@@ -8,7 +8,7 @@ import data.finset data.fintype
 import data.fin_extra
 open list 
 
-variables {α : Type} 
+variables {α : Type*} 
 
 namespace list
 
@@ -259,6 +259,12 @@ variables [linear_order α] [decidable_rel (@has_le.le α _)]
  other means.
 -/
 
+theorem list.perm.eqv' (α : Type*) : equivalence (@perm α) :=
+mk_equivalence (@perm α) (@perm.refl α) (@perm.symm α) (@perm.trans α)
+
+instance list.is_setoid' (α : Type*) : setoid (list α) :=
+setoid.mk (@perm α) (list.perm.eqv' α)
+
 lemma sort_spec (s : finset α) (l : list α) 
  (l_nodup : l.nodup) (l_sorted : l.sorted has_le.le) 
   (s_eq_l : s = l.to_finset) : s.sort has_le.le = l := 
@@ -266,7 +272,7 @@ begin
  let h0 := (congr_arg val
             (eq.trans (eq.trans (to_finset_eq (sort_nodup has_le.le s)) (eq.trans (sort_to_finset has_le.le s) s_eq_l)) 
                       (eq.symm (to_finset_eq l_nodup)))),
- let h1 := list.eq_of_sorted_of_perm (@quotient.exact (list α) (list.is_setoid α) _ _ h0) (sort_sorted has_le.le s) l_sorted,
+ let h1 := list.eq_of_sorted_of_perm (@quotient.exact (list α) (list.is_setoid' α) _ _ h0) (sort_sorted has_le.le s) l_sorted,
  let ll : multiset α := quot.mk _ l,
  have ll_nodup : ll.nodup := multiset.coe_nodup.mpr l_nodup,
  have ll_eq : (⟨ll,ll_nodup⟩ : finset α) = l.to_finset := list.to_finset_eq l_nodup,
@@ -299,7 +305,7 @@ lemma sort_spec_alt (s : finset α) (l : list α)
     list.eq_of_sorted_of_perm 
      (@quotient.exact 
       (list α)
-      (list.is_setoid α) 
+      (list.is_setoid' α) 
       _ 
       _ 
       (@congr_arg 

@@ -1,0 +1,52 @@
+\documentclass[9pt]{beamer}
+\usepackage{beamerthemesplit}
+\usetheme[headheight=0pt,footheight=0pt]{boxes}
+
+\input xypic
+\newdir{ >}{{}*!/-9pt/\dir{>}}
+
+\usepackage{tikz}
+
+\newcommand{\Nil}       {\operatorname{Nil}}
+
+\newcommand{\R}         {{\mathbb{R}}}
+\newcommand{\Z}         {{\mathbb{Z}}}
+\newcommand{\N}         {{\mathbb{N}}}
+
+
+\begin{document}
+
+\begin{frame}[t]
+ \frametitle{Commutative rings and nilpotents}
+
+ \begin{itemize}
+  \item A commutative ring is a set $R$ equipped with elements $0,1$ and
+   rules for addition, multiplication, satisfying all the usual rules
+   including $ab=ba$.
+  \item Examples: integers $\Z$, real numbers $\R$, modular numbers
+   $\Z/n$, polynomials $\Z[x]$.  Not $\N$ (no subtraction) or
+   $M_n(\R)$ (matrices; $ab\neq ba$).
+  \item An element $x\in R$ is
+   \emph{nilpotent} if $x^{n+1}=0$ for some $n\geq 0$.  Example:
+   $20^3$ is divisible by $1000$, so $20$ is nilpotent in $\Z/1000$.
+   We define $\Nil(R)$ to be the set of nilpotent elements, so
+   $\Nil(\Z/1000)=\{0,10,20,\dotsc,990\}$. 
+  \item If $x$ and $y$ are nilpotent then so is $x+y$.  Example: if
+   $x^3=y^4=0$ then
+   \begin{align*}
+    (x+y)^6 &=
+      x^6 + 6x^5y + 15x^4y^2 + 20 x^3y^3 + 15x^2y^4 + 6xy^5 + y^6 \\
+      &= (x^3+6x^2y+15xy^2+20y^3)x^3 + (15x^2+6xy+y^2)y^4 \\
+      &= (\dotsb)0 + (\dotsb)0 = 0
+   \end{align*}
+  \item Easier facts: $0$ is nilpotent, and if $x$ is nilpotent, then
+   so is $xy$.
+  \item An \emph{ideal} is a subset $I\subseteq R$ such that
+   (i)~$0\in I$ and~(ii) when $x,y\in I$ we have $x+y\in I$ and (iii)~
+   when $x\in I$ and $y\in R$ we have $xy\in I$.  Easy example: the
+   even numbers form an ideal in $\Z$.
+  \item The above facts show that $\Nil(R)$ is an ideal in $R$.
+ \end{itemize}
+\end{frame}
+
+\end{document}
