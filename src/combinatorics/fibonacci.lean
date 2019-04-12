@@ -148,4 +148,10 @@ begin
  exact h,
 end
 
+/-
+ Prove the identity
+
+ (fibonacci n) = (choose n 0) + (choose n-1 1) + (choose n-2 2) + ...
+-/
+
 end combinatorics

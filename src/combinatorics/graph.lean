@@ -1,6 +1,11 @@
 import data.pos_list
 import tactic.interactive 
 
+/-
+ This file should be refactored to use definitions and 
+ results from data/pos_list.lean
+-/
+
 namespace combinatorics 
 
 class graph (V : Type) : Type := 
@@ -98,6 +103,12 @@ instance are_connected : setoid V := {
    λ a b c ⟨p⟩ ⟨q⟩, nonempty.intro (splice p q)
   ⟩ 
 }
+
+/-
+ For finite graphs with decidable equality:
+ define valence, prove that there are two vertices with 
+ the same valence. 
+-/
 
 end path
 end graph
