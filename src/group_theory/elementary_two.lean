@@ -1,3 +1,13 @@
+/-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
+If `G` is a group in which all elements `g` stisfy `g² = 1`, then 
+`G` is automatically abelian.  We prove this, and encode the proof
+as a typeclass instance.
+-/
+
 import algebra.group_power
 
 namespace group_theory

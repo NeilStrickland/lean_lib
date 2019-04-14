@@ -1,3 +1,10 @@
+/-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
+-/
+
 import data.fintype tactic.squeeze tactic.fin_cases
 import data.finset_transfer data.unique_element 
 

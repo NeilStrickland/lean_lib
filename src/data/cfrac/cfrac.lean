@@ -1,17 +1,31 @@
-/- This file attempts to define the rationals using a variant of 
-   continued fractions as the primary definition.  Essentially,
-   the point is that any strictly positive rational p can be 
-   written uniquely as n + 1 or n + 1 - 1/(1 + q), where n is
-   a natural number and q is another strictly positive rational.
+/-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
 
-   The possible advantage of this approach is that the positive 
-   rationals become a straightforward inductive type with two 
-   constructors; no quotient constructions or subtypes are 
-   required.  The total ordering is also quite straightforward
-   from this point of view.
+This file attempts to define the rationals using a variant of 
+continued fractions as the primary definition.  Essentially,
+the point is that any strictly positive rational p can be 
+written uniquely as n + 1 or n + 1 - 1/(1 + q), where n is
+a natural number and q is another strictly positive rational.
+This means that there is a free monoid on two generators that
+acts on ℚ⁺, and evaluation at 1 ∈ ℚ⁺ gives a bijection from 
+that monoid to ℚ⁺.  The action actually extends to a group
+action on ℚ ∪ {∞}, although we have not written that yet. 
+
+The possible advantage of this approach is that the positive 
+rationals become a straightforward inductive type with two 
+constructors; no quotient constructions or subtypes are 
+required.  The total ordering is also quite straightforward
+from this point of view.
    
-   The disadvantage is that it becomes harder to set up the
-   algebraic structure.
+The disadvantage is that it becomes harder to set up the
+algebraic structure.  There is an algorithm due to Gosper and
+some of the material below in intended to lead towards an 
+implementation, but we have not yet completed that.
+
+This approach also fails to leverage the relative computational 
+efficiency of the Lean virtual machine.  
 -/
 
 import data.nat.basic

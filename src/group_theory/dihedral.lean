@@ -1,3 +1,16 @@
+/-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
+We define finite dihedral groups.  We show that a pair of elements 
+`r,s ∈ G` satisfying appropriate relations gives rise to a 
+homomorphism `Dₙ → G`.  (We have chosen to formulate this in 
+a way that works when `G` is merely a monoid, as that makes 
+it easier to deal with `Dₙ`-actions as homomorphisms from 
+`Dₙ` to endomorphism monoids.)
+-/
+
 import data.fintype group_theory.group_action 
  algebra.group_power algebra.big_operators data.zmod.basic
 import tactic.ring

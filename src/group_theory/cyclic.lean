@@ -1,3 +1,13 @@
+/-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
+We define finite cyclic groups, in multiplicative notation.
+We prove that an element `g ∈ G` with `gⁿ = 1` gives rise to
+a homomorphism `Cₙ → G`.
+-/
+
 import data.fintype group_theory.group_action 
  algebra.group_power algebra.big_operators data.zmod.basic
 import tactic.ring

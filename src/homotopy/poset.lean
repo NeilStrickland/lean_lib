@@ -1,3 +1,15 @@
+/-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
+This file effectively deals with the cartesian-closed category
+of finite posets and the associated "strong homotopy category".
+However, we have taken an ad hoc approach rather than using the
+category theory library.
+-/
+
+
 import order.basic
 import data.equiv.basic
 import data.fintype

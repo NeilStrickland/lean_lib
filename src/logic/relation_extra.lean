@@ -1,3 +1,12 @@
+/-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
+The reflexive and transitive closure of a symmetric relation
+is still symmetric.
+-/
+
 import logic.relation
 
 namespace relation

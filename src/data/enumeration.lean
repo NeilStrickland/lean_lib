@@ -1,3 +1,15 @@
+/-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
+This file defines a typeclass for types α with an ordered 
+enumeration of the elements (as opposed to a `fintype` 
+instance, which is an unordered enumeration).  This is 
+intended to allow for explicit calculation in a wider range
+of cases.
+-/
+
 -- TODO: 
 -- instances for (co) products etc
 

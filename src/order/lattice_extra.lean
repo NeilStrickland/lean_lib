@@ -1,3 +1,21 @@
+/-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
+Some additional typeclass instances:
+
+* A set with decidable linear order and top and bottom 
+  elements is a bounded distributive lattice
+* If we take a set with decidable linear order and 
+  adjoin top and bottom elements, we again get a 
+  bounded distributive lattice
+* A sup-semilattice becomes a monoid under the 
+  sup operation.
+* Dually, an inf-semilattice becomes a monoid under the
+  inf operation.
+-/
+
 import order.bounded_lattice
 
 namespace lattice

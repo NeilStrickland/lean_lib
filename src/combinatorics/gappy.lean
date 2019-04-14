@@ -1,12 +1,23 @@
+/-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
+This is about "gappy sets", ie subsets s in fin n = {0,...,n-1} 
+such that s contains no adjacent pairs {i,i+1}.  We define 
+`(gappy n)` to be the set of such subsets.
+
+A key point is that there is a bijection 
+`(gappy n) ⊕ (gappy n + 1) ≃ (gappy n + 2)`, which we define as
+`(gappy_equiv n)`.  From this it follows inductively that the 
+cardinality of `(gappy n)` is the (n + 2)nd Fibonacci number.
+
+-/
+
 import data.fintype 
+import combinatorics.fibonacci
 
 namespace combinatorics
-
-/-
- This question is about "gappy sets", ie subsets s in 
- fin n = {0,...,n-1} such that s contains no adjacent pairs
- {i,i+1}.  
--/
 
 /- We find it convenient to introduce a new notation for
    the zero element in fin m.  Notice that this only exists
@@ -34,6 +45,7 @@ begin
  exact nat.succ_inj e,
 end
 
+/- Definition of gappiness -/
 def is_gappy : ∀ {n : ℕ} (s : finset (fin n)), Prop 
 | 0 _ := true
 | (nat.succ n) s := ∀ a : fin n, ¬ (a.cast_succ ∈ s ∧ a.succ ∈ s)
@@ -55,12 +67,19 @@ instance {n : ℕ} : fintype (gappy n) :=
 instance {n : ℕ} : decidable_eq (gappy n) := 
  by { dsimp[gappy], apply_instance }
 
+/- How to generate a string describing a gappy set -/
 instance {n : ℕ} : has_repr (gappy n) := 
  ⟨λ (s : gappy n), repr s.val⟩
 
+/- Given a set s ⊆ {0,..,n-1}, we can shift it to the right 
+   to get a set (shift s) = {i + 1 : i ∈ s} ⊆ {0,..,n}
+-/
 def shift {n : ℕ} (s : finset (fin n)) : finset (fin n.succ) := 
  s.image fin.succ
 
+/- Given a set s ⊆ {0,..,n}, we can shift it to the left 
+   to get a set (unshift s) = {i : i + 1 ∈ s} ⊆ {0,..,n-1}
+-/
 def unshift {n : ℕ} (s : finset (fin n.succ)) : finset (fin n) := 
  finset.univ.filter (λ a, a.succ ∈ s)
 
@@ -164,6 +183,8 @@ begin
   {intro h,right,exact h,}
  }
 end
+
+/- Some lemmas about (un)shifting and gappiness -/
 
 lemma shift_gappy : ∀ {n : ℕ} {s : finset (fin n)},
  is_gappy s → is_gappy (shift s)
@@ -308,11 +329,6 @@ begin
  let e1 := fintype.card_sum (gappy n) (gappy n.succ),
  exact e0.symm.trans e1,
 end
-
-def fibonacci : ℕ → ℕ 
-| 0 := 0
-| 1 := 1
-| (nat.succ (nat.succ n)) := (fibonacci n) + (fibonacci n.succ)
 
 lemma gappy_card : ∀ (n : ℕ), fintype.card (gappy n) = fibonacci n.succ.succ
 | 0 := rfl

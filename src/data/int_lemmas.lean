@@ -1,3 +1,13 @@
+/-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
+Some basic lemmas about integers.  I should check whether the
+new coercion tactic makes them trivial.
+
+-/
+
 import data.fintype 
 
 lemma int.lt_succ_iff {n m : ℤ} : n < m + 1 ↔ n ≤ m := 

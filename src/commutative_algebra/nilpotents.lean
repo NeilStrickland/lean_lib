@@ -1,3 +1,13 @@
+/-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
+This is about the ideal of nilpotent elements in a commutative ring.
+There is another version in nilpotents.doc.lean with voluminous 
+comments aimed at Lean beginners.
+-/
+
 import algebra.ring
 import algebra.group_power
 import ring_theory.ideals

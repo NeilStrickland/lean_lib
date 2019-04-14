@@ -1,3 +1,16 @@
+/-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
+Given a monoid `M` and an element `g ∈ M` satisfying `gⁿ = 1`, we 
+can interpret `gⁱ` for elements `i ∈ ℤ/n`.  We give several 
+different Lean versions of this idea.  Some of them involve
+the type `zmod n`, which is Lean's implementation of `ℤ/n`.  
+Others involve the relation `a ≡ b [MOD n]` on `ℕ`, or the 
+relation `a ≡ b [ZMOD n]` on `ℤ`.
+-/
+
 import data.fintype group_theory.group_action 
  algebra.group_power algebra.big_operators data.zmod.basic
 import tactic.ring

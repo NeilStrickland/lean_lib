@@ -1,4 +1,8 @@
 /-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
  Recall that (fin n) is the type of pairs ⟨i,h⟩, where i is a natural
  number and h is a proof that i < n.  In this file we prove some 
  additional facts about these types, which might perhaps be added 

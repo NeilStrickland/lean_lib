@@ -1,3 +1,13 @@
+/-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
+This file is about ordered subsets of a finite type, i.e. lists
+of distinct elements.  It probably has some overlap with Mario's
+recent mathlib additions on lists of sublists etc.
+-/
+
 import data.nat.choose data.fintype
 import tactic.squeeze
 import combinatorics.erase combinatorics.falling combinatorics.qualify

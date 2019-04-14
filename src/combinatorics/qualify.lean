@@ -1,3 +1,32 @@
+/-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
+Suppose we have a list `l` in a type `α`.  Suppose we also have a
+subset `s` of `α`, formalised in the usual way as a term of type 
+`set α`, or equivalently a predicate `α → Prop`.  Associated to
+this we have a subtype `s' = {a : α // a ∈ s}`, and coercions 
+have been defined so that Lean will interpret `s` as `s'` where 
+necessary.  If all elements of `l` satisfy the predicate defining
+`s`, then a mathematician would say that `l` can be regarded as
+an element of `list s`.  In Lean we still have a corresponding term
+`l'` of type `s`, but it is not literally the same as `l`.  This 
+story is not just relevant for lists; there are similar 
+considerations for pairs, finsets, elements of the free group and
+so on.  
+
+In this file we use the notation `qualify h l` for `l'`, where 
+`h` is a proof that the elements of `l` satisfy the relevant 
+predicate.  We prove various basic lemmas about this operation
+and its inverse.  We have tried to write things in a way that
+could be smoothly generalised to functors other than `list`,
+but there should probably be some apparatus of type classes 
+which we have not yet set up.  Also, Mario has suggested that
+`cod_restrict` would be a better name than `qualify`, for 
+compatibility with some existing code.
+-/
+
 import data.list.basic
 
 variables {α : Type*} 

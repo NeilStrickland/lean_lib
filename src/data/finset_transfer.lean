@@ -1,16 +1,20 @@
-
 /-
- Suppose we have two types α and β with decidable equality, and 
- an equivalence between them (as defined in 
- mathlib/data/equiv/basic.lean).  We then get an equivalence 
- between the associated types (finset α) and (finset β) of finite
- subsets, and this equivalence respects membership, inclusion,
- intersections and unions and various other kinds of structure.
- In this file we prove a variety of facts of that type.
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
 
- All this should probably be done in some more abstract and 
- general framework of functors from types to types, or something
- like that.
+Suppose we have two types α and β with decidable equality, and 
+an equivalence between them (as defined in 
+mathlib/data/equiv/basic.lean).  We then get an equivalence 
+between the associated types (finset α) and (finset β) of finite
+subsets, and this equivalence respects membership, inclusion,
+intersections and unions and various other kinds of structure.
+In this file we prove a variety of facts of that type.
+
+All this should probably be done in some more abstract and 
+general framework of functors from types to types, or something
+like that.  Also, the naming conventions should be changed for
+greater compatibility with mathlib.
 -/
 
 import data.finset data.fintype

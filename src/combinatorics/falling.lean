@@ -1,8 +1,19 @@
+/-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
+This is about the function falling n k = n (n - 1) ... (n - k + 1)
+Note that the above formula involves subtraction but we give a
+different recursive definition that only involves addition and
+so works more smoothly as a map ℕ → ℕ → ℕ.
+
+-/
+
 import data.nat.choose
 
 open nat
 
-/- falling n k = n (n - 1) ... (n - k + 1) -/
 def falling : ℕ → ℕ → ℕ 
 | 0 0 := 1
 | 0 (k + 1) := 0

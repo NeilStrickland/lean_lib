@@ -1,4 +1,8 @@
 /-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
  Let p be a partition of a finite type α with decidable equality.  
  Then the type α₀ of blocks can be regarded as a quotient of α 
  in an obvious way, so we can construct a map s₀ : α₀ → β by

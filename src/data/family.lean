@@ -1,4 +1,8 @@
 /-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
  This file sets up some definitions for working with parametrised families
  of types, and morphisms between them.  In other words, we essentially 
  work with the category of arrows in the category of types.
@@ -14,6 +18,8 @@
  (eq.mp e x0) = x1 will be meaningful.  A large part of this file
  deals with the properties of these two approaches and the relationship
  between them.
+
+ It is far from clear that the approach taken here is optimal.
 -/
 
 import data.equiv.basic

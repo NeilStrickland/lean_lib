@@ -1,3 +1,17 @@
+/-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
+If we have types `X` and `Y` with a left action of a monoid `M`,
+then there are also natural actions of `M` on various other types
+defined in terms of `X` and/or `Y`, such as `X × Y` and 
+`finset X` and `X / E` (for an equivalence relation `E` with 
+appropriate properties).  This file defines typeclass instances
+that encode these natural actions.
+
+-/
+
 import group_theory.group_action
 import tactic.interactive
 

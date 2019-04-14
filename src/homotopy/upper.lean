@@ -1,3 +1,15 @@
+/-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
+Given a finite poset `P`, we define `upper P` to be the set of
+subsets `U ⊆ P` that are closed upwards.  We order this by 
+*reverse* inclusion, to ensure that the map 
+`u : p ↦ {x : p ≤ x}` is a morphism of posets.  We prove that
+`upper P` is a bounded distributive lattice with this order.
+-/
+
 import homotopy.poset
 
 universes uP uQ uR uS

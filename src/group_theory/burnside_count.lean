@@ -1,3 +1,16 @@
+/-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
+We prove the orbit counting lemma traditionally attributed to
+Burnside: if a finite group G acts on a finite set X, then 
+|G| × |X/G| is the sum over `t ∈ G` of `|Xᵗ|`, where 
+`Xᵗ = { x : t • x = x }`.  (The normal statement involves 
+dividing the above statement by `|G|`, but we avoid that so 
+that we can work everywhere in `ℕ`.)       
+-/
+
 import data.fintype group_theory.group_action 
  algebra.group_power algebra.big_operators data.zmod.basic
 import tactic.ring

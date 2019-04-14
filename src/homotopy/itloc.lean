@@ -1,3 +1,18 @@
+/-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
+This file formalises some of the combinatorial part of the 
+paper "Iterated chromatic localization" by Nicola Bellumat and
+Neil Strickland (which is in preparation).  We expect to 
+formalise all of the combinatorial content (including the 
+results in the combinatorial homotopy theory of finite 
+posets).  We may or may not add in a kind of "formal abstracts"
+account of the theory of derivators and chromatic homotopy 
+theory that forms the rest of the paper.
+-/
+
 import data.list.basic
 import data.fin
 import data.fintype

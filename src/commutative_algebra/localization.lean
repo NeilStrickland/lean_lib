@@ -1,3 +1,63 @@
+/-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
+This is about localization of commutative rings and semirings.
+The most common approach is to start with a commutative ring 
+`A` and a subset `S` that contains `1` and is closed under 
+multiplication.  We then define a set `A[S⁻¹]` of equivalence
+classes of fractions `a/s` (with `a ∈ A` and `s ∈ S`), and 
+introduce a ring structure on `A[S⁻¹]`, and prove various 
+things about it.  In particular, we prove a universal property.
+
+In this file, we deviate in various ways from the above approach.
+
+Firstly, we work with semirings rather than rings.  This wider 
+generality has some applications in stable homotopy theory, for
+example: given a finite group `G` it is useful to be able to 
+work with the Burnside semiring of isomorphism classes of finite
+`G`-sets, or the representation semiring of isomorphism classes 
+of finite-dimensional representation, rather than immediately 
+passing to the group completion.  
+
+Secondly, it is technically convenient to take `S` to be a 
+commutative monoid equipped with a homomorphism `i` from 
+`S` to the multiplicative monoid of `A`, without insisting 
+that `i` is just the inclusion of a submonoid, or even that
+`i` is injective.  For example, when forming `A[a⁻¹]` for a
+single element `a`, we take `S = ℕ` and `i n = aⁿ`.  This 
+does not cause any real issues.  Triples `(A,S,i)` of this 
+type play a central role in the theory of log geometry, so 
+we have chosen to call them "prelog semirings".  We have
+bundled the ingredients together as a structure; it is not 
+clear whether this is the best approach.
+
+Next, to stay as long as possible in the constructive/
+effectively computable world, it is useful to introduce as 
+much structure as possible on the set `A × S` of unreduced 
+fractions, before passing to equivalence classes.  All semiring
+operations can be defined in this context, and most axioms are
+satisfied, and the remaining axioms fail in a well-controlled 
+way.
+
+One thing that is currently missing is as follows.  Suppose
+we have `S` and `i` as before, and a semiring homomorphism 
+`f : A → B`.  Suppose that the homomorphism `f ∘ i` lands in
+invertible elements of `B`, or more constructively, that 
+we have a given homomorphism `j : S → units B` lifting 
+`f ∘ i`.  (There are some wrinkles here about the fact that
+unique existence statements do not give computable witnesses,
+which is why we need to qualify the above statement.)  We 
+then get an induced map `A[S⁻¹] → B`.  We would like to have
+a simple criterion for when this map is an isomorphism, or 
+equivalently when `B` also has the universal property that
+characterises `A[S⁻¹]`.  It is not yet clear what is the best
+way to formulate this.  Ideally, the resulting maps out of 
+`B` should be effectively computable in some natural cases.
+
+-/
+
 import algebra.ring group_theory.submonoid ring_theory.ideals linear_algebra.basic
 import tactic.ring tactic.abel
 

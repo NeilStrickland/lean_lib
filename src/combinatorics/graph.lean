@@ -1,10 +1,18 @@
+/-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
+This file gives some basic definitions for graph theory.
+It supports only graphs with no loops or multiple edges.
+
+It should be refactored to use definitions and results from 
+data/pos_list.lean
+
+-/
+
 import data.pos_list
 import tactic.interactive 
-
-/-
- This file should be refactored to use definitions and 
- results from data/pos_list.lean
--/
 
 namespace combinatorics 
 

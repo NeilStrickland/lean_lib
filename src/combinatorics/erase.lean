@@ -1,3 +1,12 @@
+/-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
+This is about the obvious bijection (X \ {x}) ∐ 1 ≃ X, or
+(option (erase a)) ≃ α in Lean notation.
+-/
+
 import data.fintype
 
 namespace combinatorics

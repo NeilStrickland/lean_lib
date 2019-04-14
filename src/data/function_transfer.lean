@@ -1,3 +1,13 @@
+/-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
+The formation of function types `α → β` is functorial with respect
+to equivalences of `α` and `β`.  This should be placed in some 
+more general context.
+-/
+
 import data.equiv.basic
 
 open equiv

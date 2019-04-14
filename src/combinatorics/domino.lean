@@ -1,6 +1,11 @@
-import data.fintype algebra.group
-
 /-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
+(This is part of an attempt to formalise some material from
+ a basic undergraduate combinatorics course.)
+
  A "domino" means a subset of ℕ × ℕ of the form 
  {i} × {j,j+1} or {i,i+1} × {j}.  Given a finite subset 
  B ⊆ ℕ × ℕ, we ask whether B can be written as a disjoint
@@ -12,8 +17,9 @@ import data.fintype algebra.group
  number of black squares in B must be equal to the number 
  of white squares.   Examples should be given to show that
  the converse fails.
-
 -/
+
+import data.fintype algebra.group tactic.ring
 
 namespace combinatorics
 
@@ -35,7 +41,34 @@ def delta : bool → count_pair
 
 def tot (x : count_pair) : ℕ := (x ff) + (x tt)
 
+lemma tot_delta : ∀ b : bool, tot (delta b) = 1
+| ff := rfl
+| tt := rfl
+
+instance tot_hom : is_add_monoid_hom tot := {
+ map_zero := rfl,
+ map_add := λ u v, 
+ begin
+  unfold tot, 
+  change ((u ff) + (v ff)) + ((u tt) + (v tt)) = 
+         ((u ff) + (u tt)) + ((v ff) + (v tt)),
+  rw[add_assoc,← add_assoc (v ff)],
+  rw[add_comm (v ff) (u tt),add_assoc,add_assoc],
+ end
+}
+
 def diff (x : count_pair) : ℤ := (x tt) - (x ff)
+
+instance diff_hom : is_add_monoid_hom diff := {
+ map_zero := rfl,
+ map_add := λ u v, 
+ begin
+  unfold diff, 
+  have : (u + v) tt = (u tt) + (v tt) := rfl, rw[this,int.coe_nat_add],
+  have : (u + v) ff = (u ff) + (v ff) := rfl, rw[this,int.coe_nat_add],
+  ring,
+ end
+}
 
 end count_pair
 
@@ -47,21 +80,29 @@ def black_count (s : finset (ℕ × ℕ)) : ℕ := color_count s ff
 def white_count (s : finset (ℕ × ℕ)) : ℕ := color_count s tt
 
 lemma count_eq (s : finset (ℕ × ℕ)) : 
- (color_count s).tot = s.card := sorry
+ (color_count s).tot = s.card := 
+begin
+ rw[color_count,← finset.sum_hom count_pair.tot],
+ have : (λ x, count_pair.tot (count_pair.delta (color x))) = (λ x, 1) := 
+  by {funext, apply count_pair.tot_delta},
+ rw[this,finset.sum_const,nat.smul_eq_mul,mul_one],
+end
 
 namespace color_count
 
-lemma empty : color_count ∅ = 0 := sorry
+lemma empty : color_count ∅ = 0 := by {rw[color_count,finset.sum_empty]}
 
 lemma sum (s t : finset (ℕ × ℕ)) : 
  (color_count (s ∪ t)) + (color_count (s ∩ t)) = 
- (color_count s) + (color_count t) := sorry
+ (color_count s) + (color_count t) := 
+  finset.sum_union_inter
 
-lemma disjoint_sum (s t : finset (ℕ × ℕ)) (h : s ∩ t = ∅) : 
- (color_count (s ∪ t)) = (color_count s) + (color_count t) := sorry
+lemma disjoint_sum (s t : finset (ℕ × ℕ)) (h : disjoint s t) : 
+ (color_count (s ∪ t)) = (color_count s) + (color_count t) := 
+   finset.sum_union (disjoint_iff.mp h)
 
 lemma disjoint_sum' (ss : list (finset (ℕ × ℕ)))
- (h : ss.pairwise (λ u v, u ∩ v = ∅)) : 
+ (h : ss.pairwise disjoint) : 
   color_count (ss.foldl has_union.union ∅) = (ss.map color_count).sum := sorry
 
 end color_count
@@ -88,12 +129,18 @@ def overlap : domino → domino → Prop
 | (vertical i j) (vertical k l) :=
     i = k ∧ (j = l ∨ j = l.succ ∨ j.succ = l)
 
-instance overlap_dec : decidable_rel overlap := sorry
+instance overlap_dec : decidable_rel overlap := 
+ λ a b, by {cases a with i j i j;cases b with k l k l; 
+            rw[overlap]; apply_instance,}
 
 def disjoint : domino → domino → Prop := 
- λ x y , ¬ (overlap x y)
+ λ a b , ¬ (overlap a b)
 
-instance disjoint_dec : decidable_rel disjoint := sorry
+instance disjoint_dec : decidable_rel disjoint := 
+ λ a b, by {dsimp[disjoint],apply_instance}
+
+lemma disjoint_iff (a b : domino) :
+ disjoint a b ↔ _root_.disjoint a.to_finset b.to_finset  
 
 end domino
 end combinatorics

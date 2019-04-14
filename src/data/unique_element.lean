@@ -1,25 +1,29 @@
 /-
- In classical mathematics, if we prove that there is a unique element
- x with a certain property p x, then we can treat that as a valid 
- definition of x and use x as a known entity in further developments.
- This does not work in quite the same way in Lean (unless we import
- classical logic.)  The point is basically that Lean implements proof
- irrelevance, and so erases all details of the proof of unique
- existence of x, making the definition of x inaccessible to
- computation.  However, if we have strong enough assumptions about 
- finiteness and decidability, then these issues go away.  The point 
- of this file is to set up a framework for dealing with this kind of 
- thing.  
- 
- In more detail, at the bottom of this file we will define a function 
- fintype.witness.  This accepts a decidable predicate p defined on a 
- finite type α with decidable equality, together with a proof of 
- (∃! x : α, p x), and it returns the relevant value of x, packaged
- together with a proof that it has the expected property.
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
 
- In building up to the definition of fintype.witness, we will define
- a number of other functions that play similar roles in various other
- contexts.
+In classical mathematics, if we prove that there is a unique element
+x with a certain property p x, then we can treat that as a valid 
+definition of x and use x as a known entity in further developments.
+This does not work in quite the same way in Lean (unless we import
+classical logic.)  The point is basically that Lean implements proof
+irrelevance, and so erases all details of the proof of unique
+existence of x, making the definition of x inaccessible to
+computation.  However, if we have strong enough assumptions about 
+finiteness and decidability, then these issues go away.  The point 
+of this file is to set up a framework for dealing with this kind of 
+thing.  
+ 
+In more detail, at the bottom of this file we will define a function 
+fintype.witness.  This accepts a decidable predicate p defined on a 
+finite type α with decidable equality, together with a proof of 
+(∃! x : α, p x), and it returns the relevant value of x, packaged
+together with a proof that it has the expected property.
+
+In building up to the definition of fintype.witness, we will define
+a number of other functions that play similar roles in various other
+contexts.
 -/
 
 import data.nat.basic

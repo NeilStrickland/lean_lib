@@ -1,7 +1,11 @@
 /-
- This file formalises the fact that any finite, linearly ordered
- set of size n has a unique order-isomorphism with the set 
- fin n =  {0,...,n-1}.
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
+This file formalises the fact that any finite, linearly ordered
+set of size n has a unique order-isomorphism with the set 
+fin n =  {0,...,n-1}.
 -/
 
 import data.finset data.fintype

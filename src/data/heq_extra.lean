@@ -1,3 +1,14 @@
+/-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
+This contains some additional lemmas for working with heterogenous 
+equality.  It is far from clear that the approach taken here 
+(or in places where these results are used) is optimal.
+
+-/
+
 import data.fintype
 
 lemma heq_rec {B : Type*} {X : B → Type*} {b0 b1 : B} (eb : b0 = b1) (x : X b0) :

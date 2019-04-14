@@ -1,3 +1,14 @@
+/-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
+This file defines Fibonacci numbers and their reductions mod `n`.
+It was intended to make computation efficient, but does not
+succeed very well.  Some better approaches were discussed on
+Zulip by Mario and Kenny; they should be incorporated here.
+-/
+
 import data.real.basic data.fintype algebra.big_operators data.nat.modeq
 import tactic.find tactic.squeeze tactic.norm_num tactic.ring
 
@@ -55,10 +66,6 @@ lemma fibonacci_bodd : ∀ n, (fibonacci n).bodd = bnot (n % 3 = 0)
 | (n + 3) := begin
  rw[fibonacci_bodd_step n,fibonacci_bodd n],congr,
 end
-
-lemma F2013_even : (fibonacci 2013).bodd = ff := calc
- (fibonacci 2013).bodd = bnot (2013 % 3 = 0) : fibonacci_bodd _
-  ... = ff : by norm_num
 
 /-
  We now do a more general theory of modular periodicity

@@ -1,3 +1,16 @@
+/-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
+Given a poset `P`, we define `subdiv P` to be the poset of 
+finite nonempty chains `s ⊆ P`.  Any such `s` has a largest 
+element, and the map `max : (subdiv P) → P` is a morphism 
+of posets.  There is an approach to the homotopy theory of
+finite complexes based on finite posets, and the above map
+`max` plays a key role in this. 
+-/
+
 import data.list.sort
 import homotopy.poset order.sort_rank
 
