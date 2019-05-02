@@ -1,7 +1,9 @@
 import tactic.interactive
 import tactic.monotonicity
-
-#check traversable
+import data.finset
+/-
+ To do: also document derive_handlers
+-/
 
 #check tactic.interactive.ac_mono
 -- Deduce inequalities using known monotonicity properties of functions
@@ -20,15 +22,18 @@ import tactic.monotonicity
 #check tactic.interactive.apply_assumption 
 -- Like apply, but looks in the local context for applicable things
 #check tactic.interactive.apply_auto_param 
---
+-- Not used directly in mathlib, but used indirectly by the `tidy` tactic.
 #check tactic.interactive.apply_field 
 --
 #check tactic.interactive.apply_instance 
---
+-- Use type class resolution to close the main goal.  For example, if we alread
+-- have group structures on G and H, and the goal is to give a group structure
+-- on G × (ℕ → H), then `apply_instance` will close the goal.
 #check tactic.interactive.apply_opt_param 
---
+-- Not used directly in mathlib
 #check tactic.interactive.apply_rules 
---
+-- This is like `apply`, except that you supply a list of rules instead of
+-- a single rule, and Lean applies any of the rules that are applicable.
 #check tactic.interactive.apply_with 
 -- Like apply, but with configurable options
 #check tactic.interactive.assume 
@@ -136,127 +141,199 @@ import tactic.monotonicity
 #check tactic.interactive.get_operator 
 -- No docstring
 #check tactic.interactive.get_rule_eqn_lemmas 
+-- No docstring
 #check tactic.interactive.guard_class 
+-- No docstring
 #check tactic.interactive.guard_expr_eq 
+-- No docstring
 #check tactic.interactive.guard_expr_eq' 
+-- No docstring
 #check tactic.interactive.guard_hyp 
+-- Used for writing tests
 #check tactic.interactive.guard_hyp' 
+-- Used for writing tests
 #check tactic.interactive.guard_hyp_nums 
+-- No docstring
 #check tactic.interactive.guard_tags 
+-- No docstring
 #check tactic.interactive.guard_target 
+-- Used for writing tests
 #check tactic.interactive.guard_target' 
+-- Used for writing tests
 #check tactic.interactive.h_generalize 
 -- For dealing with casts and heterogenous equality
 #check tactic.interactive.has_to_format 
+-- No docstring
 #check tactic.interactive.has_to_tactic_format_mono_ctx 
+-- No docstring
 #check tactic.interactive.has_to_tactic_format_mono_function 
+-- No docstring
 #check tactic.interactive.has_to_tactic_format_mono_law 
+-- No docstring
 #check tactic.interactive.have 
+--
 #check tactic.interactive.haveI 
+--
 #check tactic.interactive.have_field 
+--
 #check tactic.interactive.hide_meta_vars' 
+-- No docstring
 #check tactic.interactive.iclarify 
+-- No docstring
 #check tactic.interactive.induction 
+--
 #check tactic.interactive.injection 
+-- Apply the fact that constructors are injective.
 #check tactic.interactive.injections 
+-- Apply the fact that constructors are injective, repeatedly
 #check tactic.interactive.injections_and_clear 
+-- No docstring
 #check tactic.interactive.intro 
+--
 #check tactic.interactive.introI 
+--
 #check tactic.interactive.intros 
+--
 #check tactic.interactive.introsI 
+--
 #check tactic.interactive.introv 
+-- Like intros, but with slightly different behaviour wrt naming 
+-- of introduced variables
 #check tactic.interactive.isafe 
-#check tactic.interactive.itactic 
+-- No docstring
 #check tactic.interactive.iterate 
-#check tactic.interactive.last_two 
-#check tactic.interactive.lawful_functor_derive_handler 
-#check tactic.interactive.lawful_functor_derive_handler' 
-#check tactic.interactive.lawful_traversable_derive_handler 
-#check tactic.interactive.lawful_traversable_derive_handler' 
+-- Apply a tactic repeatedly
 #check tactic.interactive.left 
+--
 #check tactic.interactive.let 
+--
 #check tactic.interactive.letI 
 #check tactic.interactive.list.minimum_on 
+-- No docstring
 #check tactic.interactive.list_cast_of 
+-- No docstring
 #check tactic.interactive.map_constructor 
+--
 #check tactic.interactive.map_field 
+--
 #check tactic.interactive.mapply 
+--
 #check tactic.interactive.match_ac 
+-- No docstring
 #check tactic.interactive.match_ac' 
+-- No docstring
 #check tactic.interactive.match_ac'._main 
+-- No docstring
 #check tactic.interactive.match_assoc 
+--
 #check tactic.interactive.match_chaining_rules 
+-- No docstring
 #check tactic.interactive.match_imp 
+-- No docstring
 #check tactic.interactive.match_prefix 
-#check tactic.interactive.match_prefix._main 
+-- No docstring
 #check tactic.interactive.match_rule 
+-- No docstring
 #check tactic.interactive.match_target 
+-- Fail if type of target is not as specified
 #check tactic.interactive.min_tac 
+-- No docstring
 #check tactic.interactive.mk_assumption_set 
+-- No docstring
 #check tactic.interactive.mk_congr_args 
+-- No docstring
 #check tactic.interactive.mk_congr_law 
+-- No docstring
 #check tactic.interactive.mk_fun_app 
+-- No docstring
 #check tactic.interactive.mk_map 
+-- Helps to define functors.  You can just specify the effect on 
+-- objects and mk_map will try to work out the effect on maps (?)
 #check tactic.interactive.mk_mapp' 
+-- No docstring
 #check tactic.interactive.mk_one_instance 
+-- No docstring
 #check tactic.interactive.mk_pattern 
+-- No docstring
 #check tactic.interactive.mk_rel 
+-- No docstring
 #check tactic.interactive.mk_traverse 
+-- Helps to define traversable functors
 #check tactic.interactive.mono 
-#check tactic.interactive.monotoncity.check 
-#check tactic.interactive.monotoncity.check_rel 
+-- Applies monotonicity rules
 #check tactic.interactive.nested_map 
+--
 #check tactic.interactive.nested_traverse 
+--
 #check tactic.interactive.one_line 
-#check tactic.interactive.parse_ac_mono_function 
-#check tactic.interactive.parse_assoc_chain 
-#check tactic.interactive.parse_assoc_chain' 
-#check tactic.interactive.parse_config 
-#check tactic.interactive.pi_head 
-#check tactic.interactive.pi_instance 
-#check tactic.interactive.propagate_tags 
+-- No docstring
 #check tactic.interactive.rcases 
-#check tactic.interactive.rec.to_tactic_format 
-#check tactic.interactive.record_lit 
-#check tactic.interactive.recover 
+--
 #check tactic.interactive.refine 
-#check tactic.interactive.refine_one 
-#check tactic.interactive.refine_recursively 
+-- Like exact, but allows holes
 #check tactic.interactive.refine_struct 
+-- When defining a structure, this tactic gives a goal for each required field
+-- (Compare with hole commands?)
 #check tactic.interactive.refl 
+--
 #check tactic.interactive.reflexivity 
+-- Same as refl
 #check tactic.interactive.rename 
+--
 #check tactic.interactive.repeat 
+--
 #check tactic.interactive.repeat_or_not 
+--
 #check tactic.interactive.repeat_until 
+--
 #check tactic.interactive.repeat_until_or_at_most 
-#check tactic.interactive.repeat_until_or_at_most._main 
+--
 #check tactic.interactive.replace 
+--
 #check tactic.interactive.resetI 
+--
 #check tactic.interactive.revert 
+-- Reverse of intro
 #check tactic.interactive.revert_all 
+--
 #check tactic.interactive.rewrite 
-#check tactic.interactive.right 
+-- same as rw
+#check tactic.interactive.right
+-- If the goal is P ∨ Q, change it to Q.  Also works with other types with 
+-- precisely two constructors 
 #check tactic.interactive.rintro 
+--
 #check tactic.interactive.rintros 
+-- Same as rintro
 #check tactic.interactive.rsimp 
+-- No docstring
 #check tactic.interactive.rw  
+--
 #check tactic.interactive.rwa 
+-- rw followed by assumption
 #check tactic.interactive.safe 
+--
 #check tactic.interactive.same_function 
+-- No docstring
 #check tactic.interactive.same_operator 
+-- No docstring
 #check tactic.interactive.show 
-#check tactic.interactive.side 
-#check tactic.interactive.side_conditions 
+-- Similar to change, but can alo select a goal other than the first one
 #check tactic.interactive.simp 
+--
 #check tactic.interactive.simp_core 
-#check tactic.interactive.simp_core_aux 
+-- Is this the same as simp only[] ?
 #check tactic.interactive.simp_functor 
+-- No docstring
 #check tactic.interactive.simp_intros 
 #check tactic.interactive.simpa 
+-- Like intros, but with simplification
 #check tactic.interactive.skip 
+-- Does nothing; only useful in combinators
 #check tactic.interactive.solve1 
+-- 
 #check tactic.interactive.solve_by_elim 
+--
 #check tactic.interactive.solve_mvar 
 #check tactic.interactive.sorry 
 #check tactic.interactive.source_fields 
