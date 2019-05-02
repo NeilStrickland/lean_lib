@@ -13,15 +13,19 @@ lemmas specialised to that situation.
 import algebra.big_operators data.fintype
 import tactic.squeeze
 
-universes u v w
-variables {α : Type u} {β : Type v} {γ : Type w}
+universes uα uβ uγ uδ
+variables {α : Type uα} {β : Type uβ} {γ : Type uγ} {δ : Type uδ}
 variables [decidable_eq α] [decidable_eq β]
-variable [comm_monoid γ]
+variables [comm_monoid γ] [add_comm_monoid δ]
 
+namespace finset
 open finset 
 
+lemma mem_range_succ {i n : ℕ} : i ∈ range n.succ ↔ i ≤ n := 
+ by {rw[mem_range,nat.lt_succ_iff]}
+
 @[to_additive finset.sum_coe_list]
-lemma finset.prod_coe_list {l : list α} (h : l.nodup) (f : α → γ) :
+lemma prod_coe_list {l : list α} (h : l.nodup) (f : α → γ) :
  l.to_finset.prod f = (l.map f).prod :=
 begin
  let s := @finset.mk α l h,
@@ -34,7 +38,7 @@ begin
 end
 
 @[to_additive finset.sum_equiv]
-lemma finset.prod_equiv {s : finset α} {t : finset β}
+lemma prod_equiv {s : finset α} {t : finset β}
  (e : {a // a ∈ s} ≃ {b // b ∈ t})
   (f : α → γ) (g : β → γ) 
    (hfg : ∀ (a : α) (ha : a ∈ s), f a = g (e ⟨a,ha⟩).val) :
@@ -56,7 +60,7 @@ prod_bij
   )
 
 @[to_additive finset.univ_sum_equiv]
-lemma finset.univ_prod_equiv [fintype α] [fintype β] (e : α ≃ β) (g : β → γ) :
+lemma univ_prod_equiv [fintype α] [fintype β] (e : α ≃ β) (g : β → γ) :
  univ.prod (g ∘ e.to_fun) = univ.prod g := 
 prod_bij 
  (λ a _,e.to_fun a) (λ a _,mem_univ _) (λ a _, @rfl _ (g (e.to_fun a)))
@@ -64,7 +68,7 @@ prod_bij
  (λ b _, begin use e.inv_fun b, use mem_univ _, exact (e.right_inv b).symm, end)
 
 @[to_additive finset.sum_eq_univ_sum]
-lemma finset.prod_eq_univ_prod (s : finset α) (f : α → γ) : 
+lemma prod_eq_univ_prod (s : finset α) (f : α → γ) : 
  s.prod f = (@univ {a // a ∈ s} _).prod (λ a, f a.val) := 
 begin
  have : @univ {a // a ∈ s} _ = s.attach := rfl,
@@ -72,22 +76,60 @@ begin
 end
 
 @[to_additive finset.sum_univ_product]
-lemma finset.prod_univ_product [fintype α] [fintype β] (f : α → β → γ) :
+lemma prod_univ_product [fintype α] [fintype β] (f : α → β → γ) :
  (@univ (α × β) _).prod (λ ab, f ab.1 ab.2) = 
   (@univ α _).prod (λ a, (@univ β _).prod (f a)) := 
 begin 
  have : @univ (α × β) _ = (@univ α _).product (@univ β _) := rfl,
- rw[this,finset.prod_product],
+ rw[this,prod_product],
 end
 
 @[to_additive finset.sum_over_bool]
-lemma finset.prod_over_bool (f : bool → γ) : 
+lemma prod_over_bool (f : bool → γ) : 
  (@univ bool _).prod f = (f ff) * (f tt) := 
 begin
  let l : list bool := [ff,tt],
  let h : l.nodup := dec_trivial,
  have : (@univ bool _) = l.to_finset := dec_trivial,
- rw[this,finset.prod_coe_list h],
+ rw[this,prod_coe_list h],
  simp only [list.map,list.prod_cons,list.prod_nil,mul_one]
 end
 
+@[to_additive finset.sum_range_zero]
+lemma prod_range_zero (f : ℕ → γ) : 
+ (range 0).prod f = 1 := by {rw[range_zero,prod_empty]}
+
+lemma prod_range_one (f : ℕ → γ) : 
+ (range 1).prod f = f 0 := 
+ by {rw[range_one],apply @prod_singleton ℕ γ 0 f,}
+
+lemma sum_range_one (f : ℕ → δ) : 
+ (range 1).sum f = f 0 := 
+ by {rw[range_one],apply @sum_singleton ℕ δ 0 f,}
+
+lemma prod_range_two (f : ℕ → γ) : 
+ (range 2).prod f = f 0 * f 1 := 
+ by {
+   rw[← one_mul (f 0)],
+  have : range 2 = list.to_finset [0,1] := rfl,
+  rw[this,prod_coe_list (dec_trivial : list.nodup [0,1])],
+  refl,
+ }
+
+lemma sum_range_two (f : ℕ → δ) : 
+ (range 2).sum f = f 0 + f 1 := 
+ by {
+   rw[← zero_add (f 0)],
+  have : range 2 = list.to_finset [0,1] := rfl,
+  rw[this,sum_coe_list (dec_trivial : list.nodup [0,1])],
+  refl,
+ }
+
+@[to_additive finset.sum_eq_zero_of_terms_eq_zero] 
+lemma prod_eq_one_of_terms_eq_one
+ (s : finset α) (f : α → γ) (e : ∀ a, a ∈ s → f a = 1) : 
+  s.prod f = 1 := 
+   by { have : s.prod f = s.prod (λ a, 1) := prod_congr rfl e,
+        rw[this,prod_const_one]}
+
+end finset
