@@ -1,8 +1,6 @@
 *.olean
+*.scr
+*.pdf
+*.mw
 /_target
 /leanpkg.path
-src/data/cfrac/gosper.pdf
-src/data/cfrac/cfrac0.lean.scr
-src/data/cfrac/cfrac1.lean.scr
-src/data/cfrac/cfrac.mw
-src/homotopy/itloc.lean.scr
