@@ -1,5 +1,5 @@
 import data.fintype 
-import MAS114.fiber
+import combinatorics.fiber
 
 namespace MAS114
 namespace exercises_1
@@ -119,7 +119,7 @@ end
 lemma no_surjection : ¬ ∃ p : A → B, function.surjective p := 
 begin 
  rintro ⟨p,p_surj⟩,
- let h := card_le_of_surjective p_surj,
+ let h := combinatorics.card_le_of_surjective p_surj,
  rw[A_card,B_card] at h,
  exact not_lt_of_ge h dec_trivial,
 end
