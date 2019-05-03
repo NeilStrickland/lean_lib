@@ -1,5 +1,4 @@
-import data.nat.choose data.nat.prime data.fin
- ring_theory.matrix algebra.big_operators
+import data.nat.choose data.nat.prime data.fintype algebra.big_operators
 import tactic.ring
 
 /- --------------------------------------------------------------- -/
@@ -14,7 +13,7 @@ def my_matrix (R : Type) (n m : ℕ) : Type :=
 
 def my_matrix.mul {R : Type} [ring R] {n m p : ℕ}
  (M : my_matrix R n m) (N : my_matrix R m p) : my_matrix R n p := 
-  λ i k,(@fintype.elems (fin m) _).sum (λ j, (M i j) * (N j k))
+  λ i k,(@finset.univ (fin m) _).sum (λ j, (M i j) * (N j k))
 
 lemma bool_irrelevance (P Q : bool) : ∀ e1 e2 : P = Q, e1 = e2
 | _ _ := rfl
