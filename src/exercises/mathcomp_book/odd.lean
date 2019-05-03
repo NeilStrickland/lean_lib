@@ -1,4 +1,4 @@
-import tactic.interactive tactic.squeeze
+import tactic.interactive tactic.squeeze data.nat.modeq
 
 variables n m : nat 
 
@@ -79,14 +79,6 @@ lemma odd_ss_c : is_odd_c (n + 2) = is_odd_c n :=
 begin
  dsimp[is_odd_c],
  cases (n % 2) with k,{exact rfl},{simp}
-end
-
-lemma odd_add_c : ∀ n m : ℕ, 
- is_odd_c (n + m) = bxor (is_odd_c n) (is_odd_c m) := 
-begin
- intros n m,
- rw[is_odd_c,is_odd_c,is_odd_c],
- sorry
 end
 
 /- ------------------------------------------------------------ -/
