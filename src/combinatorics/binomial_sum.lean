@@ -23,14 +23,14 @@ import tactic.squeeze
 -/
 
 lemma choose_sum' (k m : ℕ) : 
- choose (k + m) (k + 1) = 
-  (finset.range m).sum (λ i, choose (k + i) k) := 
+ nat.choose (k + m) (k + 1) = 
+  (finset.range m).sum (λ i, nat.choose (k + i) k) := 
 begin
  induction m with m ih,
- {rw[finset.range_zero,finset.sum_empty,add_zero,choose_succ_self]},
- {rw[finset.sum_range_succ,← ih,nat.add_succ,choose],}
+ {rw[finset.range_zero,finset.sum_empty,add_zero,nat.choose_succ_self]},
+ {rw[finset.sum_range_succ,← ih,nat.add_succ,nat.choose],}
 end
 
 lemma choose_sum (n k : ℕ) : 
- choose n.succ k.succ = (finset.Ico k n.succ).sum (λ i, choose i k)
+ nat.choose n.succ k.succ = (finset.Ico k n.succ).sum (λ i, nat.choose i k)
   := sorry 
