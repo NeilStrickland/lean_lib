@@ -1,6 +1,5 @@
 import data.real.basic data.fintype algebra.big_operators data.nat.modeq
 import tactic.find tactic.squeeze 
-import MAS114.fiber
 
 namespace MAS114
 namespace exercises_1
