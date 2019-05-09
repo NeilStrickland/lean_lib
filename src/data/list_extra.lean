@@ -7,6 +7,25 @@ variables {α : Type u} {β : Type v} {γ : Type w} {δ : Type x}
 
 open list
 
+def all_prop {α : Type*} (p : α → Prop) : ∀ (l : list α), Prop
+| nil := true
+| (a :: l) := (p a) ∧ (all_prop l)
+
+lemma all_prop_iff {α : Type*} {p : α → Prop} : ∀ {l : list α},
+ all_prop p l ↔ ∀ a, a ∈ l → p a 
+| nil := by {rw[all_prop,true_iff],intros a ha,cases ha,}
+| (cons m l) := 
+by {rw[all_prop],split,
+ {rintro ⟨hm,hl⟩ a ha,rcases ha,exact ha.symm ▸ hm,
+  exact (all_prop_iff.mp hl) a ha},
+ {intro h,split,
+  exact h m (mem_cons_self m l),
+  apply all_prop_iff.mpr,intros a ha,
+  exact h a (mem_cons_of_mem m ha),
+ }
+}
+
+
 def cons_embedding (a : α) : list α ↪ list α := ⟨cons a,cons_inj⟩
 
 def concat_embedding (a : α) : list α ↪ list α := 
