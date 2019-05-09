@@ -1,3 +1,11 @@
+/-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
+Given a semiring `R`, this file defines the power series semiring `R[[x]]`
+-/
+
 import data.fintype data.finsupp algebra.big_operators algebra.pi_instances 
 import data.list_extra algebra.biadditive algebra.prod_equiv algebra.convolution
 import tactic.squeeze tactic.pi_instances
@@ -33,6 +41,9 @@ instance [ring R] : ring (power_series R) :=
 instance [comm_ring R] : comm_ring (power_series R) := 
  by {dsimp[power_series], apply_instance}
 
+/- `C a` is the constant power series with value `a`, so the zeroth 
+   coefficient is `a` and the other coefficients are zero.
+-/
 def C [has_zero R] : R → power_series R := convolution.map.delta
 
 instance C_hom [semiring R] : is_semiring_hom (C : R → power_series R) := {
@@ -41,6 +52,10 @@ instance C_hom [semiring R] : is_semiring_hom (C : R → power_series R) := {
   map_add := λ x y, by {dsimp[C],apply convolution.map.delta_add},
   map_mul := λ x y, by {dsimp[C],symmetry,apply convolution.delta_convolve_delta},
 }
+
+/- `X` denotes the standard generator of the power series 
+   semiring `R[[X]]`.
+-/
 
 def X [semiring R] : power_series R := convolution.map.single (1 : ℕ) (1 : R)
 
@@ -91,6 +106,7 @@ begin
  simp only [] at this ⊢, rw[← this],congr,
 end
 
+/- Left multiplication by `C a` is termwise left multiplication by `a` -/
 lemma coeff_C_mul [semiring R] (n : ℕ) (a : R) (f : power_series R) : 
  coeff n ((C a) * f) = a * coeff n f := 
 begin
@@ -103,6 +119,7 @@ begin
  rw[h],simp only[],rw[coeff_n_C,if_pos rfl,nat.sub_zero],
 end
 
+/- Right multiplication by `C a` is termwise right multiplication by `a` -/
 lemma coeff_mul_C [semiring R] (n : ℕ) (f : power_series R) (a : R) : 
  coeff n (f * (C a)) = (coeff n f) * a := 
 begin
@@ -138,6 +155,7 @@ begin
   rw[h₀],simp only[coeff_one_X],rw[one_mul],refl,
 end
 
+/- `E` is the homomorphism sending a power series to its constant term. -/
 def E [semiring R] : (power_series R) → R := λ f, coeff 0 f
 
 lemma E_C [semiring R] (a : R) : E (C a) = a := rfl
@@ -158,6 +176,9 @@ instance E_hom [semiring R] : is_semiring_hom (E : power_series R → R) := {
   map_mul  := E_mul
 } 
 
+/- `val_ge n f` means that `f` has valuation at least `n`, or in other
+   words that `f` is divisible by `X ^ n`.
+-/
 @[irreducible]
 def val_ge [has_zero R] (n : ℕ) (f : power_series R) : Prop := 
  ∀ {i : ℕ} (hi : i < n), coeff i f = 0
@@ -279,6 +300,7 @@ begin
  intros i _,rw[coeff_n_zero,zero_mul],
 end
 
+/- `f ∘ g` is an additive function of `f`. -/
 lemma add_compose (f₁ f₂ g : power_series R) : 
  compose (f₁ + f₂) g = compose f₁ g + compose f₂ g := 
 begin
@@ -287,6 +309,7 @@ begin
  rw[coeff_add,add_mul],
 end
 
+/- `f ∘ g` is a multiplicative function of `f`. -/
 lemma mul_compose (f₁ f₂ g : power_series R) (hg : coeff 0 g = 0): 
  compose (f₁ * f₂) g = compose f₁ g * compose f₂ g := 
 begin
