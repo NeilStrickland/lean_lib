@@ -1,3 +1,15 @@
+/-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
+This file defines a typeclass for biadditive maps, i.e. maps
+`m : α → β → γ` (where α, β and γ are commutative additive monoids)
+such that `m a b` is an additive function of `a` and also an 
+additive function of `b`.  In other words, `m` should be bilinear
+over `ℕ`.
+-/
+
 import algebra.group algebra.big_operators algebra.module
 
 variables {ι : Type*} {α : Type*} {β : Type*} {γ : Type*}
