@@ -1,3 +1,32 @@
+/-
+Copyright (c) 2019 Neil Strickland. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Neil Strickland
+
+This file sets up a framework for convolution.  The first ingredient
+is an additive monoid `M` with the property that for any `m ∈ M`, the
+set `{⟨x,y⟩ : x + y = m}` is finite.  If `M` has this property and `R`
+is a ring and `f,g : M → R` then we can define `(f * g) m` to be the 
+sum of `(f x) * (g y)` for all pairs `⟨x,y⟩` with `x + y = m`.  If 
+`M = ℕ` then this rule gives us the power series ring `R[[x]]`.  
+
+The first part of this file defines a typeclass `sum_set M` for 
+additive monoids `M` with the finiteness property mentioned above,
+and derives some additional properties of such monoids.
+
+We then define convolution.  In order to cover some additional 
+applications, we work in a context slightly more general than outlined
+above.  First, we define `convolution.map M P := M → P`, and attach 
+the convolution structure to the name `convolution.map`.  This is 
+intended to accomodate the fact that we might want to use pointwise
+products on `M → P` in some other contexts.  I am not sure whether
+this is the best way to address that issue.  Also, we will assume 
+that we have a biadditive map `m₁₂ : P₁ → P₂ → P₁₂` of additive
+commutative monoids, and we will use it to define a convolution 
+operation `map M P₁ → map M P₂ → map M P₁₂`.  We can recover the
+ring structure on `map M R` by taking `P₁ = P₂ = P₁₂ = R`.
+-/
+
 import data.fintype data.finsupp algebra.big_operators algebra.pi_instances 
 import data.list_extra algebra.biadditive algebra.prod_equiv
 import tactic.squeeze tactic.pi_instances
