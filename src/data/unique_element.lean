@@ -27,7 +27,7 @@ contexts.
 -/
 
 import data.nat.basic
-import data.list data.multiset data.finset data.fintype data.equiv.encodable
+import data.list data.multiset data.finset data.fintype.basic data.equiv.encodable.basic
 
 universe u
 
@@ -98,10 +98,8 @@ def unique_element (xs : list α) (xs_length : xs.length = 1) :
 begin
  rcases xs with _ | ⟨ x,ys ⟩,
  {simp at xs_length,exact false.elim xs_length},
- {
-  simp at xs_length,
-  rw[nat.add_comm] at xs_length,
-  have ys_length : ys.length = 0 := nat.succ_inj xs_length,
+ { change ys.length.succ = 1 at xs_length,
+  have ys_length : ys.length = 0 := nat.succ_inj'.mp xs_length,
   have ys_nil : ys = [] := list.length_eq_zero.mp ys_length,
   simp[ys_nil],
   exact ⟨ x, rfl ⟩
@@ -116,18 +114,7 @@ lemma some_unique_element (xs : list α) :
 begin
  rcases xs with _ | ⟨ x , _ | ⟨ y, zs ⟩⟩; simp; dsimp[maybe_unique_element],
  refl,
- {intro h,injection h},
- split,
- { intros u v,
-   have Q : ∀ (k : ℕ ) , ¬1 + (1 + k) = 1 :=
-   begin
-    intros k e,
-    simp at e,
-    injection e with e1,injection e1
-   end,
-   exact Q zs.length v
- },
- {intro,refl}
+ {intro h,injection h}, refl
 end
 
 /-
@@ -163,12 +150,12 @@ lemma maybe_unique_element_perm (as bs : list α) (p : perm as bs) :
 begin
  induction p,
  case list.perm.nil : {simp},
- case list.perm.skip : x as1 bs1 q ih {
+ case list.perm.cons : x as1 bs1 q ih {
    rcases as1 with _ | ⟨ a1, as2 ⟩ ,
-   {have bs1_nil : bs1 = [] := list.eq_nil_of_perm_nil q,
+   {have bs1_nil : bs1 = [] := q.nil_eq.symm,
    rw[bs1_nil]},{
     rcases bs1 with _ | ⟨ b1, bs2 ⟩ ,
-    rcases list.eq_nil_of_perm_nil q.symm,
+    rcases q.eq_nil.symm,
     dsimp[maybe_unique_element],
     refl
    }
@@ -206,7 +193,7 @@ def maybe_unique_element : (multiset α) → (option α) :=
 -/
 lemma maybe_unique_element_of_list (l : list α) :
  maybe_unique_element ↑l = list.maybe_unique_element l := 
- @quotient.lift_beta (list α) _ _
+ @quotient.lift_mk (list α) _ _
   list.maybe_unique_element
    (@list.maybe_unique_element_perm α) l
 
@@ -249,9 +236,9 @@ begin
   rcases (exists_cons_of_mem e.2) with ⟨ t, m_eq_xt⟩ ,
   have h : 1 = t.card + 1 := calc 
    1 = m.card : e.1.symm
-   ... = (x :: t).card : by rw[m_eq_xt]
+   ... = (x ::ₘ t).card : by rw[m_eq_xt]
    ... = t.card + 1 : by simp,
-  have t_eq_0 : t = 0 := card_eq_zero.mp (nat.succ_inj h).symm,
+  have t_eq_0 : t = 0 := card_eq_zero.mp (nat.succ_inj'.mp h).symm,
   simp[t_eq_0] at m_eq_xt,
   exact m_eq_xt
  }
@@ -403,7 +390,7 @@ def maybe_unique_element : (option α) :=
 
 lemma maybe_unique_element_prop (a : α)
  (e : maybe_unique_element α = some a) :
-  univ = finset.singleton a := 
+  univ = ({a} : finset α) := 
   maybe_unique_element_prop univ a e
 
 lemma some_unique_element : 
@@ -411,7 +398,7 @@ lemma some_unique_element :
 finset.some_unique_element univ
 
 lemma eq_singleton (a : α) :
- univ = finset.singleton a ↔ (card α = 1) := 
+ univ = ({a} : finset α) ↔ (card α = 1) := 
 begin
  dsimp[card],
  let e := finset.eq_singleton univ a, 

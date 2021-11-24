@@ -48,7 +48,7 @@ that the number of empty rows is the sum over `U ⊆ B` of
 
 -/
 
-import data.fintype
+import data.fintype.basic
 import combinatorics.card_sign
 
 open finset 
@@ -61,10 +61,10 @@ by {rw[mem_filter],simp only [mem_univ a,true_and],}
 lemma finset.mem_bind_univ
  {α : Type*} [fintype α]  {β : Type*} [decidable_eq β]
   {f : α → finset β} {b : β} :
-    b ∈ univ.bind f ↔ ∃ a : α, b ∈ (f a) := 
+    b ∈ univ.bUnion f ↔ ∃ a : α, b ∈ (f a) := 
 by {split,
-    {intro h,rcases mem_bind.mp h with ⟨a,_,ha⟩,exact ⟨a,ha⟩},
-    {rintro ⟨a,ha⟩,exact mem_bind.mpr ⟨a,⟨mem_univ a,ha⟩⟩}}
+    {intro h,rcases mem_bUnion.mp h with ⟨a,_,ha⟩,exact ⟨a,ha⟩},
+    {rintro ⟨a,ha⟩,exact mem_bUnion.mpr ⟨a,⟨mem_univ a,ha⟩⟩}}
 
 namespace combinatorics
 namespace matching
@@ -156,9 +156,9 @@ def col (b : B) : finset A := univ.filter (λ a, (prod.mk a b) ∈ E)
 
 def col' (b : B) := E.filter (λ ab, ab.2 = b)
 
-def row_union (T : finset A) := T.bind (row E)
+def row_union (T : finset A) := T.bUnion (row E)
 
-def col_union (U : finset B) := U.bind (col E)
+def col_union (U : finset B) := U.bUnion (col E)
 
 def row_inter (T : finset A) : finset B := univ.filter (λ b, T ⊆ col E b)
 
@@ -179,11 +179,11 @@ lemma mem_row_col {a : A} {b : B} : b ∈ row E a ↔ a ∈ col E b :=
 
 lemma mem_row_union (T : finset A) (b : B) :
  b ∈ row_union E T ↔ ∃ a ∈ T, b ∈ row E a := 
-  by {rw[row_union,mem_bind]}
+  by {rw[row_union,mem_bUnion]}
 
 lemma mem_col_union (U : finset B) (a : A) :
  a ∈ col_union E U ↔ ∃ b ∈ U, a ∈ col E b := 
-  by {rw[col_union,mem_bind]}
+  by {rw[col_union,mem_bUnion]}
 
 lemma mem_row_inter (T : finset A) (b : B) :
  b ∈ row_inter E T ↔ ∀ a ∈ T, b ∈ row E a := 
@@ -309,20 +309,21 @@ begin
  let j : (finset B) → (A ↪ (A × (finset B))) := incr, 
  let p : A → finset (A × (finset B)) := (λ a, (row E a).powerset.map (i a)),
  let q : finset B → finset (A × (finset B)) := (λ U, (col_inter E U).map (j U)),
- let Y := (@univ A _).bind p,
- let Z := (@univ (finset B) _).bind q,
+ let Y := (@univ A _).bUnion p,
+ let Z := (@univ (finset B) _).bUnion q,
  let c : A × (finset B) → ℤ := λ aU, aU.2.card_sign,
- have p_disjoint : ∀ a₀ a₁, a₀ ≠ a₁ → (p a₀) ∩ (p a₁) = ∅ := 
-  λ a₀ a₁ h, by {
-      apply eq_empty_of_forall_not_mem,rintros ⟨a,U⟩ h',
+ have p_disjoint : ∀ a₀ a₁, a₀ ≠ a₁ → disjoint (p a₀) (p a₁) := 
+  λ a₀ a₁ h, disjoint_iff.mpr $ by {
+      change (p a₀) ∩ (p a₁) = ∅,
+      apply eq_empty_of_forall_not_mem, rintros ⟨a,U⟩ h',
       rw[mem_inter,mem_incl,mem_incl] at h',
-      exact h (h'.1.1.symm.trans h'.2.1),},
- have q_disjoint : ∀ U₀ U₁, U₀ ≠ U₁ → (q U₀) ∩ (q U₁) = ∅ := 
-  λ U₀ U₁ h, by {
+      exact h (h'.1.1.symm.trans h'.2.1) },
+ have q_disjoint : ∀ U₀ U₁, U₀ ≠ U₁ → disjoint (q U₀) (q U₁) := 
+  λ U₀ U₁ h, disjoint_iff.mpr $  by {
+      change (q U₀) ∩ (q U₁) = ∅,
       apply eq_empty_of_forall_not_mem,rintros ⟨a,U⟩ h',
       rw[mem_inter,mem_incr,mem_incr] at h',
-      exact h (h'.1.2.symm.trans h'.2.2),
-  },
+      exact h (h'.1.2.symm.trans h'.2.2) },
  have e : Y = Z := begin
   ext ⟨a,U⟩,
   split,
@@ -349,9 +350,9 @@ begin
    }
  end,
  let Y_sum : Y.sum c = (@univ A _).sum (λ a, (p a).sum c) := 
-  sum_bind (λ a₀ _ a₁ _ h, p_disjoint a₀ a₁ h),
+  sum_bUnion (λ a₀ _ a₁ _ h, p_disjoint a₀ a₁ h),
  let Z_sum : Z.sum c = (@univ (finset B) _).sum (λ U, (q U).sum c) := 
-  sum_bind (λ U₀ _ U₁ _ h, q_disjoint U₀ U₁ h),
+  sum_bUnion (λ U₀ _ U₁ _ h, q_disjoint U₀ U₁ h),
  have p_sum : ∀ a, (p a).sum c = if (row E a) = ∅ then 1 else 0 := 
  λ a, begin 
   let h := card_sign_sum_eq (row E a),
@@ -379,18 +380,18 @@ begin
   ... = (A₀ ∪ A₁).sum (λ a, (p a).sum c) : 
         by rw[union_sdiff_of_subset (subset_univ A₀)]
   ... = A₀.sum (λ a, (p a).sum c) + A₁.sum (λ a, (p a).sum c) :
-         by rw[sum_union (inter_sdiff_self _ _)] 
+         by { rw[sum_union (disjoint_iff.mpr (inter_sdiff_self _ _))] }
   ... = A₀.sum (λ a, 1) + A₁.sum (λ a, 0) : 
          by rw[sum_congr rfl p_sum₀, sum_congr rfl p_sum₁]
   ... = A₀.sum (λ a, 1) : by rw[sum_const_zero,add_zero]
-  ... = add_monoid.smul A₀.card 1 : by rw[sum_const]
-  ... = A₀.card : by simp only[add_monoid.smul_one,int.nat_cast_eq_coe_nat]
+  ... = A₀.card • 1 : by { rw[sum_const] }
+  ... = A₀.card : by simp only[nsmul_one,int.nat_cast_eq_coe_nat]
    ,
  have q_sum : ∀ U, (q U).sum c = (card_sign U) * (card (col_inter E U)) := 
   λ U,begin 
    dsimp[q],
    have : (λ a, c ((j U) a)) = (λ a, card_sign U) := by {ext,refl},
-   rw[sum_map,this,sum_const,add_monoid.smul_eq_mul',int.nat_cast_eq_coe_nat],
+   rw[sum_map,this,sum_const,nsmul_eq_mul',int.nat_cast_eq_coe_nat],
   end,
  exact calc
   ((clear_rows E).card : ℤ) = Y.sum c : Y_sum'.symm

@@ -8,14 +8,14 @@ new coercion tactic makes them trivial.
 
 -/
 
-import data.fintype 
+import data.fintype.basic data.nat.sqrt
 
 lemma int.lt_succ_iff {n m : ℤ} : n < m + 1 ↔ n ≤ m := 
  ⟨int.le_of_lt_add_one,int.lt_add_one_of_le⟩ 
 
 lemma nat.square_le {n m : ℕ} : m ^ 2 ≤ n ↔ m ≤ n.sqrt := 
- ⟨λ h0, le_of_not_gt (λ h1, not_le_of_gt ((nat.pow_two m).symm.subst (nat.sqrt_lt.mp h1)) h0),
-  λ h0, le_of_not_gt (λ h1,not_le_of_gt (nat.sqrt_lt.mpr ((nat.pow_two m).subst h1)) h0)⟩ 
+ ⟨λ h0, le_of_not_gt (λ h1, not_le_of_gt ((pow_two m).symm.subst (nat.sqrt_lt.mp h1)) h0),
+  λ h0, le_of_not_gt (λ h1,not_le_of_gt (nat.sqrt_lt.mpr ((pow_two m).subst h1)) h0)⟩ 
 
 lemma nat.square_lt {n m : ℕ} : m ^ 2 < n.succ ↔ m ≤ n.sqrt :=
  (@nat.lt_succ_iff (m ^ 2) n).trans (@nat.square_le n m)
@@ -56,7 +56,7 @@ lemma int.abs_square' (n : ℤ) : n ^ 2 = ((int.nat_abs n) ^ 2 : ℕ) :=
  calc 
    n ^ 2 = n * n : pow_two n
    ... = ↑ (n.nat_abs * n.nat_abs) : int.nat_abs_mul_self.symm
-   ... = ↑ (n.nat_abs ^ 2 : ℕ) : by rw[(nat.pow_two n.nat_abs).symm]
+   ... = ↑ (n.nat_abs ^ 2 : ℕ) : by rw[(pow_two n.nat_abs).symm]
 
 lemma int.square_le {n : ℕ} {m : ℤ} : 
  m ^ 2 ≤ n ↔ - (n.sqrt : ℤ) ≤ m ∧ m ≤ n.sqrt := 

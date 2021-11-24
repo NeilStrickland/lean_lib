@@ -8,7 +8,7 @@ set of size n has a unique order-isomorphism with the set
 fin n =  {0,...,n-1}.
 -/
 
-import data.finset data.fintype
+import data.finset data.fintype.basic
 import data.fin_extra
 open list 
 
@@ -53,70 +53,45 @@ end
  than using indices.
 -/
 
-def pairwise_nth (R : α → α → Prop) (l : list α) := 
+def pairwise_nth₀ (R : α → α → Prop) (l : list α) := 
  ∀ (i j : fin l.length), i < j → R (l.fin_nth i) (l.fin_nth j)
+
+def pairwise_nth (R : α → α → Prop) (l : list α) := 
+ ∀ {i j : ℕ} (hi : i < j) (hj : j < l.length), 
+   R (l.nth_le i (lt_trans hi hj)) (l.nth_le j hj)
 
 lemma pairwise_nth_mp {R : α → α → Prop} {l : list α} 
  (p : pairwise R l) : pairwise_nth R l :=
 begin
- induction p with a l0 R_a_l0 p0 ih,
- {intro i,exact fin.elim0 i},
- {intros i j i_lt_j,
-  rcases i,rcases j,dsimp[has_lt.lt,fin.lt] at i_lt_j,
-  rcases j_val with _ | j0,
-  {exact false.elim (nat.not_lt_zero _ i_lt_j)},
-  {have j0_is_lt : j0 < l0.length := nat.lt_of_succ_lt_succ j_is_lt,
-   rcases i_val with _ | i0,
-   {let x := l0.nth_le j0 j0_is_lt,
-    have x_in_l0 := nth_le_mem l0 j0 j0_is_lt,
-    exact R_a_l0 x x_in_l0,
-   },{
-    have i0_is_lt : i0 < l0.length := nat.lt_of_succ_lt_succ i_is_lt,
-    have i0_lt_j0 : i0 < j0 := nat.lt_of_succ_lt_succ i_lt_j,
-    exact ih ⟨i0,i0_is_lt⟩ ⟨j0,j0_is_lt⟩ i0_lt_j0,
-   }
-  }
- }
+  induction p with a l0 R_a_l0 p0 ih,
+  { intros i j hi hj, cases hj },
+  { intros i j hi hj,
+    cases j with j₀, { cases hi },
+    have hj0 : j₀ < l0.length := nat.lt_of_succ_lt_succ hj,
+    cases i with i₀,
+    { exact R_a_l0 _ (l0.nth_le_mem j₀ hj0) },
+    { exact ih (nat.lt_of_succ_lt_succ hi) hj0 } }
 end
 
 lemma pairwise_nth_mpr {R : α → α → Prop} {l : list α} 
- (q : pairwise_nth R l) : (pairwise R l) := 
+ (hl : pairwise_nth R l) : (pairwise R l) := 
 begin
- induction l with a l0 ih,
- {exact @pairwise.nil _ R},
- {have R_a_l0 : ∀ (b ∈ l0), (R a b) :=
-  begin
-   let z : fin l0.length.succ := 0,
-   have e0 : (list.cons a l0).fin_nth z = a := rfl,
-   intros b b_in_l0,
-   cases nth_le_of_mem b_in_l0 with j0_val j0_prop,
-   let j0_is_lt := Exists.fst j0_prop,
-   let j0 : fin l0.length := ⟨j0_val,j0_is_lt⟩,
-   have e1 : l0.fin_nth j0 = b := Exists.snd j0_prop,
-   have e2 : (list.cons a l0).fin_nth j0.succ = b := 
-    by {simp[fin_nth],exact e1,},
-   have h0 : z < j0.succ := begin 
-    simp[has_lt.lt,fin.lt,z],
-    exact nat.zero_lt_succ j0_val,
-   end,
-   let h1 := q z j0.succ h0,
-   rw[e0,e2] at h1,
-   exact h1,
-  end,
-  have q0 : pairwise_nth R l0 := begin
-   intros i0 j0 i0_lt_j0,
-   have i_lt_j : i0.succ < j0.succ := 
-   begin
-    cases i0, cases j0,
-    dsimp[has_lt.lt,fin.lt,fin.succ],
-    exact nat.succ_lt_succ i0_lt_j0,
-   end,
-   let h0 := q i0.succ j0.succ i_lt_j,
-   rw[fin_nth_cons a l0 i0,fin_nth_cons a l0 j0] at h0,
-   exact h0,
-  end,
-  exact pairwise.cons R_a_l0 (ih q0),
- }
+  induction l with a l ih,
+  { exact @pairwise.nil _ R },
+  { have R_a_l : ∀ (b ∈ l), (R a b) :=
+    begin
+      intros b b_in_l,
+      rcases nth_le_of_mem b_in_l with ⟨j,⟨hj,eq_b⟩⟩,
+      rw [← eq_b],
+      exact hl (nat.zero_lt_succ j) (nat.succ_lt_succ hj)
+    end,
+    have : l.pairwise R := 
+    begin
+      apply ih,
+      intros i j hi hj,
+      exact hl (nat.succ_lt_succ hi) (nat.succ_lt_succ hj),
+    end,
+    exact pairwise.cons R_a_l this }
 end
 
 lemma pairwise_nth_iff {R : α → α → Prop} {l : list α} :
@@ -126,7 +101,7 @@ lemma pairwise_nth_iff {R : α → α → Prop} {l : list α} :
 /-
  The standard library defines a list to be sorted if all entries are
  less than or equal to all strictly later entries.  Here we define 
- a list to be strictly sorted if the relevant inequalities hold 
+ a list to be strongly sorted if the relevant inequalities hold 
  strictly.  This is clearly equivalent to saying that the list is
  sorted and has distinct entries; we also formalise this equivalence.
 -/
@@ -185,69 +160,63 @@ end
  induction. Here we reformulate it in terms of indices.
 -/
 
-lemma sorted_fin_nth_lt_mp {l : list α} 
+lemma sorted_nth_lt_mp {l : list α} 
  (l_nodup : list.nodup l)
  (l_sorted : list.sorted has_le.le l)
- {i j : fin l.length} 
- (i_lt_j : i < j) :
- (l.fin_nth i < l.fin_nth j) := 
+ {i j : ℕ} (hi : i < j) (hj : j < l.length) :
+ (l.nth_le i (lt_trans hi hj) < l.nth_le j hj) := 
 begin
- let x := l.fin_nth i,
- let y := l.fin_nth j,
- have x_ne_y : x ≠ y := pairwise_nth_mp l_nodup i j i_lt_j,
- have x_le_y : x ≤ y := pairwise_nth_mp l_sorted i j i_lt_j,
- exact lt_of_le_of_ne x_le_y x_ne_y,
+  let x := l.nth_le i (lt_trans hi hj),
+  let y := l.nth_le j hj,
+  have x_ne_y : x ≠ y := pairwise_nth_mp l_nodup hi hj,
+  have x_le_y : x ≤ y := pairwise_nth_mp l_sorted hi hj,
+  exact lt_of_le_of_ne x_le_y x_ne_y,
 end
 
-lemma sorted_fin_nth_le_mp {l : list α} 
+lemma sorted_nth_le_mp {l : list α} 
  (l_nodup : list.nodup l)
  (l_sorted : list.sorted has_le.le l)
- {i j : fin l.length} 
- (i_lt_j : i ≤ j) :
- (l.fin_nth i ≤ l.fin_nth j) := 
+ {i j : ℕ} (hi : i ≤ j) (hj : j < l.length) :
+ (l.nth_le i (lt_of_le_of_lt hi hj) ≤ l.nth_le j hj) := 
 begin
  by_cases h : i = j,
- {rw h,},
- {
-   have i_lt_j : i < j := (lt_of_le_of_ne i_lt_j h),
-   exact (le_of_lt $ sorted_fin_nth_lt_mp l_nodup l_sorted i_lt_j),
- }
+ { cases h, refl },
+ { have hi' : i < j := lt_of_le_of_ne hi h,
+   exact (le_of_lt $ sorted_nth_lt_mp l_nodup l_sorted hi' hj) }
 end
 
-lemma sorted_fin_nth_lt {l : list α} 
+lemma sorted_nth_lt {l : list α} 
  (l_nodup : list.nodup l)
  (l_sorted : list.sorted has_le.le l) 
- (i j : fin l.length) :
-  (i < j) ↔ (l.fin_nth i < l.fin_nth j) := 
+ { i j : ℕ } (hi : i < l.length) (hj : j < l.length) :
+  (i < j) ↔ (l.nth_le i hi < l.nth_le j hj) := 
 begin
  split,
- {exact sorted_fin_nth_lt_mp l_nodup l_sorted,},
- {intro x_lt_y,
-  rcases lt_or_ge i j with i_lt_j | j_le_i,
-  {assumption},{
-   exfalso,
-   let y_le_x := sorted_fin_nth_le_mp l_nodup l_sorted j_le_i,
-   exact not_lt_of_ge y_le_x x_lt_y,
-  }
- }
+ { intro hi', 
+   exact sorted_nth_lt_mp l_nodup l_sorted hi' hj },
+ { intro x_lt_y,
+   rcases lt_or_ge i j with i_lt_j | j_le_i,
+   { assumption },
+   { exfalso,
+     let y_le_x := sorted_nth_le_mp l_nodup l_sorted j_le_i hi,
+     exact not_lt_of_ge y_le_x x_lt_y } }
 end
 
-lemma sorted_fin_nth_le {l : list α} 
+lemma sorted_nth_le {l : list α} 
  (l_nodup : list.nodup l)
  (l_sorted : list.sorted has_le.le l) 
- (i j : fin l.length) :
-  (i ≤ j) ↔ (l.fin_nth i ≤ l.fin_nth j) := 
+ { i j : ℕ } (hi : i < l.length) (hj : j < l.length) :
+  (i ≤ j) ↔ (l.nth_le i hi ≤ l.nth_le j hj) := 
 begin
  split,
- {exact sorted_fin_nth_le_mp l_nodup l_sorted,},
- {intro x_le_y,
-  rcases le_or_gt i j with i_le_j | j_lt_i,
-  {assumption},{
-   exfalso,
-   let y_lt_x := sorted_fin_nth_lt_mp l_nodup l_sorted j_lt_i,
-   exact not_le_of_gt y_lt_x x_le_y,
-  }
- }
+ { intro hi', 
+   exact sorted_nth_le_mp l_nodup l_sorted hi' hj },
+ { intro x_le_y,
+   rcases le_or_gt i j with i_le_j | j_lt_i,
+   { assumption },
+   { exfalso,
+     let y_lt_x := sorted_nth_lt_mp l_nodup l_sorted j_lt_i hi,
+     exact not_le_of_gt y_lt_x x_le_y } }
 end
 
 end list 
@@ -276,7 +245,7 @@ begin
  let h0 := (congr_arg val
             (eq.trans (eq.trans (to_finset_eq (sort_nodup has_le.le s)) (eq.trans (sort_to_finset has_le.le s) s_eq_l)) 
                       (eq.symm (to_finset_eq l_nodup)))),
- let h1 := list.eq_of_sorted_of_perm (@quotient.exact (list α) (list.is_setoid' α) _ _ h0) (sort_sorted has_le.le s) l_sorted,
+ let h1 := list.eq_of_perm_of_sorted (@quotient.exact (list α) (list.is_setoid' α) _ _ h0) (sort_sorted has_le.le s) l_sorted,
  let ll : multiset α := quot.mk _ l,
  have ll_nodup : ll.nodup := multiset.coe_nodup.mpr l_nodup,
  have ll_eq : (⟨ll,ll_nodup⟩ : finset α) = l.to_finset := list.to_finset_eq l_nodup,
@@ -292,7 +261,7 @@ begin
   congr_arg finset.val ((mm_eq.trans (m_to_finset.trans s_eq_l)).trans ll_eq.symm),
  dsimp[finset.val] at mm_eq_ll,
  have perm_m_l : perm m l := quotient.exact mm_eq_ll,
- exact list.eq_of_sorted_of_perm perm_m_l m_sorted l_sorted,
+ exact list.eq_of_perm_of_sorted perm_m_l m_sorted l_sorted,
 end
 
 /-
@@ -306,7 +275,7 @@ end
 lemma sort_spec_alt (s : finset α) (l : list α) 
  (l_nodup : l.nodup) (l_sorted : l.sorted has_le.le) 
   (s_eq_l : s = l.to_finset) : s.sort has_le.le = l := 
-    list.eq_of_sorted_of_perm 
+    list.eq_of_perm_of_sorted
      (@quotient.exact 
       (list α)
       (list.is_setoid' α) 
@@ -397,7 +366,7 @@ begin
   rcases i with ⟨i_val,i_lt_n⟩,
   have i_lt_len : i_val < l.length := l_len.symm.subst i_lt_n,
   dsimp[inv_fun,to_fun],
-  apply fin.eq_of_veq,dsimp[fin.val],
+  apply fin.eq_of_veq,dsimp[subtype.val],
   exact list.nth_le_index_of l_nodup i_val i_lt_len,
  end,
  exact ⟨to_fun,inv_fun,left_inv,right_inv⟩, 
@@ -406,6 +375,7 @@ end
 lemma seq_le (i1 i2 : fin n) :
  i1 ≤ i2 ↔ (((rank_equiv s_card).inv_fun i1).val ≤ ((rank_equiv s_card).inv_fun i2).val) := 
 begin
+ dsimp [rank_equiv, nth_le, has_le.le, fin.le],
  let l := s.sort has_le.le,
  have l_nodup : list.nodup l := finset.sort_nodup has_le.le s,
  have l_sorted : l.sorted has_le.le := sort_sorted has_le.le s,
@@ -413,17 +383,15 @@ begin
  have l_len : l.length = n := 
   ((@eq.subst (finset α) (λ t, t.card = l.length) _ _ l_eq_s
              (list.to_finset_card_of_nodup l_nodup)).symm).trans s_card,
- let i1a : fin l.length := ⟨i1.val,eq.mp (congr_arg _ l_len.symm) i1.is_lt⟩,
- let i2a : fin l.length := ⟨i2.val,eq.mp (congr_arg _ l_len.symm) i2.is_lt⟩,
- let h := list.sorted_fin_nth_le l_nodup l_sorted i1a i2a, 
- dsimp[list.fin_nth,l,has_le.le,fin.le] at h,
- dsimp[rank_equiv,nth_le,has_le.le,fin.le],
- exact h,
+ have i1p : i1.val < l.length := by { rw[l_len], exact i1.is_lt },
+ have i2p : i2.val < l.length := by { rw[l_len], exact i2.is_lt },
+ exact list.sorted_nth_le l_nodup l_sorted i1p i2p
 end
 
 lemma seq_lt (i1 i2 : fin n) :
  i1 < i2 ↔ (((rank_equiv s_card).inv_fun i1).val < ((rank_equiv s_card).inv_fun i2).val) := 
 begin
+ dsimp [rank_equiv, nth_le, has_le.le, fin.le],
  let l := s.sort has_le.le,
  have l_nodup : list.nodup l := finset.sort_nodup has_le.le s,
  have l_sorted : l.sorted has_le.le := sort_sorted has_le.le s,
@@ -431,12 +399,9 @@ begin
  have l_len : l.length = n := 
   ((@eq.subst (finset α) (λ t, t.card = l.length) _ _ l_eq_s
              (list.to_finset_card_of_nodup l_nodup)).symm).trans s_card,
- let i1a : fin l.length := ⟨i1.val,eq.mp (congr_arg _ l_len.symm) i1.is_lt⟩,
- let i2a : fin l.length := ⟨i2.val,eq.mp (congr_arg _ l_len.symm) i2.is_lt⟩,
- let h := list.sorted_fin_nth_lt l_nodup l_sorted i1a i2a, 
- dsimp[list.fin_nth,l,has_le.le,fin.le] at h,
- dsimp[rank_equiv,nth_le,has_le.le,fin.le],
- exact h,
+ have i1p : i1.val < l.length := by { rw[l_len], exact i1.is_lt },
+ have i2p : i2.val < l.length := by { rw[l_len], exact i2.is_lt },
+ exact list.sorted_nth_lt l_nodup l_sorted i1p i2p
 end
 
 lemma rank_le (a1 a2 : {a // a ∈ s }) :
@@ -513,15 +478,13 @@ begin
  begin
   intro x,
   dsimp[g_to_fun,g_inv_fun],
-  apply subtype.eq; simp[subtype.val],
-  exact congr_arg subtype.val (f.left_inv _),
+  apply subtype.eq; simp[subtype.val]
  end,
  have g_right_inv : ∀ i, g_to_fun (g_inv_fun i) = i := 
  begin
   intro i,
   dsimp[g_to_fun,g_inv_fun],
-  apply fin.eq_of_veq; simp[fin.val],
-  exact congr_arg fin.val (f.right_inv _),
+  apply fin.eq_of_veq; simp[subtype.val]
  end,
  let g : ut ≃ fin k.val := ⟨g_to_fun,g_inv_fun,g_left_inv,g_right_inv⟩,
  let h0 := fintype.card_congr g, 
@@ -562,7 +525,7 @@ begin
   intro i,
   have e : f.inv_fun i = ⟨inv_fun i,mem_univ _⟩ := 
    by {apply subtype.eq,simp[inv_fun]},
-  dsimp[inv_fun,to_fun],rw[← e],exact f.right_inv i,
+  dsimp[inv_fun,to_fun],simp[e]
  end,
  exact ⟨to_fun,inv_fun,left_inv,right_inv⟩,
 end
@@ -619,7 +582,7 @@ begin
   let f0_id := ih @f0_mono,
   have f_zero_a : ∀ (j : fin n0.succ), f 0 = j → j = 0 := 
   begin
-   intros j e, cases j, cases j_val with j0_val,
+   intros j e, cases j with j_val j_is_lt, cases j_val with j0_val,
    {refl},
    {
      exfalso,
@@ -633,7 +596,7 @@ begin
    }
   end,
   have f_zero : f 0 = 0 := f_zero_a (f 0) rfl,
-  intro i, cases i, cases i_val with i0_val,
+  intro i, cases i with i_val i_is_lt, cases i_val with i0_val,
   {exact f_zero,},
   {
    have i0_is_lt : i0_val < n0 := nat.lt_of_succ_lt_succ i_is_lt,

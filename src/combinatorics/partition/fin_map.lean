@@ -5,8 +5,7 @@ Authors: Neil Strickland
 
 -/
 
-
-import data.vector data.list.sort data.fintype algebra.big_operators
+import data.vector data.list.sort data.fintype.basic algebra.big_operators
 import data.fin_extra order.sort_rank data.heq_extra data.enumeration 
 import combinatorics.partition.basic combinatorics.stirling
 
@@ -59,8 +58,10 @@ variables {n : ℕ} {p : partition (fin n)}
  block.  For this to make sense we need to know that each block is
  nonempty; this is proved by the lemma block_not_empty from 
  partition.lean.
+
+ I am not sure why Lean thinks this is noncomputable
 -/
-def block_max (b : p.block_type) : fin n := 
+noncomputable def block_max (b : p.block_type) : fin n := 
  (finset_largest_element b.val (block_not_empty b.property)).val
 
 /-
@@ -83,7 +84,7 @@ variable (p)
  We now define our order on the set of blocks, packaging it as an 
  instance of the linear_order typeclass.
 -/
-instance block_order : linear_order p.block_type := {
+noncomputable instance block_order : linear_order p.block_type := {
  le := λ b c ,(block_max b) ≤ (block_max c),
  lt := λ b c ,(block_max b) < (block_max c),
  lt_iff_le_not_le := λ b c, @lt_iff_le_not_le (fin n) _ (block_max b) (block_max c),
@@ -105,18 +106,14 @@ instance block_order : linear_order p.block_type := {
    end,
  le_total := λ (a b : p.block_type),
    le_total (block_max a) (block_max b),
+ decidable_le := λ b c, fin.decidable_le (block_max b) (block_max c) 
 }
-
-/- The order is decidable -/
-instance block_order_dec : 
- decidable_rel (@has_le.le p.block_type _) := 
-  λ b c, fin.decidable_le (block_max b) (block_max c) 
 
 /-
  If the number of blocks is r, then the following function returns the
  unique order-equivalence from the set of blocks to (fin r).
 -/
-def block_rank_equiv {r : ℕ} (p_rank : p.rank = r) := 
+noncomputable def block_rank_equiv {r : ℕ} (p_rank : p.rank = r) := 
  fintype.rank_equiv ((block_type_card p).trans p_rank)
 
 end block_max
@@ -197,7 +194,7 @@ begin
  }
 end
 
-@[extensionality]
+@[ext]
 lemma eq_of_block_eq (p1 p2 : fin_map n r)
  (e_block : ∀ i, p1.block.nth i = p2.block.nth i) : p1 = p2 := 
 begin
@@ -262,7 +259,7 @@ end
  left_inv and right_inv) that their composites are equal 
  (pointwise) to identity functions.
 -/
-def to_partition_blocks (p : fin_map n r) : 
+noncomputable def to_partition_blocks (p : fin_map n r) : 
  (to_partition p).block_type ≃ fin r := 
 begin
  let q := (to_partition p),
@@ -319,7 +316,9 @@ begin
  let e0 := (partition.block_type_card q).symm,
  let e1 := fintype.card_congr (to_partition_blocks p),
  let e2 := fintype.card_fin r,
- exact e0.trans (e1.trans e2)
+ have e3 := subsingleton.elim (fin.fintype r) (@enumeration_fintype (fin r) (fin.enumeration r)), 
+ rw[e3] at e2,
+ simp[e0,e1,e2],
 end
 
 lemma to_partition_block_type_card (p : fin_map n r) : 
@@ -372,7 +371,7 @@ begin
          (to_partition_block_type_card p) (g.inv_fun j1) (g.inv_fun j2)).mp r0,
  end,
  have h_id : ∀ j, h j = j := fin.rigid h_mono,
- ext b,
+ ext b, congr' 1, 
  exact (congr_arg f.to_fun (g.left_inv b)).symm.trans (h_id (g.to_fun b)),
 end
 
@@ -380,16 +379,14 @@ end
  This function accepts a partition of (fin n) of rank r and 
  produces the corresponding element of (fin_map n r).
 -/
-def of_partition (q : partition (fin n)) (e : q.rank = r) : 
+noncomputable def of_partition (q : partition (fin n)) (e : q.rank = r) : 
  fin_map n r := 
 begin
  let r0 := fintype.card q.block_type,
  have e0 : r0 = r := q.block_type_card.trans e,
  let f := block_rank_equiv q e,
- let block_map : fin n → fin r := 
-  λ i, f.to_fun (q.block_alt i),
- let top_map : fin r → fin n := 
-  λ j, block_max (f.inv_fun j), 
+ let block_map : fin n → fin r := λ i, f.to_fun (q.block_alt i),
+ let top_map : fin r → fin n := λ j, block_max (f.inv_fun j), 
  let block_vec := vector.of_fn block_map,
  let top_vec := vector.of_fn top_map,
  have block_top : ∀ j, block_vec.nth (top_vec.nth j) = j := 
@@ -397,7 +394,7 @@ begin
   intro j,dsimp[block_vec,top_vec],
   simp only [vector.nth_of_fn top_map,vector.nth_of_fn block_map],
   dsimp[top_map,block_map],
-  let h0 := (block_max_block (f.inv_fun j)).symm,
+  let h0 := (block_max_block (f.symm j)).symm,
   rw[h0],
   exact f.right_inv j,
  end,
@@ -406,7 +403,7 @@ begin
   intro i,dsimp[top_vec,block_vec],
   simp only [vector.nth_of_fn top_map,vector.nth_of_fn block_map],
   dsimp[top_map,block_map],
-  let h0 := f.left_inv (q.block_alt i),
+  let h0 : f.symm (f _) = _ := f.left_inv (q.block_alt i),
   rw[h0],
   let h1 := (block_max_spec (q.block_alt i)).right i
              (partition.mem_block q i),
@@ -490,7 +487,7 @@ begin
  {intro b1_eq_b2,rw[e1a,e2a,b1_eq_b2],},
 end
 
-def partition_equiv : (fin_map n r) ≃ { q : partition (fin n) // q.rank = r} := 
+noncomputable def partition_equiv : (fin_map n r) ≃ { q : partition (fin n) // q.rank = r} := 
 {
  to_fun := λ p, ⟨to_partition p,to_partition_rank p⟩,
  inv_fun := λ q, of_partition q.val q.property, 
@@ -502,7 +499,7 @@ def partition_equiv : (fin_map n r) ≃ { q : partition (fin n) // q.rank = r} :
  end
 }
 
-def partition_equiv_tot : tot n ≃ partition (fin n) := 
+noncomputable def partition_equiv_tot : tot n ≃ partition (fin n) := 
 {
  to_fun := λ rp, to_partition rp.2, 
  inv_fun := λ q, ⟨q.rank,@of_partition n q.rank q rfl⟩,
@@ -543,6 +540,9 @@ begin
  apply list.nth_le_map
 end
 
+lemma bump.zth {p q : ℕ} (v : vector (fin p) q) : (bump v).nth 0 = 0 := 
+ by { apply vector.zth }
+
 /- 
  Suppose that p is a partition of (fin n), of rank r.  We can then 
  produce a partition of (fin (n + 1)) of rank r + 1, as follows: 
@@ -555,8 +555,8 @@ begin
  let top := bump p.top,
  have block_top : ∀ j, block.nth (top.nth j) = j := 
  begin
-  intro j,cases j,cases j_val with j0_val; dsimp[block,top,bump],
-  {simp[vector.zth],refl},
+  intro j,cases j with j_val j_is_lt,cases j_val with j0_val; dsimp[block,top,bump],
+  {simp[vector.zth]},
   {
    have j0_is_lt : j0_val < r := nat.lt_of_succ_lt_succ j_is_lt,
    let j0 : fin r := ⟨j0_val,j0_is_lt⟩,
@@ -565,8 +565,8 @@ begin
  end,
  have top_block : ∀ i, top.nth (block.nth i) ≥ i := 
  begin
-  intro i,cases i,cases i_val with i0_val; dsimp[block,top,bump],
-  {simp[vector.zth],exact le_refl 0,},
+  intro i,cases i with i_val i_is_lt,cases i_val with i0_val; dsimp[block,top,bump],
+  {simp[vector.zth]},
   {
    have i0_is_lt : i0_val < n := nat.lt_of_succ_lt_succ i_is_lt,
    let i0 : fin n := ⟨i0_val,i0_is_lt⟩,
@@ -577,17 +577,17 @@ begin
  have top_mono : ∀ j1 j2, j1 < j2 → top.nth j1 < top.nth j2 := 
  begin
   intros j1 j2 j1_lt_j2,
-  cases j2,cases j2_val with j20_val,
+  cases j2 with j2_val j2_is_lt,cases j2_val with j20_val,
   {exact false.elim (nat.not_lt_zero j1.val j1_lt_j2),},
   {have j20_is_lt : j20_val < r := nat.lt_of_succ_lt_succ j2_is_lt,
-   cases j1,cases j1_val with j10_val,
+   cases j1 with j1_val j1_is_lt,cases j1_val with j10_val,
    {simp[top,bump,vector.zth,vector.sth _ _ j20_val j20_is_lt,vector.nth_map,fin.zero_lt_succ],},
    {have j10_is_lt : j10_val < r := nat.lt_of_succ_lt_succ j1_is_lt,
      simp[top,bump,
           vector.sth _ _ j10_val j10_is_lt,
           vector.sth _ _ j20_val j20_is_lt,
           vector.nth_map],
-    apply fin.succ_lt_succ,apply p.top_mono,
+    apply p.top_mono,
     exact fin.lt_of_succ_lt_succ j1_lt_j2,
    }
   }
@@ -613,7 +613,7 @@ begin
  end,
  have top_block : ∀ i, top.nth (block.nth i) ≥ i := 
  begin
-  intro i, cases i, cases i_val with i0_val,
+  intro i, cases i with i_val i_is_lt, cases i_val with i0_val,
   {simp[vector.zth],exact fin.zero_le _,},
   {have i0_is_lt : i0_val < n := nat.lt_of_succ_lt_succ i_is_lt,
    let h0 := fin.succ_le_succ (p.top_block ⟨i0_val,i0_is_lt⟩),
@@ -626,11 +626,10 @@ begin
  begin
   intros j1 j2 j1_lt_j2,
   simp[top,vector.nth_map],
-  exact fin.succ_lt_succ (p.top_mono j1 j2 j1_lt_j2),
+  exact p.top_mono j1 j2 j1_lt_j2
  end,
  exact ⟨block,top,block_top,top_block,top_mono⟩ 
 end
-
 
 def add_cond (q : fin_map n.succ r.succ) := (q.top.nth 0 = 0)
 
@@ -697,7 +696,7 @@ begin
   intro j0,
   dsimp[block_vec,top_vec],
   simp[vector.nth_of_fn],
-  apply fin.succ_inj,
+  apply fin.succ_inj.mp,
   let h0 := block_map_spec (top_map j0),
   let h1 := congr_arg q.block.nth (top_map_spec j0),
   let h2 := q.block_top j0.succ,
@@ -727,17 +726,18 @@ begin
  let p : fin_map n r := ⟨block_vec,top_vec,block_top,top_block,top_mono⟩,
  have eq : q = add p := 
  begin
-  ext i,cases i, cases i_val with i0_val,
-  {
-    exact ((congr_arg q.block.nth e).symm.trans (q.block_top 0)).trans 
-              (vector.zth 0 (vector.map fin.succ block_vec) i_is_lt).symm,
+  ext i,cases i with i_val i_is_lt, cases i_val with i0_val,
+  { have : (0 : fin n.succ) = ⟨0,i_is_lt⟩ := rfl, rw[← this],
+    have h₀ := (congr_arg q.block.nth e).symm,
+    have h₁ := q.block_top 0,
+    have h₂ := h₀.trans h₁,
+    rw[h₂,fin_map.add],simp only[bump.zth]
   },{
    dsimp[add,p,bump],
    let i0_is_lt := nat.lt_of_succ_lt_succ i_is_lt,
-   exact (((vector.sth 0 (vector.map fin.succ block_vec) i0_val i0_is_lt i_is_lt).trans 
-              (vector.nth_map fin.succ block_vec ⟨i0_val,i0_is_lt⟩)).trans
-             ((congr_arg fin.succ (vector.nth_of_fn block_map ⟨i0_val,i0_is_lt⟩)).trans 
-             (block_map_spec ⟨i0_val,i0_is_lt⟩))).symm,
+   have h₀ := vector.sth (0 : fin r.succ) (vector.map fin.succ block_vec) i0_val i0_is_lt i_is_lt,
+   rw[h₀,vector.nth_map],dsimp[block_vec],rw[vector.nth_of_fn,block_map_spec],
+   refl
   }
  end,
  exact ⟨p,eq⟩, 
@@ -747,11 +747,21 @@ lemma res_add (p : fin_map n r) (e : add_cond (add p)) :
  (add_res (add p) e) = ⟨p,rfl⟩ := 
 begin
  apply subtype.eq,
- ext i,
- have h0 : (add p).block.nth i.succ = (p.block.nth i).succ := 
-  by simp[add,bump,vector.nth_map],
- have h1 : (add p).block.nth i.succ ≠ 0 := 
-  λ h2, fin.zero_ne_succ (h2.symm.trans h0),
+ ext ⟨i,i_is_lt⟩,
+ cases (p.add.add_res e) with p₀ hp₀,simp only [],
+ unfold_coes,
+ simp[add_res],
+ have h0 : (add p).block.nth ⟨i.succ,nat.succ_lt_succ i_is_lt⟩ = 
+   (p.block.nth ⟨i,i_is_lt⟩).succ := 
+   begin 
+    dsimp[add,bump],
+    have h1 := vector.sth (0 : fin r.succ) (vector.map fin.succ p.block) i i_is_lt
+      (nat.succ_lt_succ i_is_lt),
+      rw[vector.nth_map] at h1,
+      rw[← h1],
+    end,
+ have h1 : (add p).block.nth (fin.succ ⟨i,i_is_lt⟩) ≠ 0 := 
+     λ h2, fin.zero_ne_succ (h2.symm.trans h0),
  simp[add,add_res,e,h1,bump,vector.nth_map],
 end
 

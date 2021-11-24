@@ -173,16 +173,14 @@ lemma a_pos (m : mat) : m.a > 0 :=
 begin
  rcases m with ⟨_ | a0,b,c,d,det_prop⟩;
  simp at det_prop ⊢,
- {rw[add_comm] at det_prop,injection det_prop},
- apply nat.succ_pos,
+ { cases det_prop, }
 end
 
 lemma d_pos (m : mat) : m.d > 0 :=
 begin
  rcases m with ⟨a,b,c,_ | d0,det_prop⟩;
  simp at det_prop ⊢,
- {rw[add_comm] at det_prop,injection det_prop},
- apply nat.succ_pos,
+ { cases det_prop }
 end
 
 def ab_pos (m : mat) : 0 < m.ab := nat.add_pos_left m.a_pos _
@@ -231,7 +229,7 @@ begin
  have dp := calc
   (a + c) * d = a * d + c * d : add_mul a c d
   ... = c * b + 1 + c * d : by rw[det_prop]
-  ... = c * b + c * d + 1 : by simp
+  ... = c * b + c * d + 1 : by rw[add_assoc, add_comm 1 (c * d), ← add_assoc]
   ... = c * (b + d) + 1 : by rw[← mul_add]
  ,
  exact ⟨ a + c , b + d,  c, d, dp⟩ 
@@ -249,26 +247,26 @@ def to_rat (m : mat) : ℚ := m.abq / m.cdq
 lemma to_rat_pos (m : mat) : 0 < to_rat m := 
 begin
  dsimp[to_rat],
- apply mul_pos,exact m.abq_pos,apply inv_pos,exact m.cdq_pos
+ apply mul_pos,exact m.abq_pos,apply inv_pos.mpr,exact m.cdq_pos
 end
 
-lemma one_to_rat : to_rat mat.one = (1:ℚ) := rfl
+lemma one_to_rat : to_rat mat.one = (1:ℚ) := begin
+  change (0 + 1) / (0 + 1) = (1 : ℚ),
+  rw[zero_add,div_one],
+end
 
 lemma succ_to_rat (m : mat) : to_rat (mat.succ m) = (to_rat m) + 1 :=
 begin
  let cdnz := m.cdq_nz,
  rcases m with ⟨ a,b,c,d,det_prop ⟩,
- simp[to_rat,mat.succ,mat.abq,mat.cdq,mat.ab,mat.cd] at cdnz ⊢,
- exact calc
-   ((a:ℚ) + ((b:ℚ) + ((c:ℚ) + (d:ℚ)))) / ((c:ℚ) + (d:ℚ)) = 
-   ((↑a + ↑b) + (↑c + ↑d)) / (↑c + ↑d) : by rw[add_assoc]
-   ... = (↑a + ↑b)/(↑c + ↑d) + (↑c + ↑d)/(↑c + ↑d) : by rw[add_div]
-   ... = (↑a + ↑b)/(↑c + ↑d) + 1 : by simp[div_self cdnz]
-   ... = 1 + (↑a + ↑b)/(↑c + ↑d) : by rw[add_comm],
+ simp only [to_rat,mat.succ,mat.abq,mat.cdq,mat.ab,mat.cd] at cdnz ⊢,
+ have : (((a + c + (b + d)) : ℕ) : ℚ) = ((a + b) : ℕ)  + ((c + d) : ℕ) := by { norm_cast, ring },
+ rw[this,add_div,div_self cdnz]
 end
 
 def twist_rat (p : ℚ) : ℚ := p / (1 + p)
 
+/- Needs fixing -/
 lemma twist_to_rat (m : mat) :
  to_rat (mat.twist m) = twist_rat (to_rat m) :=
 begin
@@ -277,16 +275,21 @@ begin
  let abnz := m.abq_nz,
  let cdnz := m.cdq_nz,
  rcases m with ⟨ a,b,c,d,det_prop ⟩,
+ simp only[to_rat,mat.twist,mat.abq,mat.cdq,mat.ab,mat.cd,twist_rat]
+  at abp cdp abnz cdnz ⊢,
+ have : (((a + c + (b + d)) : ℕ) : ℚ) = ((a + b) : ℕ)  + ((c + d) : ℕ) := by { norm_cast, ring },
+ rw[this,add_comm (1 : ℚ)],
  let x := (a:ℚ) + ((b:ℚ) + ((c:ℚ) + (d:ℚ))),
  let y := (1 + ((a:ℚ) + (b:ℚ)) / ((c:ℚ) + (d:ℚ))),
  simp[to_rat,mat.twist,mat.abq,mat.cdq,mat.ab,mat.cd,twist_rat]
   at abp cdp abnz cdnz ⊢,
+ have := mul_div_cancel',
  have x_pos : 0 < x := calc 
-   x = (a + b) + (c + d) : by simp
+   x = (a + b) + (c + d) : by { dsimp[x], norm_cast, ring } 
    ...  > 0 : (add_pos abp cdp),
  have y_pos : ((0:ℚ) < y) := begin
   apply add_pos,exact zero_lt_one,apply mul_pos,
-  exact abp,apply inv_pos,exact cdp
+  exact abp,apply inv_pos.mpr,exact cdp
  end,
  let e0 := calc
   ((c:ℚ) + (d:ℚ)) * y = 
@@ -295,7 +298,7 @@ begin
     by {dsimp[y],rw[mul_add]}
   ... = (↑c + ↑d) + (↑a + ↑b) :
    by rw[mul_one,mul_div_cancel' ((a:ℚ) + (b:ℚ)) cdnz]
-  ... = x : by simp,
+  ... = x : by { dsimp[x], ring },
  let e1 := calc
   ((a:ℚ) + (b:ℚ))/x = ((a:ℚ) + (b:ℚ))/(((c:ℚ) + (d:ℚ)) * y) : by rw[← e0]
    ... = ((a:ℚ) + (b:ℚ))/((c:ℚ) + (d:ℚ)) / y :
@@ -314,7 +317,7 @@ begin
  simp[to_rat,mat.inv,mat.abq,mat.cdq,mat.ab,mat.cd],
  let e0 := inv_eq_one_div (((a:ℚ) + (b:ℚ)) / ((c:ℚ) + (d:ℚ))),
  let e1 := div_div_eq_mul_div 1 ((a:ℚ) + (b:ℚ)) ((c:ℚ) + (d:ℚ)),
- rw[e0,e1,one_mul],
+ rw[e0,e1,one_mul,add_comm ↑c ↑d,add_comm ↑a ↑b],
 end
 
 end mat

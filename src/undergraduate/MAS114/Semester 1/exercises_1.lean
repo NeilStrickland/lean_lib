@@ -1,6 +1,8 @@
-import data.real.basic data.fintype algebra.big_operators data.nat.modeq
+import data.real.basic data.real.sqrt data.fintype.basic 
+         algebra.big_operators data.nat.modeq data.int.modeq data.fin.basic
+         data.zmod.basic
 import tactic.find tactic.squeeze 
-import MAS114.fiber
+import combinatorics.fiber
 
 namespace MAS114
 namespace exercises_1
@@ -34,8 +36,7 @@ lemma f_spec : ∀ n : ℕ, (f n) ^ 2 = n :=
 begin
  intro n,
  have h0 : (0 : ℝ) ≤ (n : ℝ) := nat.cast_le.mpr (nat.zero_le n),
- have h1 : max (0 : ℝ) (n : ℝ) = n := max_eq_right h0,
- exact (pow_two (f n)).trans ((real.sqrt_prop n).right.trans h1),
+ exact real.sq_sqrt h0,
 end
 
 /- f is injective -/
@@ -185,11 +186,9 @@ def j : ℤ → ℤ := λ n, - n
 
 lemma jj (n : ℤ) : j (j n) = n := by simp[j]
 
-lemma j_inj : function.injective j := 
- function.injective_of_left_inverse jj
+lemma j_inj : function.injective j := function.left_inverse.injective jj
 
-lemma j_surj : function.surjective j := 
- function.surjective_of_has_right_inverse ⟨j,jj⟩
+lemma j_surj : function.surjective j := function.right_inverse.surjective jj
 
 lemma j_bij : function.bijective j := ⟨j_inj,j_surj⟩
 
@@ -263,7 +262,7 @@ begin
   exfalso,
   dsimp[k] at e0,
   let e1 := calc 
-   (1 : ℤ) = (2 * m + 1 + -n) + n - 2 * m : by ring
+   (1 : ℤ) = (2 * m + 1 - n) + n - 2 * m : by ring
    ... = n + n - 2 * m : by rw[e0]
    ... = 2 * (n - m) : by ring,
   have e2 := calc 
@@ -277,20 +276,13 @@ begin
   let v_R := x_R - k,
   have h2 : v_R = - u_R + (2 * half_R - 1) := begin
    dsimp[u_R,v_R,x_R,k],
-   rw[int.cast_add,int.cast_add,int.cast_mul,int.cast_bit0],
-   rw[int.cast_one,int.cast_neg],
+   rw[int.cast_sub,int.cast_add,int.cast_mul,int.cast_bit0,int.cast_one],
    exact misc_identity (↑ m) (↑ n) half_R,
   end,
-  have h3 : 2 * half_Q - 1 = 0 := dec_trivial,
-  have h4 : 2 * half_R - 1 = (((2 * half_Q - 1) : ℚ) : ℝ) := 
-  begin
-   dsimp[half_R],
-   rw[rat.cast_add,rat.cast_mul,rat.cast_bit0,rat.cast_neg,rat.cast_one],
-  end,
-  have h5 : 2 * half_R - 1 = 0 := by rw[h4,h3,rat.cast_zero],
-  rw[h5,add_zero] at h2,
-  have h6 : abs v_R = abs u_R := by rw[h2,abs_neg],
-  exact h1 h6,
+  have h3 : 2 * half_R - 1 = 0 := by { dsimp[half_R,half_Q], norm_num },
+  rw[h3,add_zero] at h2,
+  have h4 : abs v_R = abs u_R := by rw[h2,abs_neg],
+  exact h1 h4,
  }
 end
 
@@ -400,8 +392,7 @@ lemma gf : function.left_inverse g f
 end
 
 /- g is surjective (because it has a right inverse) -/
-lemma g_surj : function.surjective g := 
- function.surjective_of_has_right_inverse ⟨f,gf⟩
+lemma g_surj : function.surjective g := function.right_inverse.surjective gf
 
 /- There is no injective map j : B → A, because |B| > |A|.
    We use the library theorem fintype.card_le_of_injective
@@ -424,7 +415,7 @@ end
 lemma no_surjection : ¬ ∃ p : A → B, function.surjective p := 
 begin 
  rintro ⟨p,p_surj⟩,
- let h := card_le_of_surjective p_surj,
+ let h := combinatorics.card_le_of_surjective p_surj,
  rw[A_card,B_card] at h,
  exact not_lt_of_ge h dec_trivial,
 end
@@ -455,19 +446,9 @@ lemma fin.z_val {n : ℕ} : (@fin.z n).val = 0 := rfl
 
 lemma fin.succ_ne_z {n : ℕ} (a : fin n) : a.succ ≠ fin.z := 
 begin
+ cases a with a_val a_is_lt,
  intro e,
- replace e := fin.veq_of_eq e,
- rw[fin.succ_val,fin.z_val] at e,
- injection e,
-end
-
-lemma fin.succ_inj {n : ℕ} {a b : fin n} (e : a.succ = b.succ) : 
- a = b := 
-begin 
- apply fin.eq_of_veq,
- replace e := congr_arg fin.val e,
- rw[fin.succ_val,fin.succ_val] at e,
- exact nat.succ_inj e,
+ replace e := fin.veq_of_eq e, cases e
 end
 
 def is_gappy : ∀ {n : ℕ} (s : finset (fin n)), Prop 
@@ -494,6 +475,8 @@ instance {n : ℕ} : decidable_eq (gappy n) :=
 instance {n : ℕ} : has_repr (gappy n) := 
  ⟨λ (s : gappy n), repr s.val⟩
 
+instance {n : ℕ} : has_mem (fin n) (gappy n) := ⟨λ i s, i ∈ s.val⟩
+
 def shift {n : ℕ} (s : finset (fin n)) : finset (fin n.succ) := 
  s.image fin.succ
 
@@ -518,10 +501,8 @@ lemma zero_not_in_shift {n : ℕ} (s : finset (fin n)) :
  fin.z ∉ shift s := 
 begin
  intro h0,
- rcases ((mem_shift s) 0).mp h0 with ⟨b,⟨b_in_s,e⟩⟩,
- let h1 := congr_arg fin.val e,
- rw[fin.succ_val] at h1,
- injection h1,
+ rcases ((mem_shift s) 0).mp h0 with ⟨⟨b,b_is_lt⟩,⟨b_in_s,e⟩⟩,
+ cases congr_arg subtype.val e
 end
 
 lemma succ_mem_shift_iff {n : ℕ} (s : finset (fin n)) (a : fin n) : 
@@ -530,7 +511,7 @@ begin
  rw[mem_shift s a.succ],
  split,{
    rintro ⟨b,⟨b_in_s,u⟩⟩,
-   rw[(fin.succ_inj u).symm],
+   rw[(fin.succ_inj.mp u).symm],
    exact b_in_s,
  },{
    intro a_in_s,use a,exact ⟨a_in_s,rfl⟩,
@@ -574,7 +555,7 @@ begin
  },{
   let b : fin n := ⟨b_val,nat.lt_of_succ_lt_succ a_is_lt⟩,
   have e : b.succ = ⟨b_val.succ,a_is_lt⟩ := 
-    by { apply fin.eq_of_veq,rw[fin.succ_val], },
+    by { apply fin.eq_of_veq, refl },
   rw[← e,succ_mem_shift_iff (unshift s) b,mem_unshift s b],
  }
 end
@@ -590,7 +571,7 @@ begin
  },{
   let b : fin n := ⟨b_val,nat.lt_of_succ_lt_succ a_is_lt⟩,
   have e : b.succ = ⟨b_val.succ,a_is_lt⟩ := 
-    by { apply fin.eq_of_veq,rw[fin.succ_val], },
+    by { apply fin.eq_of_veq, refl, },
   rw[← e,succ_mem_shift_iff (unshift s) b,mem_unshift s b],
   split,
   {rintro (u0 | u1),
@@ -605,51 +586,53 @@ lemma shift_gappy : ∀ {n : ℕ} {s : finset (fin n)},
  is_gappy s → is_gappy (shift s)
 | 0 _ _ := λ a, fin.elim0 a
 | (nat.succ n) s s_gappy := begin
- rintros a ⟨a_in_shift,a_succ_in_shift⟩,
- let a_in_s : a ∈ s := (succ_mem_shift_iff s a).mp a_succ_in_shift,
- rcases (mem_shift s a.cast_succ).mp a_in_shift with ⟨b,⟨b_in_s,eb⟩⟩,
- replace eb := congr_arg fin.val eb,
- rw[fin.succ_val,fin.cast_succ_val] at eb,
- let c_is_lt : b.val < n :=
-  nat.lt_of_succ_lt_succ (eb.symm ▸ a.is_lt), 
- let c : fin n := ⟨b.val,c_is_lt⟩,
- have ebc : b = fin.cast_succ c := fin.eq_of_veq (by rw[fin.cast_succ_val]),
- have eac : a = fin.succ c := fin.eq_of_veq (nat.succ_inj (by rw[← eb,fin.succ_val])),
- rw[ebc] at b_in_s,
+ rintros ⟨a,a_is_lt⟩ ⟨a_in_shift,a_succ_in_shift⟩,
+ let a₀ : fin n.succ := ⟨a,a_is_lt⟩,
+ let a_in_s : a₀ ∈ s := 
+   (succ_mem_shift_iff s a₀).mp a_succ_in_shift,
+ rcases (mem_shift s a₀.cast_succ).mp a_in_shift with ⟨⟨b,b_is_lt⟩,⟨b_in_s,eb⟩⟩,
+ let b₀ : fin n.succ := ⟨b,b_is_lt⟩,
+ replace eb := congr_arg subtype.val eb,
+ change b.succ = a at eb,
+ let c_is_lt : b < n :=
+  nat.lt_of_succ_lt_succ (eb.symm ▸ a_is_lt), 
+ let c₀ : fin n := ⟨b,c_is_lt⟩,
+ have ebc : b₀ = fin.cast_succ c₀ := fin.eq_of_veq rfl,
+ have eac : a₀ = fin.succ c₀ := 
+   fin.eq_of_veq (nat.succ.inj (by { change a.succ = b.succ.succ, rw[← eb],})),
+ change b₀ ∈ s at b_in_s, rw[ebc] at b_in_s,
  rw[eac] at a_in_s,
- exact s_gappy c ⟨b_in_s,a_in_s⟩, 
+ exact s_gappy c₀ ⟨b_in_s,a_in_s⟩, 
 end
 
 lemma unshift_gappy : ∀ {n : ℕ} {s : finset (fin n.succ)},
  is_gappy s → is_gappy (unshift s)
 | 0 _ _ := trivial
 | (nat.succ n) s s_gappy := begin
- rintros a ⟨a_in_unshift,a_succ_in_unshift⟩,
- let a_succ_in_s := (mem_unshift s a.cast_succ).mp a_in_unshift,
- let a_succ_succ_in_s := (mem_unshift s a.succ).mp a_succ_in_unshift,
- have e : a.cast_succ.succ = a.succ.cast_succ := 
-  fin.eq_of_veq
-   (by {rw[fin.succ_val,fin.cast_succ_val,fin.cast_succ_val,fin.succ_val]}),
+ rintros ⟨a,a_is_lt⟩ ⟨a_in_unshift,a_succ_in_unshift⟩,
+ let a₀ : fin n := ⟨a,a_is_lt⟩,
+ let a_succ_in_s := (mem_unshift s a₀.cast_succ).mp a_in_unshift,
+ let a_succ_succ_in_s := (mem_unshift s a₀.succ).mp a_succ_in_unshift,
+ have e : a₀.cast_succ.succ = a₀.succ.cast_succ := fin.eq_of_veq rfl,
  rw[e] at a_succ_in_s,
- exact s_gappy a.succ ⟨a_succ_in_s,a_succ_succ_in_s⟩,
+ exact s_gappy a₀.succ ⟨a_succ_in_s,a_succ_succ_in_s⟩,
 end
 
 lemma insert_gappy : ∀ {n : ℕ} {s : finset (fin n.succ.succ)}, 
  is_gappy s → (∀ (a : fin n.succ.succ), a ∈ s → a.val ≥ 2) → 
   is_gappy (insert fin.z s) := 
 begin
- rintros n s s_gappy s_big a ⟨a_in_t,a_succ_in_t⟩,
- rcases finset.mem_insert.mp a_succ_in_t with a_succ_zero | a_succ_in_s,
- {exact fin.succ_ne_z a a_succ_zero},
- let a_pos : 0 < a.val :=
-  nat.lt_of_succ_lt_succ ((fin.succ_val a) ▸ (s_big a.succ a_succ_in_s)),
+ rintros n s s_gappy s_big ⟨a,a_is_lt⟩ ⟨a_in_t,a_succ_in_t⟩,
+ rcases finset.mem_insert.mp a_succ_in_t with a_succ_zero | a_succ_in_s;
+ let a₀ : fin n.succ := ⟨a,a_is_lt⟩,
+ {exact fin.succ_ne_z a₀ a_succ_zero},
+ let a_pos : 0 < a := nat.lt_of_succ_lt_succ (s_big a₀.succ a_succ_in_s),
  rcases finset.mem_insert.mp a_in_t with a_zero | a_in_s,
- {replace a_zero : a.val = 0 :=
-  (fin.cast_succ_val a).symm.trans (congr_arg fin.val a_zero),
+ {replace a_zero : a = 0 := congr_arg subtype.val a_zero,
   rw[a_zero] at a_pos,
   exact lt_irrefl 0 a_pos,
  },{
-  exact s_gappy a ⟨a_in_s,a_succ_in_s⟩, 
+  exact s_gappy a₀ ⟨a_in_s,a_succ_in_s⟩, 
  }
 end
 
@@ -658,19 +641,19 @@ def i {n : ℕ} (s : gappy n) : gappy n.succ :=
 
 lemma i_val {n : ℕ} (s : gappy n) : (i s).val = shift s.val := rfl
 
-lemma zero_not_in_i {n : ℕ} (s : gappy n) : fin.z ∉ (i s).val := 
+lemma zero_not_in_i {n : ℕ} (s : gappy n) : fin.z ∉ (i s) := 
  zero_not_in_shift s.val
 
 lemma shift_big {n : ℕ} (s : finset (fin n)) : 
  ∀ (a : fin n.succ.succ), a ∈ shift (shift s) → a.val ≥ 2 := 
 begin
- intros a ma,
- rcases (mem_shift (shift s) a).mp ma with ⟨b,⟨mb,eb⟩⟩,
- rcases (mem_shift s b).mp mb with ⟨c,⟨mc,ec⟩⟩,
- rw[← eb,← ec,fin.succ_val,fin.succ_val],
+ rintro ⟨a,a_is_lt⟩ ma,
+ rcases (mem_shift (shift s) ⟨a,a_is_lt⟩).mp ma with ⟨⟨b,b_is_lt⟩,⟨mb,eb⟩⟩,
+ rcases (mem_shift s ⟨b,b_is_lt⟩).mp mb with ⟨⟨c,c_is_lt⟩,⟨mc,ec⟩⟩,
+ rw[← eb,← ec],
  apply nat.succ_le_succ,
  apply nat.succ_le_succ,
- exact nat.zero_le c.val,
+ exact nat.zero_le c
 end
 
 def j {n : ℕ} (s : gappy n) : gappy n.succ.succ := 
@@ -683,7 +666,7 @@ def j {n : ℕ} (s : gappy n) : gappy n.succ.succ :=
 lemma j_val {n : ℕ} (s : gappy n) :
  (j s).val = insert fin.z (shift (shift s.val)) := rfl
 
-lemma zero_in_j {n : ℕ} (s : gappy n) : fin.z ∈ (j s).val := 
+lemma zero_in_j {n : ℕ} (s : gappy n) : fin.z ∈ (j s) := 
  finset.mem_insert_self _ _
 
 def p {n : ℕ} : (gappy n) ⊕ (gappy n.succ) → gappy n.succ.succ 
@@ -691,7 +674,7 @@ def p {n : ℕ} : (gappy n) ⊕ (gappy n.succ) → gappy n.succ.succ
 | (sum.inr s) := i s
 
 def q {n : ℕ} (s : gappy n.succ.succ) : (gappy n) ⊕ (gappy n.succ) := 
-if fin.z ∈ s.val then
+if fin.z ∈ s then
  sum.inl ⟨unshift (unshift s.val),unshift_gappy (unshift_gappy s.property)⟩
 else
  sum.inr ⟨unshift s.val,unshift_gappy s.property⟩ 
@@ -699,7 +682,8 @@ else
 lemma qp {n : ℕ} (s : (gappy n) ⊕ (gappy n.succ)) : q (p s) = s := 
 begin
  rcases s with s | s; dsimp[p,q],
- {rw[if_pos (zero_in_j s)],congr,apply subtype.eq,
+ {rw[if_pos (zero_in_j s)],
+  congr,apply subtype.eq,
   change unshift (unshift (j s).val) = s.val,
   rw[j_val,unshift_insert,unshift_shift,unshift_shift],
  },
@@ -739,11 +723,7 @@ def gappy_equiv {n : ℕ} :
 lemma gappy_card_step (n : ℕ) :
  fintype.card (gappy n.succ.succ) =
   fintype.card (gappy n) + fintype.card (gappy n.succ) := 
-begin
- let e0 := fintype.card_congr (@gappy_equiv n),
- let e1 := fintype.card_sum (gappy n) (gappy n.succ),
- exact e0.symm.trans e1,
-end
+by rw[← fintype.card_congr (@gappy_equiv n),fintype.card_sum]
 
 def fibonacci : ℕ → ℕ 
 | 0 := 0
@@ -776,8 +756,8 @@ lemma int.lt_succ_iff {n m : ℤ} : n < m + 1 ↔ n ≤ m :=
  ⟨int.le_of_lt_add_one,int.lt_add_one_of_le⟩ 
 
 lemma nat.square_le {n m : ℕ} : m ^ 2 ≤ n ↔ m ≤ n.sqrt := 
- ⟨λ h0, le_of_not_gt (λ h1, not_le_of_gt ((nat.pow_two m).symm.subst (nat.sqrt_lt.mp h1)) h0),
-  λ h0, le_of_not_gt (λ h1,not_le_of_gt (nat.sqrt_lt.mpr ((nat.pow_two m).subst h1)) h0)⟩ 
+ ⟨λ h0, le_of_not_gt (λ h1, not_le_of_gt ((pow_two m).symm.subst (nat.sqrt_lt.mp h1)) h0),
+  λ h0, le_of_not_gt (λ h1,not_le_of_gt (nat.sqrt_lt.mpr ((pow_two m).subst h1)) h0)⟩ 
 
 lemma nat.square_lt {n m : ℕ} : m ^ 2 < n.succ ↔ m ≤ n.sqrt :=
  (@nat.lt_succ_iff (m ^ 2) n).trans (@nat.square_le n m)
@@ -818,7 +798,7 @@ lemma int.abs_square' (n : ℤ) : n ^ 2 = ((int.nat_abs n) ^ 2 : ℕ) :=
  calc 
    n ^ 2 = n * n : pow_two n
    ... = ↑ (n.nat_abs * n.nat_abs) : int.nat_abs_mul_self.symm
-   ... = ↑ (n.nat_abs ^ 2 : ℕ) : by rw[(nat.pow_two n.nat_abs).symm]
+   ... = ↑ (n.nat_abs ^ 2 : ℕ) : by rw[(pow_two n.nat_abs).symm]
 
 lemma int.square_le {n : ℕ} {m : ℤ} : 
  m ^ 2 ≤ n ↔ - (n.sqrt : ℤ) ≤ m ∧ m ≤ n.sqrt := 
@@ -918,10 +898,10 @@ namespace Q7
 
 local attribute [instance] classical.prop_decidable
 
-lemma L1 (U : Type) (A B : set U) : - (A ∪ B) = (- A) ∩ (- B) :=
+lemma L1 (U : Type) (A B : set U) : (A ∪ B)ᶜ = Aᶜ ∩ Bᶜ :=
  by { simp }
 
-lemma L2 (U : Type) (A B : set U) : - (A ∩ B) = (- A) ∪ (- B) := 
+lemma L2 (U : Type) (A B : set U) : (A ∩ B)ᶜ = Aᶜ ∪ Bᶜ := 
 begin
  ext x,
  rw[set.mem_union,set.mem_compl_iff,set.mem_compl_iff,set.mem_compl_iff],
@@ -1014,12 +994,8 @@ begin
  rw[f_eq x] at fx,
  dsimp[f_alt] at fx,
  rcases eq_zero_or_eq_zero_of_mul_eq_zero fx with x_eq_2 | x_eq_5,
- {rw[← sub_eq_add_neg] at x_eq_2,
-  exact or.inl (sub_eq_zero.mp x_eq_2),
- },{
-  rw[← sub_eq_add_neg] at x_eq_5,
-  exact or.inr (sub_eq_zero.mp x_eq_5),
- }
+ {exact or.inl (sub_eq_zero.mp x_eq_2)},
+ {exact or.inr (sub_eq_zero.mp x_eq_5)}
 end
 
 end Q10 
@@ -1042,7 +1018,7 @@ namespace Q12
 
 def f : ℚ → ℚ := λ x, x * (x + 1) * (2 * x + 1) / 6
 
-lemma f_step (x : ℚ) : f (x + 1) = (x + 1) ^ 2 + f x := 
+lemma f_step (x : ℚ) : f (x + 1) = (f x) + (x + 1) ^ 2 := 
 begin
  dsimp[f],
  apply sub_eq_zero.mp,
@@ -1052,11 +1028,13 @@ end
 
 lemma sum_of_squares : ∀ (n : ℕ), 
  (((finset.range n.succ).sum (λ i, i ^ 2)) : ℚ) = f n
-| 0 := rfl
+| 0 := begin
+   rw[finset.sum_range_succ,finset.sum_range_zero,f],simp, 
+  end
 | (n + 1) := begin
   rw[finset.sum_range_succ,sum_of_squares n],
   have : (((n + 1) : ℕ) : ℚ) = ((n + 1) : ℚ ) := by simp, 
-  rw[this,f_step n]
+  rw[this,f_step n],
  end
 
 end Q12
@@ -1083,12 +1061,13 @@ lemma f_step (x : ℚ) : x > 1 → (1 - 1 / (x ^ 2)) * f (x - 1) = f x :=
 begin
  intro x_big,
  let d := 2 * (x - 1) * (x ^ 2) ,
+ let nz_2 : (2 : ℚ) ≠ 0 := by norm_num,
  /- Prove that all relevant denominators are nonzero -/
- let nz_x  : x ≠ 0     := (ne_of_lt (by linarith using [x_big])).symm,
- let nz_2x : 2 * x ≠ 0 := mul_ne_zero dec_trivial nz_x,
+ let nz_x  : x ≠ 0     := (ne_of_lt (by linarith [x_big])).symm,
+ let nz_2x : 2 * x ≠ 0 := mul_ne_zero nz_2 nz_x,
  let nz_x2 : x ^ 2 ≠ 0 := by {rw[pow_two], exact mul_ne_zero nz_x nz_x},
- let nz_y  : x - 1 ≠ 0 := (ne_of_lt (by linarith using [x_big])).symm,
- let nz_2y : 2 * (x - 1) ≠ 0 := mul_ne_zero dec_trivial nz_y,
+ let nz_y  : x - 1 ≠ 0 := (ne_of_lt (by linarith [x_big])).symm,
+ let nz_2y : 2 * (x - 1) ≠ 0 := mul_ne_zero nz_2 nz_y,
  let nz_d : d ≠ 0 := mul_ne_zero nz_2y nz_x2,
  let e0 := calc
   (x ^ 2) * (1 - 1 / (x ^ 2)) = (x ^ 2) * 1 - (x ^ 2) * (1 / (x ^ 2)) : 
@@ -1119,15 +1098,18 @@ begin
   ... = (x * x - x) * ((2 * x) * ((x + 1) / (2 * x))) : by rw[mul_assoc]
   ... = (x * x - x) * (x + 1) : by rw[mul_div_comm,div_self nz_2x,mul_one]
   ... = x ^ 3 - x : by ring,
- exact eq_of_mul_eq_mul_left nz_d (e4.trans e6.symm),
+  exact (mul_right_inj' nz_d).mp (e4.trans e6.symm)
 end
 
 lemma product_formula : ∀ (n : ℕ), 
  (finset.range n).prod (λ k, ((1 - 1 / ((k + 2) ^ 2)) : ℚ)) = f (n + 1)
-| 0 := rfl
+| 0 := by { rw[finset.prod_range_zero,f], norm_num }
 | (n + 1) := begin
  have e0 : 1 < n + 2 := by linarith,
- have e1 : (1 : ℚ) < ((n + 2) : ℕ) := nat.cast_lt.mpr e0, 
+ have e1 : (1 : ℚ) < ((n + 2) : ℕ) := by {
+  have : (1 : ℚ) = (1 : ℕ) := by norm_num, rw[this],
+  exact nat.cast_lt.mpr e0,
+ }, 
  rw[nat.cast_add,nat.cast_bit0,nat.cast_one] at e1,
  rw[finset.prod_range_succ,product_formula n],
  let e2 := f_step (n + 2) e1,
@@ -1135,7 +1117,7 @@ lemma product_formula : ∀ (n : ℕ),
  have e4 : (((n + 1) : ℕ) : ℚ) + 1 = (n : ℚ) + 2 :=
   by { rw[nat.cast_add,nat.cast_one],ring},
  rw[e3] at e2,
- rw[e2,e4],
+ rw[mul_comm,e2,e4],
 end
 
 end Q14
@@ -1241,17 +1223,18 @@ begin
   (2 * n + 1) ^ 2 = 4 * n + (4 * n ^ 2 + 1) : by ring
    ... ≤ 4 * n ^ 2 + (4 * n ^ 2 + 1) : 
       by {apply (nat.add_le_add_iff_le_right _ _ _).mpr,
-          rw[nat.pow_two],
+          rw[pow_two],
           exact nat.mul_le_mul_left 4 (nat.le_mul_self n),} 
    ... = 8 * n ^ 2 + 1 : by ring
-   ... ≤ 9 * n ^ 2 + 2 : by linarith
+   ... ≤ (8 * n ^ 2 + 1) + (n ^ 2 + 1) : le_self_add 
+   ... = 9 * n ^ 2 + 2 : by ring
    ... ≤ 9 * a n + 2 : 
       by {apply (nat.add_le_add_iff_le_right _ _ _).mpr,
           exact nat.mul_le_mul_left 9 ih,}  
 end
 
 lemma square_le : ∀ n, n ^ 2 ≤ a n 
-| 0 := le_refl 0
+| 0 := by { norm_num }
 | (nat.succ m) := 
    have cond (nat.bodd m) (nat.succ (nat.div2 m)) (nat.div2 m) < nat.succ m := wf_lemma' m,
    begin
@@ -1330,7 +1313,7 @@ lemma fibonacci_bodd : ∀ n, (fibonacci n).bodd = bnot (n % 3 = 0)
 | 1 := rfl
 | 2 := rfl
 | (n + 3) := begin
- rw[fibonacci_bodd_step n,fibonacci_bodd n],congr,
+ rw[fibonacci_bodd_step n,fibonacci_bodd n,nat.add_mod_right]
 end
 
 lemma F2013_even : (fibonacci 2013).bodd = ff := calc
@@ -1370,8 +1353,8 @@ lemma mod_step_mod (p : ℕ) : ∀ (c : ℕ × ℕ),
   ⟨b % p % p,(a % p + b % p) % p⟩,
  have e0 : b % p % p = b % p := nat.mod_mod b p,
  have e1 : (a % p + b % p) % p = (a + b) % p :=
-  nat.modeq.modeq_add (nat.mod_mod a p) (nat.mod_mod b p),
- rw[e0,e1],
+  nat.modeq.add (nat.mod_mod a p) (nat.mod_mod b p),
+ rw[e0,e1]
 end
 
 lemma fibonacci_pair_mod_spec (p : ℕ) : ∀ n, 
@@ -1447,7 +1430,398 @@ end Q17
 
 namespace Q18
 
+variables (a b c d : ℤ)
+
+lemma L_i : a ∣ b → b ∣ c → a ∣ c := 
+by { rintros ⟨uab,hab⟩ ⟨ubc,hbc⟩, use uab * ubc, rw[← mul_assoc,← hab,← hbc] }
+
+lemma L_ii : a ∣ b → a ∣ c → a ∣ (b + c) := 
+by { rintros ⟨uab,hab⟩ ⟨uac,hac⟩, use uab + uac, rw[mul_add,hab,hac] }
+
+lemma L_iii_false : ¬ (∀ a b c : ℤ, (a ∣ (b + c)) → (a ∣ b) ∧ (a ∣ c)) := 
+begin
+ intro h₀,
+ have h₁ :    (2 : ℤ) ∣ 1  := (h₀ 2 1 1 dec_trivial).left,
+ have h₂ : ¬ ((2 : ℤ) ∣ 1) := dec_trivial,
+ exact h₂ h₁
+end
+
+lemma L_iv : a ∣ b → a ∣ c → a ∣ (b * c) := 
+by { rintros ⟨uab,hab⟩ ⟨uac,hac⟩, use uab * c, rw[← mul_assoc,hab] }
+
+lemma L_v_false : ¬ (∀ a b c : ℤ, (a ∣ (b * c)) → (a ∣ b) ∧ (a ∣ c)) := 
+begin
+ intro h₀,
+ have h₁ :    (4 : ℤ) ∣ 2  := (h₀ 4 2 2 dec_trivial).left,
+ have h₂ : ¬ ((4 : ℤ) ∣ 2) := dec_trivial,
+ exact h₂ h₁
+end
+
+lemma L_vi : a ∣ b → c ∣ d → (a * c) ∣ (b * d) := 
+by { rintros ⟨uab,hab⟩ ⟨ucd,hcd⟩, use uab * ucd, rw[hab,hcd], ring }
+
 end Q18
+
+namespace Q19
+def f (n : ℤ) : ℤ := n * (n + 1) * (n + 2) * (n + 3)
+
+lemma f_mod (p n₀ n₁ : ℤ) (h0 : n₀ ≡ n₁ [ZMOD p]) : f n₀ ≡ f n₁ [ZMOD p] := 
+begin
+ have h1 : n₀ + 1 ≡ n₁ + 1 [ZMOD p] := int.modeq.add h0 rfl,
+ have h2 : n₀ + 2 ≡ n₁ + 2 [ZMOD p] := int.modeq.add h0 rfl,
+ have h3 : n₀ + 3 ≡ n₁ + 3 [ZMOD p] := int.modeq.add h0 rfl,
+ have h01 : n₀ * (n₀ + 1) ≡ n₁ * (n₁ + 1) [ZMOD p] := 
+  int.modeq.mul h0 h1,
+ have h02 : n₀ * (n₀ + 1) * (n₀ + 2) ≡ n₁ * (n₁ + 1) * (n₁ + 2) [ZMOD p] := 
+  int.modeq.mul h01 h2,
+ exact int.modeq.mul h02 h3,
+end
+
+lemma f_mod_3 (n : ℕ) : f n ≡ 0 [ZMOD 3] := 
+begin
+ have three_pos : (3 : ℤ) > 0 := dec_trivial,
+ rcases int.exists_unique_equiv_nat n three_pos with ⟨r,⟨r_is_lt,r_equiv⟩⟩,
+ let e := (f_mod 3 r n r_equiv).symm,
+ suffices : f r ≡ 0 [ZMOD 3],
+ {exact e.trans this,},
+ rcases r with _ | _ | _ | r0; rw[f]; try {refl},
+ {exfalso,
+  have : (3 : ℤ) = ((3 : ℕ) : ℤ) := rfl,
+  rw[this] at r_is_lt,
+  let h0 := int.coe_nat_lt.mp r_is_lt,
+  replace h0 := nat.lt_of_succ_lt_succ h0,
+  replace h0 := nat.lt_of_succ_lt_succ h0,
+  replace h0 := nat.lt_of_succ_lt_succ h0,
+  exact nat.not_lt_zero r0 h0,
+ }
+end
+
+lemma f_mod_8 (n : ℕ) : f n ≡ 0 [ZMOD 8] := 
+begin
+ have eight_pos : (8 : ℤ) > 0 := dec_trivial,
+ rcases int.exists_unique_equiv_nat n eight_pos with ⟨r,⟨r_is_lt,r_equiv⟩⟩,
+ let e := (f_mod 8 r n r_equiv).symm,
+ suffices : f r ≡ 0 [ZMOD 8],
+ {exact e.trans this,},
+ rcases r with _ | _ | _ | _ | _ | _ | _ | _ | r0;
+  rw[int.modeq,f]; try {norm_num},
+ {exfalso,
+  have : (8 : ℤ) = ((8 : ℕ) : ℤ) := rfl,
+  rw[this] at r_is_lt,
+  let h0 := int.coe_nat_lt.mp r_is_lt,
+  repeat { replace h0 := nat.lt_of_succ_lt_succ h0 },
+  exact nat.not_lt_zero r0 h0,
+ }
+end
+
+lemma f_mod_24 (n : ℕ) : f n ≡ 0 [ZMOD 24] := 
+begin
+ let i3 : ℤ := 3,
+ let i8 : ℤ := 8,
+ have : (24 : ℤ) = i3 * i8 := rfl,
+ rw[this],
+ have cp : nat.coprime i3.nat_abs i8.nat_abs := by {dsimp[i3,i8], norm_num},
+ exact (int.modeq_and_modeq_iff_modeq_mul cp).mp ⟨f_mod_3 n,f_mod_8 n⟩,
+end
+
+/- ----------- Part (ii) ------------- -/
+
+def h {R : Type} [comm_ring R] (a b c d : R) : R := 
+ (a - b) * (a - c) * (a - d) * (b - c) * (b - d) * (c - d) 
+
+lemma h_shift {R : Type} [comm_ring R] (a b c d : R) : 
+ h a b c d = h (a - d) (b - d) (c - d) 0 := 
+begin
+ have e : ∀ x y z : R, (x - z) - (y - z) = x - y := 
+  by {intros, ring},
+ dsimp[h],
+ rw[sub_zero,sub_zero,sub_zero,e,e,e]
+end
+
+lemma h_zero_shift {R : Type} [comm_ring R] : 
+ (∀ a b c : R, h a b c 0 = 0) → (∀ a b c d : R, h a b c d = 0) := 
+  λ p a b c d, (h_shift a b c d).trans (p (a - d) (b - d) (c - d))
+
+lemma h_zero_3 : ∀ a b c d : zmod 3, h a b c d = 0 := 
+ h_zero_shift dec_trivial
+
+lemma h_zero_4 : ∀ a b c d : zmod 4, h a b c d = 0 :=
+ h_zero_shift dec_trivial
+
+lemma h_map {R S : Type} [comm_ring R] [comm_ring S] 
+ (φ : R →+* S) (a b c d : R) :
+  φ (h a b c d) = h (φ a) (φ b) (φ c) (φ d) := 
+begin
+ dsimp[h],
+ let em := φ.map_mul,
+ let es := φ.map_sub,
+ rw[em,em,em,em,em,es,es,es,es,es,es]
+end
+
+lemma h_zero_mod (p : ℕ+) :
+ (∀ a b c d : zmod p, h a b c d = 0) → 
+  (∀ a b c d : ℤ, h a b c d ≡ 0 [ZMOD p]) := 
+begin
+ intros e a b c d,
+ have h₀ := eq_iff_modeq_int (zmod p) (p : ℕ),
+ have : (p : ℤ) = ((p : ℕ) : ℤ) := by norm_cast,
+ rw [← this] at h₀, rw[← h₀],
+ let π : ℤ →+* (zmod p) := int.cast_ring_hom _,
+ exact calc 
+  π (h a b c d) = h (π a) (π b) (π c) (π d) : by rw[h_map π]
+  ... = 0 : e (π a) (π b) (π c) (π d),
+end
+
+lemma h_zero_12 : ∀ (a b c d : ℤ), h a b c d ≡ 0 [ZMOD 12] := 
+begin
+ intros,
+ let i3 : ℤ := 3,
+ let i4 : ℤ := 4,
+ let h3 := h_zero_mod 3 h_zero_3 a b c d,
+ let h4 := h_zero_mod 4 h_zero_4 a b c d,
+ have : (12 : ℤ) = i3 * i4 := rfl,
+ rw[this],
+ have cp : nat.coprime i3.nat_abs i4.nat_abs := by {dsimp[i3,i4], norm_num},
+ exact (int.modeq_and_modeq_iff_modeq_mul cp).mp ⟨h3,h4⟩
+end
+
+/-
+ Here are partial results for a more general case
+-/
+
+def π (m : ℕ+) : ℤ →+* (zmod m) := int.cast_ring_hom _
+
+def F (n : ℕ) := { ij : (fin n) × (fin n) // ij.1.val < ij.2.val }
+
+instance (n : ℕ) : fintype (F n) := by { dsimp[F], apply_instance,}
+
+def g (n : ℕ) (u : (fin n) → ℤ) : ℤ := 
+ (@finset.univ (F n) _).prod (λ ij, (u ij.val.2) - (u ij.val.1))
+
+def g_mod (n : ℕ) (m : ℕ+) (u : (fin n) → ℤ) : zmod m := 
+ (@finset.univ (F n) _).prod (λ ij, (π m (u ij.val.2)) - (π m (u ij.val.1)))
+
+lemma g_mod_spec (n : ℕ) (m : ℕ+) (u : (fin n) → ℤ) : 
+ π m (g n u) = g_mod n m u := 
+begin
+ dsimp[g,g_mod],
+ let ms := (π m).map_sub,
+ let ma := (π m).map_add,
+ conv
+ begin
+  to_rhs, congr, skip, funext, rw[← ms],
+ end,
+ rw[ ← (π m).map_prod ],
+end
+
+lemma must_repeat (n : ℕ) (m : ℕ+) (m_lt_n : m.val < n)
+ (u : fin n → ℤ) : ∃ i j : fin n, (i.val < j.val ∧ (π m (u i)) = (π m (u j))) := 
+begin
+ let P := { ij : (fin n) × (fin n) // ij.1 ≠ ij.2 },
+ let p : P → Prop := λ ij, π m (u ij.val.1) = π m (u ij.val.2),
+ let q := exists ij, p ij,
+ by_cases h : q,
+ { rcases h with ⟨⟨⟨i,j⟩,i_ne_j⟩,eq_mod⟩,
+   change i ≠ j at i_ne_j,
+   let i_ne_j_val : i.val ≠ j.val := λ e,i_ne_j (fin.eq_of_veq e),
+   change (π m (u i)) = (π m (u j)) at eq_mod,
+   by_cases hij : i.val < j.val,
+   {use i,use j,exact ⟨hij,eq_mod⟩},
+   { let hij' := lt_of_le_of_ne (le_of_not_gt hij) i_ne_j_val.symm,
+    use j,use i,exact ⟨hij',eq_mod.symm⟩ } },
+ { exfalso,
+   let v : fin n → zmod m := λ i, π m (u i),
+   have v_inj : function.injective v := 
+   begin 
+     intros i j ev,
+     by_cases hij : i = j,
+     { exact hij },
+     { exfalso, exact h ⟨⟨⟨i,j⟩,hij⟩,ev⟩ }
+   end,  
+   haveI : fact (0 < (m : ℕ)) := ⟨m.property⟩,
+   let e := calc
+     n = fintype.card (fin n) : (fintype.card_fin n).symm
+     ... ≤ fintype.card (zmod m) : fintype.card_le_of_injective v v_inj
+     ... = m : zmod.card m
+     ... < n : m_lt_n,
+   exact lt_irrefl _ e }
+end
+
+lemma g_mod_zero (n : ℕ) (m : ℕ+) (m_lt_n : m.val < n)
+ (u : fin n → ℤ) : g_mod n m u = 0 := 
+begin
+  rcases must_repeat n m m_lt_n u with ⟨i,j,i_lt_j,e⟩,
+  dsimp[π] at e,
+  let ij : F n := ⟨⟨i,j⟩,i_lt_j⟩,
+  dsimp[g_mod],
+  apply finset.prod_eq_zero (finset.mem_univ ij),
+  dsimp[ij],
+  change π m (u i) = π m (u j) at e,
+  rw[e,sub_self],
+end
+
+end Q19
+
+namespace Q20
+lemma L1 : nat.gcd 896 1200 = 16 := 
+begin
+ have e0 : 1200 % 896 = 304 := by norm_num,
+ have e1 :  896 % 304 = 288 := by norm_num,
+ have e2 :  304 % 288 =  16 := by norm_num,
+ have e3 :  288 %  16 =   0 := by norm_num,
+ exact calc
+  nat.gcd 896 1200 = nat.gcd 304 896 : by rw[nat.gcd_rec,e0]
+               ... = nat.gcd 288 304 : by rw[nat.gcd_rec,e1] 
+               ... = nat.gcd  16 288 : by rw[nat.gcd_rec,e2] 
+               ... = nat.gcd   0  16 : by rw[nat.gcd_rec,e3] 
+               ... = 16 : nat.gcd_zero_left 16
+end
+
+lemma L2 : nat.gcd 123456789 987654321 = 9 := 
+begin
+ have e0 : 987654321 % 123456789 = 9 := by norm_num,
+ have e1 : 123456789 % 9 = 0 := by norm_num,
+ exact calc
+  nat.gcd 123456789 987654321 
+       = nat.gcd 9 123456789  : by rw[nat.gcd_rec,e0]
+   ... = nat.gcd 0 9          : by rw[nat.gcd_rec,e1]
+   ... = 9 : nat.gcd_zero_left 9
+end
+
+end Q20
+
+namespace Q21
+
+def u (n : ℕ) : ℕ := 2 ^ n
+def a (n : ℕ) : ℕ := 2 ^ (u n) + 1
+
+lemma u_ge_1 (n : ℕ) : u n ≥ 1 := 
+ by {
+  let e := @nat.pow_le_pow_of_le_right 2 dec_trivial 0 n (nat.zero_le n),
+  rw[pow_zero] at e,
+  exact e,
+ }
+
+lemma u_step (n : ℕ) : u (n + 1) = 2 * (u n) := 
+ by {dsimp[u],rw[pow_succ],}
+
+def a_pos (n : ℕ) : ℕ+ := ⟨a n,nat.zero_lt_succ _⟩
+
+lemma a_step (n : ℕ) : a (n + 1) + 2 * (a n) = 2 + (a n) * (a n) := 
+begin
+ have h : ∀ (x : ℕ), x ^ 2 + 1 + 2 * (x + 1) 
+   = 2 + (x + 1) * (x + 1) := by {intro, ring,},
+ rw[a,a,u_step,mul_comm 2 (u n),pow_mul,h (2 ^ (u n))]
+end
+
+lemma a_ge_3 (n : ℕ) : a n ≥ 3 := 
+begin
+ let e := @nat.pow_le_pow_of_le_right 2 dec_trivial _ _ (u_ge_1 n),
+ rw[pow_one] at e,
+ exact nat.succ_le_succ e,
+end
+
+lemma a_ne_1 (n : ℕ) : a n ≠ 1 := ne_of_gt (lt_trans dec_trivial (a_ge_3 n))
+
+lemma a_odd (n : ℕ) : (a n) % 2 = 1 := 
+begin
+ dsimp[a],
+ rw[← nat.add_sub_of_le (u_ge_1 n),pow_add,pow_one],
+ rw[add_comm _ 1,nat.add_mul_mod_self_left],
+ refl,
+end
+
+lemma a_mod_a : ∀ (n m : ℕ), a (n + m + 1) ≡ 2 [MOD (a n)] 
+| n 0 := begin 
+   rw[add_zero n],
+   let e : (a (n + 1) + 2 * (a n)) % (a n) = 
+           (2 + (a n) * (a n)) % (a n) :=
+            congr_arg (λ i, i % (a n)) (a_step n),
+   rw[nat.add_mul_mod_self_right] at e,
+   rw[nat.add_mul_mod_self_right] at e,
+   exact e,
+  end
+| n (m + 1) := begin
+   rw[← (add_assoc n m 1)],
+   let e := a_step (n + m + 1),
+   replace e : (a (n + m + 1 + 1) + 2 * a (n + m + 1)) % (a n) = 
+             (2 + a (n + m + 1) * a (n + m + 1)) % (a n) := by {rw[e]},
+   let ih := a_mod_a n m,
+   let ih1 : 2 * a (n + m + 1) ≡ 4 [MOD (a n)] := 
+    nat.modeq.mul rfl ih,
+   let ih2 : a (n + m + 1) * a (n + m + 1) ≡ 4 [MOD (a n)] := 
+    nat.modeq.mul ih ih,
+   let ih3 : a (n + m + 1 + 1) + 2 * a (n + m + 1) ≡
+             a (n + m + 1 + 1) + 4 [MOD (a n)] := nat.modeq.add rfl ih1, 
+   let ih4 : 2 + a (n + m + 1) * a (n + m + 1) ≡ 2 + 4 [MOD (a n)] := 
+    nat.modeq.add rfl ih2,
+   let e1 := (ih3.symm.trans e).trans ih4,
+   exact nat.modeq.add_right_cancel rfl e1,
+  end
+
+lemma a_coprime_aux (n m : ℕ) : nat.coprime (a n) (a (n + m + 1)) := 
+begin
+ let u := a n,
+ let v := a (n + m + 1),
+ change (nat.gcd u v) = 1,
+ let q := v / u,
+ let r := v % u,
+ have e0 : r + u * q = v := nat.mod_add_div (a (n + m + 1)) (a n),
+ have e1 : r = 2 % (a n) := a_mod_a n m,
+ have e2 : 2 % (a n) = 2 := @nat.mod_eq_of_lt 2 (a n) (a_ge_3 n),
+ rw[e2] at e1,
+ have e3 : nat.gcd u v = nat.gcd r u := nat.gcd_rec u v,
+ rw[e1] at e3,
+ have e4 : nat.gcd 2 u = nat.gcd (u % 2) 2 := nat.gcd_rec 2 u,
+ have e5 : u % 2 = 1 := a_odd n,
+ have e6 : nat.gcd 1 2 = 1 := by norm_num,
+ rw[e5,e6] at e4,
+ rw[e4] at e3,
+ exact e3,
+end
+
+lemma a_coprime {n m : ℕ} : n ≠ m → nat.coprime (a n) (a m) := 
+begin
+ cases (lt_or_ge n m) with h h,
+ {let k := m - n.succ,
+  have e0 : (n + 1) + k = m := add_tsub_cancel_of_le h,
+  have : (n + 1) + k = n + k + 1 := by ring,
+  rw[this] at e0,
+  rw[← e0],
+  intro,
+  exact a_coprime_aux n k,  
+ },{
+  intro h0,   
+  let h1 := lt_of_le_of_ne h h0.symm,
+  let k := n - m.succ,
+  have e0 : (m + 1) + k = n := nat.add_sub_of_le h1,
+  have : (m + 1) + k = m + k + 1 := by ring,
+  rw[this] at e0,
+  rw[← e0],
+  exact (a_coprime_aux m k).symm,  
+ }
+end
+
+def b (n : ℕ) : ℕ := nat.min_fac (a n)
+
+def b_prime (n : ℕ) : nat.prime (b n) := nat.min_fac_prime (a_ne_1 n)
+
+lemma b_inj : function.injective b := begin
+ intros i j e0,
+ by_cases e1 : i = j,
+ {assumption},
+ {exfalso,
+  have e2 : nat.gcd (a i) (a j) = 1 := a_coprime e1,
+  have e3 : (b i) ∣ (a i) := nat.min_fac_dvd (a i),
+  have e4 : (b j) ∣ (a j) := nat.min_fac_dvd (a j),
+  rw[← e0] at e4,
+  let e5 := nat.dvd_gcd e3 e4,
+  rw[e2] at e5,
+  exact nat.prime.not_dvd_one (b_prime i) e5
+ }
+end
+
+end Q21
 
 end exercises_1
 end MAS114

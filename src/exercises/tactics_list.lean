@@ -60,9 +60,7 @@ import data.finset
 #check tactic.interactive.clarify 
 #check tactic.interactive.classical 
 #check tactic.interactive.clean 
-#check tactic.interactive.clean_ids 
 #check tactic.interactive.clear 
-#check tactic.interactive.coinduction 
 #check tactic.interactive.comp_val 
 #check tactic.interactive.congr 
 #check tactic.interactive.congr' 
@@ -72,7 +70,6 @@ import data.finset
 #check tactic.interactive.contradiction 
 #check tactic.interactive.conv 
 #check tactic.interactive.convert 
-#check tactic.interactive.decidable_eq 
 #check tactic.interactive.delete_expr 
 #check tactic.interactive.delta 
 #check tactic.interactive.derive_functor 
@@ -162,7 +159,6 @@ import data.finset
 -- Used for writing tests
 #check tactic.interactive.h_generalize 
 -- For dealing with casts and heterogenous equality
-#check tactic.interactive.has_to_format 
 -- No docstring
 #check tactic.interactive.has_to_tactic_format_mono_ctx 
 -- No docstring
@@ -177,8 +173,6 @@ import data.finset
 #check tactic.interactive.have_field 
 --
 #check tactic.interactive.hide_meta_vars' 
--- No docstring
-#check tactic.interactive.iclarify 
 -- No docstring
 #check tactic.interactive.induction 
 --
@@ -199,8 +193,6 @@ import data.finset
 #check tactic.interactive.introv 
 -- Like intros, but with slightly different behaviour wrt naming 
 -- of introduced variables
-#check tactic.interactive.isafe 
--- No docstring
 #check tactic.interactive.iterate 
 -- Apply a tactic repeatedly
 #check tactic.interactive.left 
@@ -237,8 +229,6 @@ import data.finset
 #check tactic.interactive.match_target 
 -- Fail if type of target is not as specified
 #check tactic.interactive.min_tac 
--- No docstring
-#check tactic.interactive.mk_assumption_set 
 -- No docstring
 #check tactic.interactive.mk_congr_args 
 -- No docstring
@@ -370,7 +360,6 @@ import data.finset
 #check tactic.interactive.unfold_aux 
 #check tactic.interactive.unfold_coes 
 #check tactic.interactive.unfold_projs 
-#check tactic.interactive.unfreezeI 
 #check tactic.interactive.unify_with_instance 
 #check tactic.interactive.use 
 #check tactic.interactive.with_cases 

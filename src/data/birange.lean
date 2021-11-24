@@ -1,4 +1,4 @@
-import data.fintype
+import data.fintype.basic
 import tactic.squeeze
 
 variable (n : ℕ)
@@ -14,13 +14,15 @@ def snd (u : birange n) := u.val.snd
 
 lemma rel (u : birange n) : u.fst + u.snd = n := u.property
 
-@[extensionality]
+@[ext]
 lemma ext (u₀ u₁ : birange n) :
  u₀ = u₁ ↔ (u₀.fst = u₁.fst ∧ u₀.snd = u₁.snd) := 
-  by {rcases u₀ with ⟨⟨i₀,j₀⟩,h₀⟩,
-      rcases u₁ with ⟨⟨i₁,j₁⟩,h₁⟩,
-      dsimp[fst,snd],
-      rw[subtype.ext,prod.mk.inj_iff],}
+begin
+ rcases u₀ with ⟨⟨i₀,j₀⟩,h₀⟩,
+ rcases u₁ with ⟨⟨i₁,j₁⟩,h₁⟩,
+ dsimp[fst,snd] at *,
+ rw[subtype.ext_iff_val,prod.mk.inj_iff]
+end
 
 lemma ext_left (u₀ u₁ : birange n) : u₀ = u₁ ↔ u₀.fst = u₁.fst := 
  ⟨λ e, by rw[e],
@@ -75,13 +77,13 @@ def fst (u : trirange n) := u.val.1
 def snd (u : trirange n) := u.val.2.1
 def thd (u : trirange n) := u.val.2.2
 
-@[extensionality]
+@[ext]
 lemma ext (u₀ u₁ : trirange n) :
  u₀ = u₁ ↔ (u₀.fst = u₁.fst ∧ u₀.snd = u₁.snd ∧ u₀.thd = u₁.thd) := 
   by {rcases u₀ with ⟨⟨i₀,j₀,k₀⟩,h₀⟩,
       rcases u₁ with ⟨⟨i₁,j₁,k₁⟩,h₁⟩,
       dsimp[fst,snd,thd],
-      rw[subtype.ext,prod.mk.inj_iff,prod.mk.inj_iff], }
+      rw[subtype.ext_iff_val,prod.mk.inj_iff,prod.mk.inj_iff], }
 
 instance : decidable_eq (trirange n) := 
  λ u₀ u₁, by { apply_instance }

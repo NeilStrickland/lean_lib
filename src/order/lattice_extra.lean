@@ -16,32 +16,33 @@ Some additional typeclass instances:
   inf operation.
 -/
 
+import data.fin.basic
 import order.bounded_lattice
 
 namespace lattice
 open lattice 
 
-instance bounded_distrib_lattice_of_decidable_linear_order 
-  {α : Type*} [decidable_linear_order α]
+instance bounded_distrib_lattice_of_linear_order 
+  {α : Type*} [linear_order α]
   (top : α) (le_top : ∀ a, a ≤ top)
   (bot : α) (bot_le : ∀ a, bot ≤ a) :
   bounded_distrib_lattice α := {
    top          := top,     bot          := bot,
    le_top       := le_top,  bot_le       := bot_le,
-   .. (lattice.distrib_lattice_of_decidable_linear_order)
+   .. (distrib_lattice_of_linear_order)
   }
 
-instance wtb_bdl_of_dlo (α : Type*) [decidable_linear_order α] :
+instance wtb_bdl_of_dlo (α : Type*) [linear_order α] :
  bounded_distrib_lattice (with_top (with_bot α)) := 
-  @lattice.bounded_distrib_lattice_of_decidable_linear_order 
+  @lattice.bounded_distrib_lattice_of_linear_order 
    (with_top (with_bot α)) _ 
-    (has_top.top _) (@lattice.le_top _ _)
-    (has_bot.bot _) (@lattice.bot_le _ _)
+    has_top.top (λ _, le_top)
+    has_bot.bot (λ _, bot_le)
 
 instance inf_monoid {α : Type*} [semilattice_inf_top α] :
  comm_monoid α := {
     mul := has_inf.inf,
-    one := has_top.top α,
+    one := has_top.top,
     one_mul := @top_inf_eq α _,
     mul_one := @inf_top_eq α _,
     mul_comm := @inf_comm α _,
@@ -51,7 +52,7 @@ instance inf_monoid {α : Type*} [semilattice_inf_top α] :
 instance sup_monoid {α : Type*} [semilattice_sup_bot α] :
  comm_monoid α := {
     mul := has_sup.sup,
-    one := has_bot.bot α,
+    one := has_bot.bot,
     one_mul := @bot_sup_eq α _,
     mul_one := @sup_bot_eq α _,
     mul_comm := @sup_comm α _,
@@ -59,3 +60,13 @@ instance sup_monoid {α : Type*} [semilattice_sup_bot α] :
 }
 
 end lattice
+
+namespace fin
+
+instance (n : ℕ) : bounded_distrib_lattice (fin n.succ) := 
+ lattice.bounded_distrib_lattice_of_linear_order
+ (fin.mk n n.lt_succ_self) (λ i, nat.le_of_lt_succ i.is_lt)
+ (fin.mk 0 n.zero_lt_succ) (λ i, nat.zero_le i)
+
+end fin
+

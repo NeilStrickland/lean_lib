@@ -11,7 +11,7 @@ theorems about the combinatorial interpretation of `stirling2` and
 `bell`.  We have not yet proved anything about `stirling1`.
 -/
 
-import algebra.big_operators
+import algebra.big_operators.basic
 
 namespace partition.number
 

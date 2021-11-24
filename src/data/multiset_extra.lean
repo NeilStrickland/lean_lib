@@ -24,8 +24,8 @@ lemma all_prop_coe (p : α → Prop) (l : list α) :
 lemma all_prop_iff {p : α → Prop} {s : multiset α} :
  all_prop p s ↔ ∀ a, a ∈ s → p a := 
 begin
- rcases s with l,
- have : quot.mk setoid.r l = (l : multiset α) := rfl, rw[this],
+ rcases s,
+ have : quot.mk setoid.r s = (s : multiset α) := rfl, rw[this],
  rw[all_prop_coe,list.all_prop_iff],
  split; intros h a; replace h := h a; rw[mem_coe] at *; exact h,
 end
@@ -54,8 +54,9 @@ begin
  change (s₁.map c).sum = count a s,
  by_cases h : a ∈ s, 
  {have h₁ : a ∈ s₁ := mem_erase_dup.mpr h,
-  let s₂ := s₁.erase a,
-  have : s₁ = a :: s₂ := (cons_erase h₁).symm,
+  let s₂ : multiset α := s₁.erase a,
+  let s₃ : multiset α := (cons a s₂),
+  have : s₁ = (cons a s₂) := (cons_erase h₁).symm,
   rw[this,map_cons,sum_cons],
   have : a ∉ s₂ := λ h,
    ((mem_erase_iff_of_nodup s.nodup_erase_dup).mp h).left rfl,
@@ -66,8 +67,8 @@ begin
        rw[← eq_of_mem_repeat ha] at h₁,
        exact this h₁,
    },
-  rw[this,sum_repeat,nat.smul_eq_mul,mul_zero,add_zero],
-  dsimp[c],rw[count_repeat],
+  rw[this,sum_repeat,smul_eq_mul,mul_zero,add_zero],
+  dsimp[c],rw[count_repeat,if_pos (rfl : a = a)],
  },
  {rw[count_eq_zero.mpr h],
   have : s₁.map c = repeat 0 (s₁.map c).card := 
@@ -77,7 +78,7 @@ begin
        rw[eq_of_mem_repeat ha] at h,
        exact h (mem_erase_dup.mp h₁),
    },
-  rw[this,sum_repeat,nat.smul_eq_mul,mul_zero],
+  rw[this,sum_repeat,smul_eq_mul,mul_zero],
  }
 end
 

@@ -137,13 +137,11 @@ def C := { f : X → ℝ // continuous f }
 noncomputable instance C_comm_ring : comm_ring C :=
  by { unfold C, exact continuous_comm_ring }
 
-def C.x : C := ⟨prod.fst ∘ subtype.val,begin 
- apply continuous.comp, apply continuous_subtype_val, apply continuous_fst,
-end⟩
+def C.x : C := ⟨prod.fst ∘ subtype.val,
+ continuous.comp continuous_fst continuous_subtype_val⟩
 
-def C.y : C := ⟨prod.snd ∘ subtype.val,begin 
- apply continuous.comp, apply continuous_subtype_val, apply continuous_snd,
-end⟩
+def C.y : C := ⟨prod.snd ∘ subtype.val,
+ continuous.comp continuous_snd continuous_subtype_val⟩
 
 lemma C.x_def (xy : X) : C.x.val xy = xy.val.1 := rfl
 lemma C.y_def (xy : X) : C.y.val xy = xy.val.2 := rfl
@@ -163,14 +161,14 @@ def P := mv_polynomial A_gens ℝ
 noncomputable instance P_comm_ring :
  comm_ring P := by {unfold P, apply_instance}
 
-noncomputable def P.x : P := @mv_polynomial.X ℝ A_gens _ _ _ A_gens.x
-noncomputable def P.y : P := @mv_polynomial.X ℝ A_gens _ _ _ A_gens.y
+noncomputable def P.x : P := @mv_polynomial.X ℝ A_gens _ A_gens.x
+noncomputable def P.y : P := @mv_polynomial.X ℝ A_gens _ A_gens.y
 
 noncomputable def P.relator : P := (P.x ^ 2 + P.y ^ 2 - 1) * P.y
 
-noncomputable def φ₀ : ℝ → C := λ c, ⟨(λ u, c),continuous_const⟩
+def φ₀ : ℝ → C := λ c, ⟨(λ u, c),continuous_const⟩
 
-noncomputable instance φ₀_hom : is_ring_hom φ₀ := {
+instance φ₀_hom : is_ring_hom φ₀ := {
  map_one := by {apply subtype.eq,funext u,refl,},
  map_add := λ c d, by {apply subtype.eq,funext u,refl,},
  map_mul := λ c d, by {apply subtype.eq,funext u,refl,},
@@ -203,7 +201,7 @@ namespace eg_padic
 variables {p : ℕ} (hp : nat.prime p)
 
 def p_pow : ℕ → ℕ+ := 
- λ k, ⟨p ^ (k + 1),nat.pow_pos (le_of_lt (nat.prime.gt_one hp)) (k + 1)⟩
+ λ k, ⟨p ^ (k + 1),nat.pow_pos hp.pos (k + 1)⟩
 
 lemma p_pow_coe (k : ℕ) : ((p_pow hp k) : ℕ) = p ^ (k + 1) := rfl 
 

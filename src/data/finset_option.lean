@@ -15,7 +15,7 @@ succeeded in reducing it.
 
 -/
 
-import data.fintype algebra.big_operators
+import data.fintype.basic algebra.big_operators.basic
 import algebra.prod_equiv
 import tactic.squeeze
 

@@ -10,7 +10,7 @@ lemmas specialised to that situation.
 
 -/
 
-import algebra.big_operators data.fintype
+import algebra.big_operators data.fintype.basic
 import tactic.squeeze
 
 universes uα uβ uγ uδ
@@ -72,7 +72,7 @@ lemma prod_eq_univ_prod (s : finset α) (f : α → γ) :
  s.prod f = (@univ {a // a ∈ s} _).prod (λ a, f a.val) := 
 begin
  have : @univ {a // a ∈ s} _ = s.attach := rfl,
- rw[← prod_attach,this],
+ rw[← prod_attach,this],refl
 end
 
 @[to_additive finset.sum_univ_product]
@@ -94,18 +94,6 @@ begin
  rw[this,prod_coe_list h],
  simp only [list.map,list.prod_cons,list.prod_nil,mul_one]
 end
-
-@[to_additive finset.sum_range_zero]
-lemma prod_range_zero (f : ℕ → γ) : 
- (range 0).prod f = 1 := by {rw[range_zero,prod_empty]}
-
-lemma prod_range_one (f : ℕ → γ) : 
- (range 1).prod f = f 0 := 
- by {rw[range_one],apply @prod_singleton ℕ γ 0 f,}
-
-lemma sum_range_one (f : ℕ → δ) : 
- (range 1).sum f = f 0 := 
- by {rw[range_one],apply @sum_singleton ℕ δ 0 f,}
 
 lemma prod_range_two (f : ℕ → γ) : 
  (range 2).prod f = f 0 * f 1 := 

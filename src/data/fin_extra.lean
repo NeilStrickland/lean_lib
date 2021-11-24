@@ -9,27 +9,111 @@ Authors: Neil Strickland
  to the standard library at some point. 
 -/
 
-import data.list data.fintype
+import data.list data.fintype.basic data.finset.interval data.fin.interval
 
 namespace fin
 open fin finset
 
+def reflect : ∀ {n : ℕ} (i : fin n), fin n
+| 0 i := fin.elim0 i
+| (n + 1) i := ⟨n - i, nat.lt_succ_of_le (nat.sub_le n i)⟩  
+
+@[simp] lemma coe_reflect : ∀ {n : ℕ} (i : fin n), (i.reflect : ℕ) = n - 1 - i
+| 0 i := fin.elim0 i
+| (n + 1) i := by { change n - i = _, simp }
+
+@[simp] lemma reflect_val {n : ℕ} (i : fin n) : i.reflect.val = n - 1 - i := 
+  coe_reflect i
+
+lemma reflect_reflect : ∀ {n : ℕ} (i : fin n), i.reflect.reflect = i
+| 0 i := fin.elim0 i
+| (n + 1) ⟨i,h⟩ := 
+begin
+  rw [fin.ext_iff], 
+  let j := n - i,
+  change n - j = i,
+  have : n = i + j := (nat.add_sub_of_le (nat.le_of_lt_succ h)).symm,
+  rw [this, nat.add_sub_cancel]
+end
+
+lemma add_reflect : ∀ {n : ℕ} (i : fin n), (i : ℕ) + (i.reflect : ℕ) + 1 = n
+| 0 i := fin.elim0 i
+| (n + 1) ⟨i,h⟩ := 
+begin
+  let j := n - i,
+  change i + j + 1 = n + 1,
+  rw [(nat.add_sub_of_le (nat.le_of_lt_succ h)).symm]
+end
+
+lemma reflect_le : ∀ {n : ℕ} {i j : fin n} (h : i ≤ j), j.reflect ≤ i.reflect 
+| 0 i _ _ := i.elim0
+| (n + 1) ⟨i,hi⟩ ⟨j,hj⟩ hij := nat.sub_le_sub_left n hij
+
+lemma reflect_lt {n : ℕ} {i j : fin n} (h : i < j) : j.reflect < i.reflect := 
+begin
+  apply lt_of_not_ge, intro hr, replace hr := reflect_le hr,
+  rw [reflect_reflect, reflect_reflect] at hr,
+  exact not_lt_of_ge hr h
+end
+
+def inc {n : ℕ} : fin n → fin n.succ := 
+  λ i, ⟨i.val, lt_trans i.is_lt n.lt_succ_self⟩ 
+
+@[simp] lemma coe_inc {n : ℕ} (i : fin n) : (i.inc : ℕ) = (i : ℕ) := rfl
+@[simp] lemma inc_val {n : ℕ} (i : fin n) :  i.inc.val  = i.val := rfl
+
+lemma reflect_inc {n : ℕ} (i : fin n) : i.inc.reflect = i.reflect.succ :=
+begin
+  cases n, exact fin.elim0 i, apply fin.eq_of_veq,
+  change (n + 1) - i = (n - i) + 1, 
+  exact nat.succ_sub (nat.le_of_lt_succ i.is_lt)
+end
+
+lemma reflect_succ {n : ℕ} (i : fin n) : i.succ.reflect = i.reflect.inc :=
+begin
+  let h := congr_arg fin.reflect (reflect_inc (i.reflect)),
+  rw [reflect_reflect, reflect_reflect] at h,
+  exact h.symm
+end
+
+lemma inc_lt_succ {n : ℕ} (i : fin n) : i.inc < i.succ := 
+ by { cases i with i₀ hi, exact i₀.lt_succ_self }
+
+def res {n : ℕ} {i : fin n} {j : fin n.succ} (h : (j : ℕ) ≤ (i : ℕ)) : 
+  fin n := ⟨j.val, lt_of_le_of_lt h i.is_lt⟩
+
+@[simp] lemma coe_res {n : ℕ} {i : fin n} {j : fin n.succ} (h : (j : ℕ) ≤ (i : ℕ)) : 
+  (res h : ℕ) = (j : ℕ) := rfl
+@[simp] lemma res_val {n : ℕ} {i : fin n} {j : fin n.succ} (h : (j : ℕ) ≤ (i : ℕ)) : 
+  (res h).val = j.val := rfl
+
+def trunc {n : ℕ} (i : fin (n + 2)) : fin (n + 1) := 
+  dite ((i : ℕ) < n + 1) (λ h, fin.mk i h) (λ h, fin.mk n n.lt_succ_self)
+
+@[simp] lemma coe_trunc {n : ℕ} (i : fin (n + 2)) : 
+  (trunc i : ℕ) = if (i : ℕ)  < n + 1 then i else n := 
+by { rw [trunc], split_ifs; refl }
+@[simp] lemma trunc_val {n : ℕ} (i : fin (n + 2)) : 
+  (trunc i).val = if (i : ℕ)  < n + 1 then i.val else n := coe_trunc _
+
+def pred' {n : ℕ} (i : fin (n + 2)) : fin (n + 1) := 
+  ⟨i.val.pred, begin have hi : i.val < n + 2 := i.is_lt, cases i.val with i₀, 
+    { rw [nat.pred_zero], exact nat.zero_lt_succ n },
+    { rw [nat.pred_succ], exact nat.lt_of_succ_lt_succ hi }
+  end⟩ 
+
+@[simp] lemma coe_pred' {n : ℕ} (i : fin (n + 2)) :
+  (i.pred' : ℕ) = (i : ℕ).pred := rfl
+
+lemma coe_inj {n : ℕ} {i j : fin n} (h : (i : ℕ) = (j : ℕ)) : i = j := 
+fin.eq_of_veq h
+
 def pred_alt {n : ℕ} {i : ℕ} (h : i.succ < n.succ) : fin n :=
  ⟨i,nat.lt_of_succ_lt_succ h⟩
 
-/- The successor function (fin n) → (fin (n + 1)) is injective -/
-lemma succ_inj : ∀ {n : ℕ} (i j : fin n) (h : i.succ = j.succ), i = j 
-| n ⟨i_val,_⟩ ⟨j_val,_⟩ h := 
-   begin
-    let h0 := @congr_arg (fin n.succ) ℕ _ _ (@fin.val n.succ) h,
-    dsimp[fin.succ] at h0,
-    apply fin.eq_of_veq,
-    exact nat.succ_inj h0,
-   end
-
 /- Zero is not a successor -/
 lemma zero_ne_succ : ∀ {n : ℕ} {i : fin n}, (0 : fin n.succ) ≠ i.succ
-| n ⟨i_val,_⟩ := λ e, nat.no_confusion (congr_arg fin.val e)
+| n ⟨i_val,_⟩ := λ e, nat.no_confusion (congr_arg subtype.val e)
 
 /- Zero is less than any successor -/
 lemma zero_lt_succ : ∀ {n : ℕ} {i : fin n}, (0 : fin n.succ) < i.succ
@@ -72,8 +156,10 @@ def elems_list_nodup : ∀ (n : ℕ), list.nodup (elems_list n)
 | 0 := @list.pairwise.nil _ ne
 | (n + 1) := begin
   let old_list := (elems_list n).map fin.succ,
+  have h : function.injective (fin.succ : (fin n) → (fin (n + 1))) := 
+   λ _ _ e, fin.succ_inj.mp e,
   have old_nodup : list.nodup old_list :=
-   list.nodup_map fin.succ_inj (elems_list_nodup n),
+   list.nodup_map h (elems_list_nodup n),
   have not_mem_old : ∀ k ∈ old_list, (0 : fin n.succ) ≠ k := 
   begin
    intros k k_in_old zero_eq_k,
@@ -90,7 +176,7 @@ begin
  {exact fin.elim0 k,},
  {dsimp[elems_list],
   rw[list.mem_cons_eq],
-  cases k,
+  cases k with k_val k_is_lt,
   cases k_val with k0_val,
   {left,apply fin.eq_of_veq,refl,},
   {have k0_is_lt : k0_val < n0 := nat.lt_of_succ_lt_succ k_is_lt,
@@ -152,7 +238,7 @@ begin
      have k_min : ∀ j, p j → k ≤ j := 
      begin
       intro j,
-      cases j,rcases j_val with _ | j0_val;
+      cases j with j_val j_is_lt,rcases j_val with _ | j0_val;
        simp[has_le.le,fin.le],
       {intro pz0, exact false.elim (pz pz0),},
       {have j0_is_lt : j0_val < n0 := nat.lt_of_succ_lt_succ j_is_lt,
@@ -170,33 +256,35 @@ end
  This is essentially the same as the previous function, but formulated
  in terms of a finite subset of (fin n) rather than a predicate.
 -/
-def finset_least_element {n : ℕ} (s : finset (fin n)) (e : s ≠ ∅ ) : 
+def finset_least_element {n : ℕ} (s : finset (fin n)) (e : s.nonempty) : 
  {k : fin n // k ∈ s ∧ ∀ j, j ∈ s → k ≤ j} :=
-  least_element (λ k,k ∈ s) (exists_mem_of_ne_empty e)
+  least_element (λ k,k ∈ s) (nonempty.bex e)
 
 /-
  We now have a similar function for finding the largest element of 
  a finite subset of (fin n).  For technical reasons we have found it
  more convenient to do this directly with finite sets rather than 
  predicates.
+
+ I am not sure why Lean thinks this is noncomputable
 -/
-def finset_largest_element {n : ℕ} (s : finset (fin n)) (e : s ≠ ∅) :
+noncomputable def finset_largest_element {n : ℕ} (s : finset (fin n)) (e : s.nonempty) :
  {k : fin n // k ∈ s ∧ ∀ j, j ∈ s → j ≤ k} :=
 begin
  tactic.unfreeze_local_instances,
  induction n with n0 ih,
  {exfalso,
-  cases (exists_mem_of_ne_empty e) with i _,
+  cases (nonempty.bex e) with i _,
   exact fin.elim0 i,},
  {let s0 := univ.filter (λ i0 : fin n0, i0.succ ∈ s),
-  by_cases e0 : s0 ≠ ∅,
+  by_cases e0 : s0.nonempty,
   {rcases (ih s0 e0) with ⟨⟨k0_val,k0_is_lt⟩,⟨k0_in_s0,k0_max⟩⟩,
    let k0 : fin n0 := ⟨k0_val,k0_is_lt⟩,
    let k := k0.succ,
    let k_in_s : k ∈ s := (mem_filter.mp k0_in_s0).right,
    let k_max : ∀ j, j ∈ s → j ≤ k := begin
     intros j j_in_s,
-    cases j, cases j_val with j0_val,
+    cases j with j_val j_is_lt, cases j_val with j0_val,
     {exact fin.zero_le k,},
     {have j0_is_lt : j0_val < n0 := nat.lt_of_succ_lt_succ j_is_lt,
      let j0 : fin n0 := ⟨j0_val,j0_is_lt⟩,
@@ -210,32 +298,38 @@ begin
    let z : fin n0.succ := 0,
    have zero_in_s : z ∈ s := begin 
     let h : ∀ k, k ∈ s → z ∈ s := begin
-     intro k,cases k,cases k_val with k0_val,
+     intro k,cases k with k_val k_is_lt,cases k_val with k0_val,
      {intro z_in_s,exact z_in_s,},
      {intro k_in_s,exfalso,
       have k0_is_lt : k0_val < n0 := nat.lt_of_succ_lt_succ k_is_lt,
       let k0 : fin n0 := ⟨k0_val,k0_is_lt⟩,
-      exact e0 (ne_empty_of_mem (mem_filter.mpr ⟨mem_univ k0,k_in_s⟩)),
+      have k0_in_s0 : k0 ∈ s0 := mem_filter.mpr ⟨mem_univ k0,k_in_s⟩,
+      exact e0 ⟨k0,k0_in_s0⟩,
      }
     end,
-    exact exists.elim (exists_mem_of_ne_empty e) h,
+    exact exists.elim (nonempty.bex e) h,
    end,
    have zero_max : ∀ j, j ∈ s → j ≤ z := 
    begin
     intros j j_in_s,
-    cases j, cases j_val with j0_val,
+    cases j with j_val j_is_lt, cases j_val with j0_val,
     {exact fin.zero_le z},
     {exfalso,
      have j0_is_lt : j0_val < n0 := nat.lt_of_succ_lt_succ j_is_lt,
      let j0 : fin n0 := ⟨j0_val,j0_is_lt⟩,
      have j0_in_s0 : j0 ∈ s0 := mem_filter.mpr ⟨mem_univ j0,j_in_s⟩,
-     exact e0 (ne_empty_of_mem j0_in_s0), 
+     exact e0 ⟨j0,j0_in_s0⟩,
     }
    end,
    exact ⟨z,zero_in_s,zero_max⟩,
   }
  }
 end
+
+def fin.list_Ico {n : ℕ} (i : fin n) (j : fin n.succ) : 
+  list (fin n) := (list.Ico i j).attach.map 
+   (λ x, ⟨x.val,lt_of_lt_of_le (list.Ico.mem.mp x.property).right
+                               (nat.le_of_lt_succ j.is_lt)⟩)
 
 end fin
 

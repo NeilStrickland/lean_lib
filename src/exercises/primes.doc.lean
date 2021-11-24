@@ -140,13 +140,13 @@ begin
   This means, essentially, that we are working in a context where we have a given
   natural number $n$, and we aim to prove that there is a prime $p$ with $p>n$.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-/
- let m := fact n + 1,
+ let m := factorial n + 1,
 /-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   We now define $m$ to be $n!+1$.  Again note the terminating comma.  The tactic
   state changes to
   <div class="lean_messages">
    n : ℕ,
-   m : ℕ := fact n + 1
+   m : ℕ := factorial n + 1
    ⊢ ∃ (p : ℕ), prime p ∧ p > n
   </div>
   incorporating the definition of $m$ in the context.
@@ -268,10 +268,10 @@ Note also that the `apply` tactic has unfolded the definition
 $m:=n!+1$ in order to see that `succ_lt_succ` is applicable.  We 
 could have helped with this by writing `dsimp [m],` before 
 `apply succ_lt_succ`; this would have changed the goal to say 
-explicitly that `(fact n) + 1 > 1`.  This kind of help is sometimes
+explicitly that `(factorial n) + 1 > 1`.  This kind of help is sometimes
 necessary, but not in this particular case.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-/
-apply fact_pos,
+apply factorial_pos,
 },
 /-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The theorem `fact_pos` says that $k! > 0$ for all $k$, so we can apply 
@@ -375,7 +375,7 @@ to `n < p`.  The theorem `lt_of_not_ge` converts this goal to
  `let`; it is standard to use `have` for propositions and `let` for
  other types, but this is not enforced.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-/
- have d0 : p ∣ fact n := dvd_fact p_gt_0 p_le_n,
+ have d0 : p ∣ factorial n := dvd_factorial p_gt_0 p_le_n,
 /-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  We now prove that $p$ divides $n!$.  The proof appeals to the fact
  (named `dvd_fact`) that $a$ divides $b!$ whenever $a>0$ and
@@ -392,7 +392,7 @@ to `n < p`.  The theorem `lt_of_not_ge` converts this goal to
  explanation for this slightly awkward syntax involves typeclasses;
  we will not give details here.)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-/
- have d1 : p ∣ fact n + 1 := min_fac_dvd m,
+ have d1 : p ∣ factorial n + 1 := min_fac_dvd m,
 /-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  We now claim that $p$ divides $m=n! + 1$.  As $p$ was defined to be
  `min_fac m`, this amounts to the claim that the `min_fac` function
@@ -451,12 +451,12 @@ style.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-/
 begin
  intro n,
- let m := fact n + 1,
+ let m := factorial n + 1,
  let p := min_fac m,
 /-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 These lines are the same as before.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-/
- have : m ≠ 1 := ne_of_gt (nat.succ_lt_succ (fact_pos n)),
+ have : m ≠ 1 := ne_of_gt (nat.succ_lt_succ (factorial_pos n)),
 /-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Here we have a slight variation.  Previously, in every `have` statement
 there was a name before the colon, which could be used to refer to the
@@ -469,8 +469,8 @@ recent anonymous `have`.
  have p_gt_0 : p > 0 := min_fac_pos m,
  have not_p_le_n : ¬ p ≤ n, {
   intro p_le_n,
-  have d0 : p ∣ fact n := dvd_fact p_gt_0 p_le_n,
-  have d1 : p ∣ fact n + 1 := min_fac_dvd m,
+  have d0 : p ∣ factorial n := dvd_factorial p_gt_0 p_le_n,
+  have d1 : p ∣ factorial n + 1 := min_fac_dvd m,
 /-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 These lines are much the same as before, but with proof terms instead
 of tactics.
@@ -513,17 +513,17 @@ from this.
 
 lemma larger_prime'' : ∀ n : ℕ, ∃ p, (prime p) ∧ (p > n) := 
 λ n, 
- let m := fact n + 1 in
+ let m := factorial n + 1 in
  let p := min_fac m in 
  let p_prime :=
-  min_fac_prime (ne_of_gt (nat.succ_lt_succ (fact_pos n))) in
+  min_fac_prime (ne_of_gt (nat.succ_lt_succ (factorial_pos n))) in
   ⟨p,⟨p_prime,
      (lt_of_not_ge
       (λ p_le_n,
         prime.not_dvd_one
          p_prime
           ((nat.dvd_add_iff_right
-            (dvd_fact p_prime.pos p_le_n)).mpr
+            (dvd_factorial p_prime.pos p_le_n)).mpr
               (min_fac_dvd m))))⟩⟩
 /-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Finally, we give a third proof written as a single proof term with no

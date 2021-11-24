@@ -6,8 +6,9 @@ Authors: Neil Strickland
 Given a semiring `R`, this file defines the power series semiring `R[[x]]`
 -/
 
-import data.fintype data.finsupp algebra.big_operators algebra.pi_instances 
+import data.fintype.basic data.finsupp algebra.big_operators data.pi
 import data.list_extra algebra.biadditive algebra.prod_equiv algebra.convolution
+import algebra.order.sub
 import tactic.squeeze tactic.pi_instances
 
 def power_series (R : Type*) := convolution.map ℕ R
@@ -18,10 +19,7 @@ open finset
 
 variable {R : Type*}
 
-def coeff : ℕ → (power_series R) → R := λ n f, f n
-
-@[extensionality]
-lemma ext : ∀ {f g : power_series R}, (∀ n, coeff n f = coeff n g) → f = g := @funext _ _
+def coeff₀ : ℕ → (power_series R) → R := λ n f, f n
 
 instance [has_zero R] : has_zero (power_series R) := 
  by {dsimp[power_series], apply_instance}
@@ -44,13 +42,12 @@ instance [comm_ring R] : comm_ring (power_series R) :=
 /- `C a` is the constant power series with value `a`, so the zeroth 
    coefficient is `a` and the other coefficients are zero.
 -/
-def C [has_zero R] : R → power_series R := convolution.map.delta
-
-instance C_hom [semiring R] : is_semiring_hom (C : R → power_series R) := {
-  map_zero := convolution.map.delta_zero,
-  map_one := by {dsimp[power_series,C,has_one.one,monoid.one,semiring.one],refl},
-  map_add := λ x y, by {dsimp[C],apply convolution.map.delta_add},
-  map_mul := λ x y, by {dsimp[C],symmetry,apply convolution.delta_convolve_delta},
+def C [semiring R] : R →+* power_series R := {
+ to_fun := convolution.map.delta,
+ map_zero' := convolution.map.delta_zero,
+ map_one' := by {dsimp[power_series,has_one.one,monoid.one,semiring.one],refl},
+ map_add' := λ x y, by {apply convolution.map.delta_add},
+ map_mul' := λ x y, by {symmetry,apply convolution.delta_convolve_delta}
 }
 
 /- `X` denotes the standard generator of the power series 
@@ -59,8 +56,15 @@ instance C_hom [semiring R] : is_semiring_hom (C : R → power_series R) := {
 
 def X [semiring R] : power_series R := convolution.map.single (1 : ℕ) (1 : R)
 
-lemma coeff_n_zero [has_zero R] (n : ℕ) :
- coeff n (0 : power_series R) = (0 : R) := rfl
+def coeff [add_comm_monoid R] (n : ℕ) : (power_series R →+ R) := {
+  to_fun := λ f, f n,
+  map_zero' := rfl,
+  map_add' := λ f g, rfl,
+}
+
+@[ext]
+lemma ext [add_comm_monoid R] : 
+ ∀ {f g : power_series R}, (∀ n, coeff n f = coeff n g) → f = g := @funext _ _
 
 lemma coeff_n_one [semiring R] (n : ℕ) :
  coeff n (1 : power_series R) = ite (0 = n) 1 0 := rfl
@@ -81,15 +85,6 @@ lemma coeff_zero_X [semiring R] : coeff 0 (X : power_series R) = 0 := rfl
 lemma coeff_one_X  [semiring R] : coeff 1 (X : power_series R) = 1 := rfl
 lemma coeff_ss_X   [semiring R] (n : ℕ) : coeff (n + 2) (X : power_series R) = 0 := rfl
 
-lemma coeff_add [add_comm_monoid R] (n : ℕ) (f g : power_series R) : 
- coeff n (f + g) = coeff n f + coeff n g := rfl
-
-instance coeff_hom [add_comm_monoid R] (n : ℕ) : 
- is_add_monoid_hom (coeff n : power_series R → R) := {
-   map_zero := coeff_n_zero n,
-   map_add := coeff_add n
- }
-
 lemma coeff_mul [semiring R] (n : ℕ) (f g : power_series R) : 
  coeff n (f * g) = (range n.succ).sum (λ i, (coeff i f) * (coeff (n - i) g)) := 
 begin
@@ -101,9 +96,9 @@ begin
     (i₂ : ℕ) (h₂ : i₂ ∈ range n.succ)
     (e : prod.mk i₁ (n - i₁) = prod.mk i₂ (n - i₂)), i₁ = i₂ := 
   by { intros,injection e, },
- have := @sum_image (ℕ × ℕ) R ℕ (λ x, (f x.1) * (g x.2)) _ _ 
+ have := @sum_image R (ℕ × ℕ) ℕ (λ x, (f x.1) * (g x.2)) _ _ 
   (range n.succ) (λ i, prod.mk i (n - i)) h_inj,
- simp only [] at this ⊢, rw[← this],congr,
+ simp only [] at this ⊢, rw[← this]
 end
 
 /- Left multiplication by `C a` is termwise left multiplication by `a` -/
@@ -111,7 +106,7 @@ lemma coeff_C_mul [semiring R] (n : ℕ) (a : R) (f : power_series R) :
  coeff n ((C a) * f) = a * coeff n f := 
 begin
  rw[coeff_mul],
- let h := @sum_eq_single ℕ R _ (range (n + 1)) 
+ let h := @sum_eq_single R ℕ _ (range (n + 1)) 
   (λ i, coeff i (C a) * coeff (n - i) f) 0
    (λ i _ h, by { simp only[], rw[coeff_n_C i a,if_neg h.symm,zero_mul], })
    (λ h, by { exfalso, 
@@ -124,7 +119,7 @@ lemma coeff_mul_C [semiring R] (n : ℕ) (f : power_series R) (a : R) :
  coeff n (f * (C a)) = (coeff n f) * a := 
 begin
  rw[coeff_mul],
- let h := @sum_eq_single ℕ R _ (range (n + 1)) 
+ let h := @sum_eq_single R ℕ _ (range (n + 1)) 
   (λ i, coeff i f * coeff (n - i) (C a)) n
    (λ i h_le h_ne, by {
      replace h_le : i ≤ n := mem_range_succ.mp h_le,
@@ -146,7 +141,7 @@ lemma coeff_X_mul_succ [semiring R] (n : ℕ) (f : power_series R) :
  coeff (n + 1) (X * f) = coeff n f := 
 begin
  rw[coeff_mul],
- let h₀ := @sum_eq_single ℕ R _ (range (n + 2)) 
+ let h₀ := @sum_eq_single R ℕ _ (range (n + 2)) 
   (λ i, coeff i X * coeff (n + 1 - i) f) 1
    (λ i _ h, by { simp only[], rw[coeff_n_X i,if_neg h.symm,zero_mul], })
    (λ h, by { have : 1 < n + 2 := nat.succ_lt_succ (nat.zero_lt_succ n),
@@ -156,40 +151,30 @@ begin
 end
 
 /- `E` is the homomorphism sending a power series to its constant term. -/
-def E [semiring R] : (power_series R) → R := λ f, coeff 0 f
+def E [semiring R] : (power_series R) →+* R := {
+  to_fun := λ f, coeff 0 f,
+  map_zero' := rfl,
+  map_one' := rfl,
+  map_add' := λ f g, rfl,
+  map_mul' := λ f g, by { rw[coeff_mul,sum_range_one] }  
+}
 
 lemma E_C [semiring R] (a : R) : E (C a) = a := rfl
-
-lemma E_zero [semiring R] : E (0 : power_series R) = 0 := rfl
-
-lemma E_one  [semiring R] : E (1 : power_series R) = 1 := rfl
-
-lemma E_add  [semiring R] (f g : power_series R) : E (f + g) = E f + E g := rfl
-
-lemma E_mul  [semiring R] (f g : power_series R) : E (f * g) = (E f) * (E g) := 
-by {dsimp[E],rw[coeff_mul,sum_range_one],}
-
-instance E_hom [semiring R] : is_semiring_hom (E : power_series R → R) := {
-  map_zero := E_zero,
-  map_one  := E_one,
-  map_add  := E_add,
-  map_mul  := E_mul
-} 
 
 /- `val_ge n f` means that `f` has valuation at least `n`, or in other
    words that `f` is divisible by `X ^ n`.
 -/
 @[irreducible]
-def val_ge [has_zero R] (n : ℕ) (f : power_series R) : Prop := 
+def val_ge [add_comm_monoid R] (n : ℕ) (f : power_series R) : Prop := 
  ∀ {i : ℕ} (hi : i < n), coeff i f = 0
 
-lemma val_ge_zero_all [has_zero R] (f : power_series R) : val_ge 0 f := 
+lemma val_ge_zero_all [add_comm_monoid R] (f : power_series R) : val_ge 0 f := 
 begin dsimp[val_ge],intros i hi, exact (nat.not_lt_zero i hi).elim end
 
-lemma val_ge_all_zero [has_zero R] (n : ℕ) : val_ge n (0 : power_series R) := 
+lemma val_ge_all_zero [add_comm_monoid R] (n : ℕ) : val_ge n (0 : power_series R) := 
  by {dsimp[val_ge], intros i hi, refl}
 
-lemma val_ge_one_iff [has_zero R] (f : power_series R) : 
+lemma val_ge_one_iff [add_comm_monoid R] (f : power_series R) : 
  val_ge 1 f ↔ coeff 0 f = 0 := 
   by { dsimp[val_ge], split,
    {intro h,exact h (nat.lt_succ_self 0)},
@@ -249,7 +234,7 @@ begin
   {rw[coeff_X_mul_zero],rw[if_neg (nat.succ_ne_zero n)],},
   {rw[coeff_X_mul_succ,ih i],by_cases h : n = i,
    {rw[if_pos h,if_pos (congr_arg nat.succ h)]},
-   {have : n.succ ≠ i.succ := λ e, h (nat.succ_inj e),
+   {have : n.succ ≠ i.succ := λ e, h (nat.succ_inj'.mp e),
     rw[if_neg h,if_neg this]}}}
 end
 
@@ -268,9 +253,7 @@ lemma coeff_compose (n : ℕ) (f g : power_series R) :
  coeff n (compose f g) = 
   (range n.succ).sum (λ j, (coeff j f) * (coeff n (g ^ j))) := 
 begin
- haveI : is_add_monoid_hom ((coeff n) : power_series R → R) :=
-  power_series.coeff_hom n,
- let hh := sum_hom (coeff n : power_series R → R),
+ let hh := (coeff n : power_series R →+ R).map_sum,
  have := calc 
   coeff n (compose f g) = 
    coeff n ((range n.succ).sum (λ j, C (coeff j f) * (g ^ j))) : rfl
@@ -295,18 +278,18 @@ end
 
 lemma zero_compose (g : power_series R) : compose 0 g = 0 := 
 begin
- ext n,rw[coeff_compose,coeff_n_zero],
+ ext n,rw[coeff_compose],
  apply sum_eq_zero_of_terms_eq_zero,
- intros i _,rw[coeff_n_zero,zero_mul],
+ intros i _,rw[(coeff i).map_zero,zero_mul],
 end
 
 /- `f ∘ g` is an additive function of `f`. -/
 lemma add_compose (f₁ f₂ g : power_series R) : 
  compose (f₁ + f₂) g = compose f₁ g + compose f₂ g := 
 begin
- ext n,rw[coeff_add,coeff_compose,coeff_compose,coeff_compose],
+ ext n,rw[(coeff n).map_add,coeff_compose,coeff_compose,coeff_compose],
  rw[← sum_add_distrib],congr,ext j,
- rw[coeff_add,add_mul],
+ rw[(coeff _).map_add,add_mul],
 end
 
 /- `f ∘ g` is a multiplicative function of `f`. -/
@@ -323,11 +306,11 @@ begin
           coeff jpq.1 (g ^ jpq.2.1) * coeff (n - jpq.1) (g ^ jpq.2.2), 
  let t'₁ := λ pqj : ((ℕ × ℕ) × ℕ), t₁ ⟨pqj.2,pqj.1⟩,
  let inc₁ : ∀ (k : ℕ), ℕ ↪ (ℕ × ℕ) := λ k, {
-    to_fun := λ p, ⟨p,k - p⟩, inj := λ p₁ p₂ e, congr_arg prod.fst e,
+    to_fun := λ p, ⟨p,k - p⟩, inj' := λ p₁ p₂ e, congr_arg prod.fst e,
  },
- let r2' := r.bind (λ k, (range k.succ).map (inc₁ k)),
+ let r2' := r.bUnion (λ k, (range k.succ).map (inc₁ k)),
  have r2_filter : r2' = r2.filter (λ pq, pq.1 + pq.2 ≤ n) := by {
-  ext ⟨p,q⟩,rw[mem_bind,mem_filter,mem_product,mem_range_succ,mem_range_succ],
+  ext ⟨p,q⟩,rw[mem_bUnion,mem_filter,mem_product,mem_range_succ,mem_range_succ],
   simp only [],split,
   {rintro ⟨k,k_le,hk⟩,rcases mem_map.mp hk with ⟨p',p_le,hpq⟩,
    injection hpq with hp hq,rw[hp] at p_le hq,
@@ -335,7 +318,7 @@ begin
    replace p_le := mem_range_succ.mp p_le,
    repeat {split}; apply le_trans _ k_le,
    {exact p_le},
-   {rw[← hq],apply nat.sub_le_self},
+   {rw[← hq],apply tsub_le_self},
    {rw[← hq,nat.add_sub_of_le p_le]}
   },
   {rintro ⟨⟨p_le,q_le⟩,k_le⟩,
@@ -351,14 +334,17 @@ begin
   ... = r.sum (λ k, (range k.succ).sum (λ p, coeff p f₁ * coeff (k - p) f₂ * coeff n (g ^ k))) : 
    by {apply sum_congr rfl,intros k k_le,rw[coeff_mul,sum_mul],}
   ... = r2'.sum (λ pq, coeff pq.1 f₁ * coeff pq.2 f₂ * coeff n (g ^ (pq.1 + pq.2))) : 
-   by {rw[sum_bind],apply sum_congr rfl,intros k k_le,
+   by {rw[sum_bUnion],apply sum_congr rfl,intros k k_le,
        rw[sum_map],{
          apply sum_congr rfl,intros p p_le,dsimp[inc₁],
          replace p_le : p ≤ k := mem_range_succ.mp p_le,
          rw[nat.add_sub_of_le p_le],
        },{-- side condition for sum_map
          intros k₁ k₁_le k₂ k₂_le k_ne,
+         change disjoint _ _, simp only [],
+         rw [disjoint, le_bot_iff],
          apply eq_empty_iff_forall_not_mem.mpr,rintros ⟨p,q⟩ hpq,
+         change _ ∈ _ ∩ _ at hpq,
          rw[mem_inter] at hpq,
          rcases mem_map.mp hpq.1 with ⟨p₁,p₁_le,hpq₁⟩,injection hpq₁ with hp₁ hq₁, 
          rcases mem_map.mp hpq.2 with ⟨p₂,p₂_le,hpq₂⟩,injection hpq₂ with hp₂ hq₂,
@@ -391,7 +377,7 @@ begin
     by {apply sum_congr rfl,intros j j_le,
      replace j_le := mem_range_succ.mp j_le,
      rw[coeff_compose_extra f₁ g hg j_le],
-     have : n - j ≤ n := nat.sub_le_self n j,
+     have : n - j ≤ n := tsub_le_self,
      rw[coeff_compose_extra f₂ g hg this],
     }
    ... = r.sum (λ j, r.sum (λ p, coeff p f₁ * coeff j (g ^ p) * 
@@ -433,10 +419,10 @@ begin
  let f := λ (j : ℕ), coeff j (C a) * coeff n (g ^ j),
  change (range n.succ).sum f = coeff n (C a),
  have : f 0 = coeff n (C a) := 
-  by {dsimp[f],rw[coeff_zero_C,coeff_n_one,coeff_n_C],
+  by {dsimp[f],rw[pow_zero,coeff_zero_C,coeff_n_one,coeff_n_C],
       split_ifs,rw[mul_one],rw[mul_zero]},
  rw[← this],apply sum_eq_single,
- {intros j h_le h_ne,dsimp[f],rw[coeff_n_C,if_neg h_ne.symm,zero_mul]},
+ {intros j h_le h_ne,rw[coeff_n_C,if_neg h_ne.symm,zero_mul]},
  {intro h,exfalso,exact h (mem_range_succ.mpr (nat.zero_le n))}
 end
 
@@ -448,9 +434,9 @@ begin
  have : f 1 = coeff n g := 
   by {dsimp[f],rw[coeff_one_X,pow_one,one_mul]},
  rw[← this],apply sum_eq_single,
- {intros j h_le h_ne,dsimp[f],rw[coeff_n_X,if_neg h_ne.symm,zero_mul]},
+ {intros j h_le h_ne,rw[coeff_n_X,if_neg h_ne.symm,zero_mul]},
  {cases n with n,
-  {intro h,rw[this],exact hg},
+  {intro h,rw[pow_one,hg,mul_zero]},
   {intro h,exfalso,
    exact h (mem_range_succ.mpr (nat.succ_le_succ (nat.zero_le n))),
   }}

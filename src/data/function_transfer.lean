@@ -21,7 +21,7 @@ def function_equiv_of_equiv {α : Type u} {β : Type v} {γ : Type w} {δ : Type
   inv_fun := λ (v : γ → δ), g.inv_fun ∘ v ∘ f,
   left_inv := begin
    unfold function.left_inverse,
-   intro u, ext a, simp,
+   intro u, ext a,
    by calc
     g.inv_fun (g.to_fun (u (f.inv_fun (f.to_fun a)))) = 
      u (f.inv_fun (f.to_fun a)) : g.left_inv _
@@ -29,7 +29,7 @@ def function_equiv_of_equiv {α : Type u} {β : Type v} {γ : Type w} {δ : Type
   end,
   right_inv := begin
     unfold function.right_inverse,
-    intro v, ext c, simp, 
+    intro v, ext c,
    by calc
     g.to_fun (g.inv_fun (v (f.to_fun (f.inv_fun c)))) = v (f.to_fun (f.inv_fun c)) : g.right_inv _
      ... = v c : congr_arg v (f.right_inv c)

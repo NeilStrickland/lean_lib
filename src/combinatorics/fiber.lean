@@ -5,7 +5,8 @@ Authors: Neil Strickland
 
 -/
 
-import data.fintype
+import data.fintype.basic data.fintype.card 
+       algebra.big_operators.basic algebra.big_operators.order
 import tactic.squeeze
 
 namespace combinatorics
@@ -51,8 +52,8 @@ begin
  let e0 := card_eq_fiber_sum p,
  let e1 : ∀ b : β, b ∈ finset.univ → fintype.card (fiber p b) = finset.card (fiber' p b)
   := λ b _, card_fiber p b,
- let e2 := @finset.sum_congr β ℕ finset.univ _ _ _ _ rfl e1,
- exact e0.trans e2,
+ let e2 := @finset.sum_congr ℕ β finset.univ _ _ _ _ rfl e1,
+ exact e0.trans e2
 end
 
 variable {p}
@@ -70,12 +71,12 @@ begin
  intro p_surj,
  have h0 : ∀ b, b ∈ finset.univ → 1 ≤ fintype.card (fiber p b) := 
   λ b _, fintype.card_pos_iff.mpr (fiber_nonempty_of_surjective p_surj b),
- let h1 := @finset.sum_le_sum β ℕ finset.univ _ _ _ _ h0,
+ let h1 := @finset.sum_le_sum β ℕ _ _ _ finset.univ h0,
  let h2 := calc 
   finset.sum finset.univ (λ b : β, 1) = 
-   add_monoid.smul finset.univ.card 1 : 
-     @finset.sum_const β ℕ finset.univ _ 1
-  ... = ↑finset.univ.card : @add_monoid.smul_one ℕ _ _ finset.univ.card
+   add_monoid.nsmul finset.univ.card 1 : 
+     @finset.sum_const ℕ β finset.univ _ 1
+  ... = ↑finset.univ.card : nsmul_one _
   ... = finset.univ.card : nat.cast_id _
   ... = fintype.card β : rfl,
  rw[h2,← card_eq_fiber_sum p] at h1,

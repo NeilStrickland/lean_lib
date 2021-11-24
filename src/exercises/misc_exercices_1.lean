@@ -1,3 +1,4 @@
+import algebra.big_operators.basic
 import tactic.interactive tactic.ring tactic.fin_cases
 
 /- Exercise 1
@@ -93,13 +94,13 @@ begin
  fin_cases r0,
  {left,
   use m,
-  let e : r = 0 := congr_arg fin.val h_1,
+  let e : r = 0 := congr_arg subtype.val h_1,
   rw[e,add_zero] at h,
   exact h,
  },{
   right,
   use m,
-  let e : r = 1 := congr_arg fin.val h_1,
+  let e : r = 1 := congr_arg subtype.val h_1,
   rw[e] at h,
   exact h,
  },

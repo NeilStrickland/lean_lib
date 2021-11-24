@@ -1,4 +1,4 @@
-import data.vector logic.embedding data.fin data.list.basic
+import data.vector logic.embedding data.fin.basic data.list.basic
 import data.list_extra
 
 namespace vector 
@@ -10,7 +10,7 @@ lemma head_eq_zeroth : ∀ (v : vector α (n + 1)), v.head = nth v 0
 | ⟨list.nil,l_len⟩ := by {cases l_len}
 | ⟨_ :: _,_⟩ := rfl 
 
-def single (a : α) : vector α 1 := a :: vector.nil
+def single (a : α) : vector α 1 := vector.cons a vector.nil
 
 lemma head_single (a : α) : (single a).head = a := rfl
 lemma single_val (a : α) : (single a).val = [a] := rfl
@@ -24,7 +24,7 @@ lemma veq_of_eq {x₀ x₁ : vector α n} (e : x₀ = x₁) :
  x₀.val = x₁.val := congr_arg subtype.val e
 
 def concat (v : vector α n) (a : α) : vector α (n + 1) := 
- v.append (a :: vector.nil)
+ v.append (vector.single a)
 
 def trim : ∀ (v : vector α (n + 1)), vector α n 
 | ⟨l,l_len⟩ := ⟨l.take n,
@@ -39,7 +39,7 @@ lemma trim_to_list : ∀ (v : vector α (n + 1)), v.trim.to_list = v.to_list.tak
 lemma trim_concat : ∀ (v : vector α n) (a : α), (v.concat a).trim = v 
 | ⟨l,l_len⟩ a := subtype.eq $ by {
  change (l ++ [a]).take n = l,
- rw[← l_len,list.take_append_of_le_length (le_refl l.length),list.take_all],}
+ rw[← l_len,list.take_append_of_le_length (le_refl l.length),list.take_length],}
 
 lemma last_concat : ∀ (v : vector α n) (a : α), (v.concat a).last = a
 | ⟨l,l_len⟩ a := by {
@@ -60,7 +60,7 @@ end
 
 def cons_inj (n : ℕ) (a : α) : vector α n ↪ vector α (n + 1) := {
  to_fun := vector.cons a,
- inj := λ ⟨l₀,l₀_len⟩ ⟨l₁,l₁_len⟩ e, 
+ inj' := λ ⟨l₀,l₀_len⟩ ⟨l₁,l₁_len⟩ e, 
  begin 
   apply subtype.eq,
   dsimp[vector.cons] at e,
@@ -72,11 +72,13 @@ def cons_inj (n : ℕ) (a : α) : vector α n ↪ vector α (n + 1) := {
 
 def concat_inj (n : ℕ) (a : α) : vector α n ↪ vector α (n + 1) := {
  to_fun := λ v, v.concat a,
- inj := λ ⟨l₀,l₀_len⟩ ⟨l₁,l₁_len⟩ e, 
+ inj' := λ ⟨l₀,l₀_len⟩ ⟨l₁,l₁_len⟩ e, 
  begin 
   apply subtype.eq,
   replace e := vector.veq_of_eq e,
-  exact list.append_inj_right e (l₀_len.trans l₁_len.symm),
+  change l₀.append [a] = l₁.append [a] at e,
+  change l₀ = l₁,
+  exact list.append_inj_left e (l₀_len.trans l₁_len.symm),
  end 
 }
 
@@ -93,7 +95,7 @@ lemma prod_eq_val_prod (v : vector α n) : v.prod = v.val.prod := rfl
 
 @[to_additive vector.sum_cons]
 lemma prod_cons : ∀ (a : α) (v : vector α n),
- (a :: v).prod = a * v.prod
+ (vector.cons a v).prod = a * v.prod
 | a ⟨l,l_len⟩ := list.prod_cons
 
 @[to_additive vector.sum_append]

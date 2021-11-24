@@ -40,24 +40,24 @@ lemma my_bnot_and (a b : bool) : bnot (a && b) = (bnot a) || (bnot b) :=
 lemma my_zero_le (n : ℕ) :  0 ≤ n :=
 begin
  induction n with n ih,
- exact nat.less_than_or_equal.refl 0,
+ exact nat.less_than_or_equal.refl,
  exact nat.less_than_or_equal.step ih,
 end
 
-def odd (n : ℕ) : Prop := (n % 2 = 1)
+def odd' (n : ℕ) : Prop := (n % 2 = 1)
 
 lemma eq_leq (m n : ℕ) : m = n ↔ ((m ≤ n) ∧ (n ≤ m)) := sorry
 lemma ne_lt (m n : ℕ) : m ≠ n ↔ ((m < n) ∨ (n < m)) := sorry
 lemma le_zero (n : ℕ) : n ≤ 0 ↔ n = 0 := sorry
 lemma dvd_one (d : ℕ) : (d ∣ 1) ↔ (d = 1) := sorry 
-lemma odd_mul (m n : ℕ) : odd (m * n) ↔ (odd n) ∧ (odd m) := sorry
+lemma odd_mul (m n : ℕ) : odd' (m * n) ↔ (odd' n) ∧ (odd' m) := sorry
 
 
 /- --------------------------------------------------------------- -/
 -- Section 2.1.4
 
 lemma leq_pmull (m n : ℕ) : (n > 0) → m ≤ n * m := sorry
-lemma odd_gt_zero (n : ℕ) : odd n → n > 0 := sorry
+lemma odd_gt_zero (n : ℕ) : odd' n → n > 0 := sorry
 
 lemma dvd_mul (d1 d2 m1 m2 : ℕ) : (d1 ∣ m1) → (d2 ∣ m2) → d1 * d2 ∣ m1 * m2 := sorry
 
@@ -78,9 +78,7 @@ by { cases n with k; simp, }
 lemma my_mul_eq_zero (m n : ℕ) : (m * n = 0) ↔ (m = 0) ∨ (n = 0) := 
 begin
  cases n; cases m;
- try {simp [-nat.mul_eq_zero]},
- dsimp[has_mul.mul,nat.mul,has_add.add,nat.add],
- simp only [nat.succ_ne_zero,or_self],
+ try {simp [-nat.mul_eq_zero]}
 end
 
 /- --------------------------------------------------------------- -/
@@ -142,7 +140,7 @@ end
 
 attribute [simp] my_le_refl 
 
-example (a b : ℕ) : a + (nat.succ b) ≤ nat.succ (a + b) := by simp.
+example (a b : ℕ) : a + (nat.succ b) ≤ nat.succ (a + b) := sorry
 
 lemma contra (c b : Prop) : (¬ c → ¬ b) → (b → c) := 
 begin
@@ -152,24 +150,24 @@ begin
  {exact false.elim (h hnc hb)}
 end
 
-example (m p : ℕ) : nat.prime p → p ∣ ((nat.fact m) + 1) → m < p := 
+example (m p : ℕ) : nat.prime p → p ∣ ((nat.factorial m) + 1) → m < p := 
 begin
  intro prime_p,
  apply contra,
  intro h0,
  have leq_p_m : p ≤ m := le_of_not_gt h0,
- rw[← (@nat.dvd_add_iff_right p (nat.fact m) 1)],
+ rw[← (@nat.dvd_add_iff_right p (nat.factorial m) 1)],
  {exact nat.prime.not_dvd_one prime_p},
- {exact nat.dvd_fact (nat.prime.pos prime_p) leq_p_m}
+ {exact nat.dvd_factorial (nat.prime.pos prime_p) leq_p_m}
 end
 
-example (m p : ℕ) : nat.prime p → p ∣ ((nat.fact m) + 1) → m < p := 
+example (m p : ℕ) : nat.prime p → p ∣ ((nat.factorial m) + 1) → m < p := 
 begin
  intros prime_p d1,
  cases lt_or_ge m p, assumption, exfalso,
- rw[← (@nat.dvd_add_iff_right p (nat.fact m) 1)] at d1,
+ rw[← (@nat.dvd_add_iff_right p (nat.factorial m) 1)] at d1,
  exact nat.prime.not_dvd_one prime_p d1,
- exact nat.dvd_fact (nat.prime.pos prime_p) h,
+ exact nat.dvd_factorial (nat.prime.pos prime_p) h,
 end
 
 /- --------------------------------------------------------------- -/
@@ -223,11 +221,11 @@ end
 /- --------------------------------------------------------------- -/
 -- Section 2.4
 
-example (m p : ℕ) : nat.prime p → p ∣ ((nat.fact m) + 1) → m < p := 
+example (m p : ℕ) : nat.prime p → p ∣ ((nat.factorial m) + 1) → m < p := 
 begin
  intros prime_p,apply contra,intros h0 d1,
  exact nat.prime.not_dvd_one prime_p
-  ((@nat.dvd_add_iff_right p (nat.fact m) 1 (nat.dvd_fact (nat.prime.pos prime_p) (le_of_not_gt h0))).mpr d1), 
+  ((@nat.dvd_add_iff_right p (nat.factorial m) 1 (nat.dvd_factorial (nat.prime.pos prime_p) (le_of_not_gt h0))).mpr d1), 
 end
 
 /- --------------------------------------------------------------- -/
@@ -273,16 +271,15 @@ lemma nat.sub_mul (n m k : ℕ) : (n - m) * k = n * k - m * k :=
 
 example (n m : ℕ) : m ^ 2 - n ^ 2 = (m - n) * (m + n) := 
  begin
-  dsimp[has_pow.pow,nat.pow],
-  rw[one_mul,one_mul,nat.sub_mul,mul_add,mul_add,nat.sub_add,
-     nat.mul_comm m n,nat.add_sub_cancel],
+  rw[pow_two,pow_two,nat.sub_mul,mul_add,mul_add,nat.mul_comm m n],
+  rw[nat.sub_add,nat.add_sub_cancel],
  end
 
 lemma bodd_exp (m n : ℕ) : nat.bodd (m ^ n) = (n = 0) || nat.bodd m := 
 begin
  induction n with n ih,
  {refl,},
- {rw[to_bool_ff (nat.succ_ne_zero n),ff_bor,nat.pow_succ,nat.bodd_mul,ih],
+ {rw[to_bool_ff (nat.succ_ne_zero n),ff_bor,pow_succ,nat.bodd_mul,ih],
   cases (nat.bodd m); cases (to_bool (n = 0)); refl
  }
 end
@@ -308,6 +305,7 @@ begin
  induction n with n ih,
  {refl,},
  {erw[all_words,flatten_length],
+  rw[pow_succ,mul_comm],
   let f : α → list (list α) :=
    λ a, list.map (list.cons a) (all_words n alphabet),
   let g : α → ℕ := λ a, (f a).length,
@@ -328,7 +326,6 @@ begin
   let h3 := (@list.eq_repeat ℕ (alphabet.length ^ n) alphabet.length
    (l.map list.length)).mpr ⟨h1,h2⟩,
   exact ((congr_arg list.sum h3).trans 
-   (list.sum_const_nat (alphabet.length ^ n) alphabet.length)).trans 
-    (nat.pow_succ alphabet.length n).symm,
+   (list.sum_const_nat (alphabet.length ^ n) alphabet.length)),
  }
 end

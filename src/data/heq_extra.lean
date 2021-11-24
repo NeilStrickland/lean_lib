@@ -9,7 +9,7 @@ equality.  It is far from clear that the approach taken here
 
 -/
 
-import data.fintype
+import data.fintype.basic
 
 lemma heq_rec {B : Type*} {X : B → Type*} {b0 b1 : B} (eb : b0 = b1) (x : X b0) :
  x == (@eq.rec_on B b0 X b1 eb x) := 

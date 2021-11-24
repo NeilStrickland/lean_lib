@@ -8,7 +8,7 @@ of distinct elements.  It probably has some overlap with Mario's
 recent mathlib additions on lists of sublists etc.
 -/
 
-import data.nat.choose data.fintype
+import data.nat.choose data.fintype.basic
 import tactic.squeeze
 import combinatorics.erase combinatorics.falling combinatorics.qualify
 
@@ -19,6 +19,7 @@ namespace combinatorics
 variables (α : Type*) [fintype α] [decidable_eq α]
 local attribute [instance] set_fintype
 
+/- @latex: defn-F -/
 def ordered_subset (k : ℕ) := 
  { s : list α // s.length = k ∧ s.nodup }
 
@@ -32,7 +33,7 @@ instance (k : ℕ) : decidable_eq (ordered_subset α k) :=
 
 variable {α}
 
-@[extensionality]
+@[ext]
 lemma ext {k : ℕ} {s₁ s₂ : ordered_subset α k} : 
   s₁ = s₂ ↔ s₁.val = s₂.val := 
 begin 
@@ -59,7 +60,7 @@ lemma map_id {k : ℕ} : ∀ s : ordered_subset α k,
  map function.injective_id s = s
 | ⟨s,⟨s_len,s_nodup⟩⟩ := by {apply subtype.eq,exact list.map_id s}
 
-lemma map_comp {k : ℕ} : 
+lemma map_map {k : ℕ} : 
  ∀ s : ordered_subset α k, 
   map (function.injective_comp g_inj f_inj) s = 
    map g_inj (map f_inj s)

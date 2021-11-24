@@ -7,7 +7,7 @@ This is about the obvious bijection (X \ {x}) ∐ 1 ≃ X, or
 (option (erase a)) ≃ α in Lean notation.
 -/
 
-import data.fintype
+import data.fintype.basic
 
 namespace combinatorics
 

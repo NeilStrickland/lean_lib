@@ -20,7 +20,7 @@ Authors: Neil Strickland
  the theory developed in the file unique_element.lean
 -/
 
-import data.fintype tactic.squeeze tactic.fin_cases
+import data.fintype.basic tactic.squeeze tactic.fin_cases
 import data.finset_transfer data.unique_element data.heq_extra 
 import combinatorics.partition.basic
 

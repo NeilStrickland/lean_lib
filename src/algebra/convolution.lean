@@ -27,9 +27,10 @@ operation `map M P₁ → map M P₂ → map M P₁₂`.  We can recover the
 ring structure on `map M R` by taking `P₁ = P₂ = P₁₂ = R`.
 -/
 
-import data.fintype data.finsupp algebra.big_operators algebra.pi_instances 
+import data.fintype.basic data.finsupp algebra.big_operators 
+import data.pi tactic.pi_instances
 import data.list_extra algebra.biadditive algebra.prod_equiv
-import tactic.squeeze tactic.pi_instances
+import tactic.squeeze
 
 namespace convolution
 
@@ -61,18 +62,19 @@ def twist : M × M ↪ M × M :=
 variable {M}
 
 def els3 : finset (M × M × M) := 
- (els m).bind (λ xv,(els xv.2).map (incl xv.1))
+ (els m).bUnion (λ xv,(els xv.2).map (incl xv.1))
 
 def els3' : finset (M × M × M) := 
- (els m).bind (λ uz,(els uz.1).map (incr uz.2))
+ (els m).bUnion (λ uz,(els uz.1).map (incr uz.2))
 
 lemma els3_disjoint (m : M)
  (xv₁ : M × M) (h₁ : xv₁ ∈ els m) (xv₂ : M × M) (h₂ : xv₂ ∈ els m) 
- (h : xv₁ ≠ xv₂) :
-  (els xv₁.2).map (incl xv₁.1) ∩ (els xv₂.2).map (incl xv₂.1) = ∅ := 
+ (h : xv₁ ≠ xv₂) : 
+  disjoint ((els xv₁.2).map (incl xv₁.1)) ((els xv₂.2).map (incl xv₂.1)) := 
 begin
  rcases xv₁ with ⟨x₁,v₁⟩,
  rcases xv₂ with ⟨x₂,v₂⟩,
+ dsimp [disjoint], rw[subset_empty],
  apply eq_empty_iff_forall_not_mem.mpr,intros w hw,apply h,
  rcases (mem_inter.mp hw) with ⟨hw₁,hw₂⟩,
  rcases mem_map.mp hw₁ with ⟨yz₁,⟨w_sum₁,w_eq₁⟩⟩,
@@ -89,10 +91,11 @@ end
 lemma els3'_disjoint (m : M)
  (uz₁ : M × M) (h₁ : uz₁ ∈ els m) (uz₂ : M × M) (h₂ : uz₂ ∈ els m) 
  (h : uz₁ ≠ uz₂) :
-  (els uz₁.1).map (incr uz₁.2) ∩ (els uz₂.1).map (incr uz₂.2) = ∅ := 
+  disjoint ((els uz₁.1).map (incr uz₁.2)) ((els uz₂.1).map (incr uz₂.2)) := 
 begin
  rcases uz₁ with ⟨u₁,z₁⟩,
  rcases uz₂ with ⟨u₂,z₂⟩,
+ dsimp [disjoint], rw[subset_empty],
  apply eq_empty_iff_forall_not_mem.mpr,intros w hw,apply h,
  rcases (mem_inter.mp hw) with ⟨hw₁,hw₂⟩,
  rcases mem_map.mp hw₁ with ⟨xy₁,⟨w_sum₁,w_eq₁⟩⟩,
@@ -114,7 +117,7 @@ begin
  change (⟨x,y,z⟩ : M × M × M) ∈ els3 m ↔ x + y + z = m,
  split,
  {intro hw,
-  rcases mem_bind.mp hw with ⟨xv,⟨hxv,h⟩⟩,
+  rcases mem_bUnion.mp hw with ⟨xv,⟨hxv,h⟩⟩,
   replace hxv := (mem_els m xv).mp hxv,
   rcases mem_map.mp h with ⟨yz,⟨hyz,h'⟩⟩,
   replace hyz := (mem_els _ yz).mp hyz,
@@ -122,7 +125,7 @@ begin
   rw[← hyz,ex,← add_assoc] at hxv,exact hxv,
  },
  {intro e,
-  apply mem_bind.mpr,
+  apply mem_bUnion.mpr,
   use ⟨x,y + z⟩,
   have : x + (y + z) = m := by {rw[← add_assoc,e]},
   use (mem_els m ⟨x,y + z⟩).mpr this,
@@ -137,12 +140,12 @@ begin
  change x + y + z = m ↔ (⟨x,y,z⟩ : M × M × M) ∈ els3' m,
  split,
  {intro e,
-  apply mem_bind.mpr,use ⟨x + y,z⟩,use (mem_els m _).mpr e,
+  apply mem_bUnion.mpr,use ⟨x + y,z⟩,use (mem_els m _).mpr e,
   apply mem_map.mpr,
   use ⟨x,y⟩, use (mem_els _ _).mpr rfl,refl,
  },
  {intro hw,
-  rcases mem_bind.mp hw with ⟨uz,⟨huz,h⟩⟩,
+  rcases mem_bUnion.mp hw with ⟨uz,⟨huz,h⟩⟩,
   replace huz := (mem_els m uz).mp huz,
   rcases mem_map.mp h with ⟨xy,⟨hxy,h'⟩⟩,
   replace hxy := (mem_els _ xy).mp hxy,
@@ -153,7 +156,7 @@ begin
 end
 
 lemma els_zero_left : 
- (els m).filter (λ xy, 0 = xy.1) = finset.singleton ⟨0,m⟩ := 
+ (els m).filter (λ xy, 0 = xy.1) = singleton ⟨0,m⟩ := 
 begin
  ext ⟨x,y⟩,
  rw[mem_filter,mem_els,mem_singleton],
@@ -167,7 +170,7 @@ begin
 end
 
 lemma els_zero_right : 
- (els m).filter (λ xy, 0 = xy.2) = finset.singleton ⟨m,0⟩ := 
+ (els m).filter (λ xy, 0 = xy.2) = singleton ⟨m,0⟩ := 
 begin
  ext ⟨x,y⟩,
  rw[mem_filter,mem_els,mem_singleton],
@@ -191,7 +194,7 @@ instance : sum_set ℕ := {
    },
    {intro e,rw[mem_image],use x,
     use mem_range_succ.mpr (e ▸ (nat.le_add_right x y)),congr,
-    exact nat.sub_eq_of_eq_add e.symm,
+    exact norm_num.sub_nat_pos _ _ _ e,
    }
   end
 }
@@ -199,7 +202,7 @@ instance : sum_set ℕ := {
 def shuffle (M₁ : Type*) (M₂ : Type*) :
  (M₁ × M₁) × (M₂ × M₂) ↪ (M₁ × M₂) × (M₁ × M₂) := {
  to_fun := λ x, ⟨⟨x.1.1,x.2.1⟩,⟨x.1.2,x.2.2⟩⟩,
- inj := begin
+ inj' := begin
   rintros ⟨⟨x₁,x₂⟩,⟨x₃,x₄⟩⟩ ⟨⟨y₁,y₂⟩,⟨y₃,y₄⟩⟩ e,
   injection e with e₁₃ e₂₄,
   injection e₁₃ with e₁ e₃, injection e₂₄ with e₂ e₄,
@@ -265,7 +268,7 @@ namespace map
 
 variables (M : Type*) (P : Type*)
 
-instance : has_coe_to_fun (map M P) := ⟨λ _, M → P,id⟩
+instance : has_coe_to_fun (map M P) (λ _, M → P) := ⟨ id ⟩ 
 
 variables {M} {P}
 
@@ -316,7 +319,7 @@ lemma one_apply_nz [has_zero M] [decidable_eq M] [has_zero P] [has_one P]
  {m : M} (h : m ≠ 0) : (1 : map M P) m = 0 := 
   by { dsimp[has_one.one],rw[if_neg h] }
 
-@[extensionality]
+@[ext]
 lemma ext : ∀ {a₁ a₂ : map M P}, (∀ m, a₁ m = a₂ m) → a₁ = a₂ := @funext _ _
 
 section single 
@@ -386,7 +389,7 @@ def convolve (u₁ : map M P₁) (u₂ : map M P₂) : (map M P₁₂) :=
 lemma zero_convolve (p₂ : map M P₂) : convolve m₁₂ 0 p₂ = 0 := begin
  ext m,dsimp[convolve],
  have : (els m).sum (λ x, (0 : P₁₂)) = 0 := sum_const_zero,
- rw[← this],congr,funext x,rw[is_biadditive.zero_mul m₁₂],
+ rw[← this],congr,funext x,rw[is_biadditive.zero_mul m₁₂]
 end
 
 lemma convolve_zero (p₁ : map M P₁) : convolve m₁₂ p₁ 0 = 0 := begin
@@ -411,10 +414,10 @@ end
 
 instance biadditive_convolve:
  is_biadditive (convolve m₁₂ : (map M P₁) → (map M P₂) → (map M P₁₂)) := {
-  zero_mul := zero_convolve m₁₂,
-  add_mul  := add_convolve  m₁₂,
-  mul_zero := convolve_zero m₁₂,
-  mul_add  := convolve_add  m₁₂,
+  zero_mul' := zero_convolve m₁₂,
+  add_mul'  := add_convolve  m₁₂,
+  mul_zero' := convolve_zero m₁₂,
+  mul_add'  := convolve_add  m₁₂,
 }
 
 lemma convolve_assoc (p₁ : map M P₁) (p₂ : map M P₂) (p₃ : map M P₃) 
@@ -429,13 +432,17 @@ begin
  have em' : (els3' m).sum f' = (convolve m₁₂₃ (convolve m₁₂ p₁ p₂) p₃) m := 
  begin
   dsimp[convolve,els3'],
-  rw[sum_bind (els3'_disjoint m)],congr,ext ⟨x,v⟩,
+  have hh := els3'_disjoint m,
+  have hhh := @sum_bUnion (M × M),
+  let ee := els m,
+  rw[sum_bUnion (els3'_disjoint m)],
+  congr,ext ⟨x,v⟩,
   rw[is_biadditive.sum_mul m₁₂₃,sum_map],congr,
  end,
  have em : (els3 m).sum f    = (convolve m'₁₂₃ p₁ (convolve m₂₃ p₂ p₃)) m := 
  begin
   dsimp[convolve,els3],
-  rw[sum_bind (els3_disjoint m)],congr,ext ⟨u,z⟩,
+  rw[sum_bUnion (els3_disjoint m)],congr,ext ⟨u,z⟩,
   rw[is_biadditive.mul_sum m'₁₂₃,sum_map],congr,  
  end,
  rw[← em,← em',ef,els3_assoc],

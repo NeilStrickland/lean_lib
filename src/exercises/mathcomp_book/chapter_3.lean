@@ -1,4 +1,4 @@
-import data.nat.choose data.nat.prime data.fintype algebra.big_operators
+import data.nat.choose data.nat.prime data.fintype.basic algebra.big_operators.basic
 import tactic.ring
 
 /- --------------------------------------------------------------- -/
@@ -96,7 +96,7 @@ begin
  dsimp[prod.fst,prod.snd,nat.add] at *;
  rw[nat.succ_add];
  apply nat.succ_lt_succ;
- apply nat.lt_of_lt_of_le pr_x.gt_one;
+ apply nat.lt_of_lt_of_le pr_x.two_le;
  apply nat.le_add_left _,
 end
 

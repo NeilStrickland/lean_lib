@@ -17,7 +17,7 @@ like that.  Also, the naming conventions should be changed for
 greater compatibility with mathlib.
 -/
 
-import data.finset data.fintype
+import data.finset data.fintype.basic
 
 /-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-/
@@ -163,16 +163,16 @@ def finset_equiv_of_equiv (f : α ≃ β) :
   (finset_equiv_of_equiv f).to_fun (u ∩ v) = 
    (finset_equiv_of_equiv f).to_fun (u) ∩ (finset_equiv_of_equiv f).to_fun (v) :=
  begin
-  simp[ext],
+  apply finset.ext,
   intro b,
   let P := mem_transfer_inv f b u,
   let Q := mem_transfer_inv f b v,
   let R := mem_transfer_inv f b (u ∩ v),
   split,
-  {intro H,
+  {intro H,apply finset.mem_inter.mpr,
   exact ⟨P.mpr (mem_inter.mp (R.mp H)).left,
          Q.mpr (mem_inter.mp (R.mp H)).right⟩},
-  {intro H,
+  {intro H,rw[finset.mem_inter] at H,
   exact R.mpr (mem_inter.mpr ⟨P.mp H.left,Q.mp H.right⟩)}
  end
 
@@ -180,16 +180,16 @@ def finset_equiv_of_equiv (f : α ≃ β) :
   (finset_equiv_of_equiv f).to_fun (u \ v) = 
    (finset_equiv_of_equiv f).to_fun (u) \ (finset_equiv_of_equiv f).to_fun (v) :=
  begin
-  simp[ext],
+  apply finset.ext,
   intro b,
   let P := mem_transfer_inv f b u,
   let Q := mem_transfer_inv f b v,
   let R := mem_transfer_inv f b (u \ v),
   split,
-  {intro H,
+  {intro H,apply finset.mem_sdiff.mpr,
   exact ⟨P.mpr (mem_sdiff.mp (R.mp H)).left,
         λ U,(mem_sdiff.mp (R.mp H)).right (Q.mp U)⟩}, 
-  {intro H,
+  {intro H,rw[finset.mem_sdiff] at H,
   exact R.mpr (mem_sdiff.mpr ⟨P.mp H.left,λ U,H.right (Q.mpr U)⟩)}
  end
  
@@ -203,13 +203,13 @@ def finset_equiv_of_equiv (f : α ≃ β) :
  
  lemma card_transfer (f : α ≃ β) (u : finset α) : 
   card ((finset_equiv_of_equiv f) u) = card u := 
-  card_image_of_injective u (function.injective_of_left_inverse f.left_inv)
+  card_image_of_injective u (function.left_inverse.injective f.left_inv)
 
  lemma erase_transfer (f : α ≃ β) (u : finset α) (a : α) :
   (finset_equiv_of_equiv f) (erase u a) = erase ((finset_equiv_of_equiv f) u) (f a) := 
  begin
   let Pf := (finset_equiv_of_equiv f),
-  simp[ext],
+  simp[ext_iff],
   intro b,
   split,
   intro b_in_f_erase,
@@ -247,7 +247,7 @@ def finset_equiv_of_equiv (f : α ≃ β) :
     filter (p ∘ f.inv_fun) ((finset_equiv_of_equiv f) u) :=
  begin
   let Pf := (finset_equiv_of_equiv f),
-  simp[ext],
+  simp[ext_iff],
   intro b,
   let a := f.inv_fun b,
   split,

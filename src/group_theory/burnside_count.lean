@@ -11,8 +11,8 @@ dividing the above statement by `|G|`, but we avoid that so
 that we can work everywhere in `ℕ`.)       
 -/
 
-import data.fintype group_theory.group_action 
- algebra.group_power algebra.big_operators data.zmod.basic
+import data.fintype.basic group_theory.group_action 
+ algebra.group_power algebra.big_operators.basic data.zmod.basic
 import tactic.ring
 
 namespace group_theory
@@ -24,8 +24,9 @@ variables {X : Type*} [fintype X] [decidable_eq X] [mul_action G X]
 instance : decidable_rel (mul_action.orbit_rel G X).r := 
  begin
   dsimp[mul_action.orbit_rel],
-  intros x y,
-  apply_instance,
+  intros x y, simp only [],
+  rw [mul_action.mem_orbit_iff],
+  apply_instance
  end 
 
 variables (G X)
@@ -39,10 +40,10 @@ lemma orbit_act : ∀ (g : G) (x : X), orbit (g • x) = @orbit G _ _ _ X _ _ _ 
  λ g x, (@quotient.eq X (mul_action.orbit_rel G X) (g • x) x).mpr ⟨g,rfl⟩ 
 
 instance : fintype (orbits G X) :=
- by { dsimp[orbits], apply_instance, }
+ by { dsimp[orbits], apply_instance }
 
 instance : decidable_eq (orbits G X) :=
- by { dsimp[orbits], apply_instance, }
+ by { dsimp[orbits], apply_instance }
 
 variables (G X)
 structure transversal := 
@@ -77,15 +78,17 @@ end
 variables {G X}
 
 variable (X)
+
 def el_fixed_points (g : G) : finset X := 
  finset.univ.filter (λ x,g • x = x)
+
 variable {X}
 
 lemma burnside_count :
  (fintype.card G) * (fintype.card (orbits G X)) = 
   (@finset.univ G _).sum (λ g, finset.card (el_fixed_points X g)) := 
 begin 
- rcases (transversal_exists G X) with t,
+ rcases (transversal_exists G X) with ⟨t⟩,
  let V : G → Type* := λ g, { x : X // g • x = x },
  have V_mem : ∀ (g : G) (x : X), (x ∈ el_fixed_points X g) ↔ g • x = x := 
   λ g x,by {simp[el_fixed_points]},

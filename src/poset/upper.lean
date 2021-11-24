@@ -10,7 +10,7 @@ subsets `U ⊆ P` that are closed upwards.  We order this by
 `upper P` is a bounded distributive lattice with this order.
 -/
 
-import homotopy.poset
+import poset.basic order.bounded_lattice
 
 universes uP uQ uR uS
 
@@ -23,6 +23,9 @@ variable {P}
 def is_upper : finset P → Prop := 
  λ (U : finset P), ∀ (p₀ p₁ : P), (p₀ ≤ p₁) → (p₀ ∈ U) → (p₁ ∈ U) 
 variable (P)
+
+instance is_upper_decidable (U : finset P) : decidable (is_upper U) := 
+  by { dsimp[is_upper], apply_instance }
 
 lemma is_upper_empty : is_upper (@finset.empty P) := 
  λ p₀ p₁ hp hU, (finset.not_mem_empty p₀ hU).elim
@@ -69,9 +72,36 @@ def upper := { U : finset P // is_upper U }
 
 namespace upper 
 
+instance : fintype (upper P) := 
+by {dsimp [upper], apply_instance}
+
+/-- To print an upper set, ignore the upperness property and 
+  just print the underlying set.
+-/
+instance [has_repr P] : has_repr (upper P) := ⟨λ U, repr U.val⟩ 
+
+variable {P}
+def els (U : upper P) : Type* := {p // p ∈ U.val}
+variable (P)
+
+instance els_order (U : upper P) : partial_order U.els := 
+by { unfold els, apply_instance }
+
 instance : has_mem P (upper P) := ⟨λ p  U, p ∈ U.val⟩ 
 
-instance bdl : lattice.bounded_distrib_lattice (upper P) := {
+/-- Two upper sets are equal iff they have the same elements. -/
+@[ext] lemma ext (U₀ U₁ : upper P) : 
+  (∀ (p : P), p ∈ U₀ ↔ p ∈ U₁) → U₀ = U₁ := 
+begin
+  intro h, 
+  apply subtype.eq,
+  ext p,
+  exact h p
+end
+
+/-- upper P has a natural structure as a bounded distributive lattice. 
+-/
+instance bdl : bounded_distrib_lattice (upper P) := {
   le := λ U V, V.val ⊆ U.val,
   le_refl := λ U, le_refl U.val,
   le_antisymm := λ U V (h0 : V.val ⊆ U.val) (h1 : U.val ⊆ V.val),
@@ -104,17 +134,37 @@ instance bdl : lattice.bounded_distrib_lattice (upper P) := {
 
 variable {P}
 
+lemma mem_bot (p : P) : p ∈ (⊥ : upper P) := finset.mem_univ p 
+
+lemma not_mem_top (p : P) : p ∉ (⊤ : upper P) := finset.not_mem_empty p
+
+lemma mem_inf {U V : upper P} (p : P) : p ∈ U ⊓ V ↔ (p ∈ U ∨ p ∈ V) := 
+  finset.mem_union
+
+lemma mem_sup {U V : upper P} (p : P) : p ∈ U ⊔ V ↔ (p ∈ U ∧ p ∈ V) := 
+  finset.mem_inter
+
 /-
  We embed `P` in `upper P` using the map `u : A ↦ { B : A ⊆ B }` 
 -/
 
-def u : P → upper P := 
- λ p, ⟨finset.univ.filter (λ q, p ≤ q),
+def u : poset.hom P (upper P) := 
+ ⟨λ p, ⟨finset.univ.filter (λ q, p ≤ q),
   begin intros q r hqr hpq,
    replace hpq := (finset.mem_filter.mp hpq).right,
    exact finset.mem_filter.mpr ⟨finset.mem_univ r,le_trans hpq hqr⟩,
   end
- ⟩
+ ⟩, λ p₀ p₁ h q q_in_up₀, 
+  begin 
+   have : p₀ ≤ q := le_trans h (finset.mem_filter.mp q_in_up₀).right, 
+   exact finset.mem_filter.mpr ⟨finset.mem_univ q, this⟩
+  end⟩
+
+lemma mem_u (p q : P) : p ∈ (@u P _ _ _ _ q) ↔ q ≤ p :=
+begin
+  change p ∈ finset.filter _ _ ↔ q ≤ p, 
+  simp [finset.mem_filter, finset.mem_univ]
+end
 
 end upper
 

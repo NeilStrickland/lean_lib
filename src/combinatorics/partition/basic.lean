@@ -5,7 +5,7 @@ Authors: Neil Strickland
 
 -/
 
-import data.fintype tactic.squeeze tactic.fin_cases
+import data.fintype.basic tactic.squeeze tactic.fin_cases
 import data.finset_transfer data.unique_element 
 
 namespace combinatorics
@@ -307,98 +307,13 @@ exists_prop_of_true, finset.mem_image]`, which is more efficient.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-/
 
 lemma block_not_empty {p : partition α} {b : finset α} : 
- b ∈ p.block_set → b ≠ ∅ :=
+ b ∈ p.block_set → b.nonempty :=
 begin
-/-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-We state the lemma that all blocks are nonempty.  Note that the only
-explicit argument is the proof that `b ∈ p.block_set`, because
-`p` and `b` can be inferred from this.
-
-The symbol ∅ can be entered as \empty or \emptyset.  The thing that it
-refers to here can be named more explicitly as `@finset.empty α`.
-However, this is an indirect reference via the typeclass `has_emptyc`.
-This is a fairly common pattern.  Whenever a type `α` has an element 
-that deserves to be called `0`, this will be encoded as an instance
-of the typeclass `has_zero α`.  Similarly, elements that deserve 
-to be called `1` are encoded as instances of `has_one α`, and 
-elements that deserve to be called `∅` are encoded as instances of 
-`has_emptyc α`.  (I am not sure why it is `has_emptyc` rather than 
-`has_empty`.)  There is a separate framework for not-necessarily-finite
-subsets of types, which has a separate definition of `∅`.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-/
- intros b_in_blocks b_empty,
-/-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-We assume given proofs that `b ∈ p.block_set` and that `b = ∅`;
-the goal then becomes to derive a contradiction, or in other words,
-to give a proof of `false`.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-/
+ intros b_in_blocks,
  cases (mem_block_set.mp b_in_blocks) with a a_block,
-/-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Above we proved a result called `mem_block_set`, which is a 
-bidirectional implication.  The suffix `.mp` (for "modus ponens") 
-picks out the left-to-right implication.  We pass this our proof
-that `b ∈ p.block_set` to get a proof that `∃ a, p.block a = b`.
-The `cases` tactic then introduces names for the element `a` and
-the proof that `p.block a = b`.
-
-It is important to note some restrictions on this kind of use of the
-`cases` tactic.  At the moment we are trying to prove a proposition, 
-not to define a function.  Lean implements the principle of "proof
-irrelevance", so any two proofs of the same proposition are regarded
-as equal.  Because of this, Lean does not worry that what we are 
-doing might depend on the choice of `a`.  However, if we tried to
-do this while defining a function to a `Type` rather than a `Prop` 
-we would get an error message as follows:
-`induction tactic failed, recursor 'Exists.dcases_on' can only eliminate into Prop`.
-We postpone any discussion of what to do about this.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-/
- have block_empty : p.block a = ∅ := a_block.trans b_empty,
-/-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Given proofs `P : x = y` and `Q : y = z`, we can combine them to get 
-a proof of `x = z` using the notation `eq.trans P Q` or `P.trans Q`.
-Here we use the latter to produce a proof that `p.block a = ∅`. 
-(For more complicated strings of equalities one would use the `calc`
-tactic, which would produce terms like `P.trans Q` automatically,
-but here it is easy to just write the proof term explicitly.) 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-/
-
  have a_in_block : a ∈ p.block a := p.ispart.left a,
-/-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Recall that `p` is a structure consisting of a map 
-`p.block : α → finset α` together with a proof `p.ispart` of the 
-required property of this map.  Here `p.ispart` is a logical 
-conjunction of two propositions, and we can select the first of 
-these with the notation `p.ispart.left` or `p.ispart.1`.  This is
-a universally quantified proposition like `∀ x, x ∈ p.block x`.
-We specialise to `x = a` by simply supplying `a` as an argument.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-/
- rw[block_empty] at a_in_block,
-/-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-At this point we have a proof `a_in_block : a ∈ p.block a` and also 
-a proof `block_empty : p.block a = ∅`.  The `rw` tactic (which can
-also be written as `rewrite`) allows us to convert `a_in_block` to 
-a proof that `a ∈ ∅`.  
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-/
- exact not_mem_empty a a_in_block,
-/-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The library theorem `not_mem_empty` (from 
-<span class="mathlib">data/finset.lean</span>) proves that the 
-empty set has no elements.  In more detail, it accepts as explicit
-arguments a term `x` and a proof that `x ∈ ∅`, and produces a proof
-of `false`.  We can thus pass `a` and `a_in_block` to `not_mem_empty`
-to produce the required contradiction.
-
-In even more detail, the current goal is `false` and the term 
-`not_mem_empty a a_in_block` has type false.  If we were in term
-mode we could just write `not_mem_empty a a_in_block` to satisfy
-the goal.  However, we are in a `begin ... end` block and thus in 
-tactic mode, so we need to use the `exact` tactic rather than
-just writing the relevant term.
-
-Note also that we have an extra comma at the end of the line.  This
-is not required, but it causes Lean to give an explicit message 
-saying "no goals", which can be comforting.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-/
+ rw[a_block] at a_in_block,
+ exact ⟨a,a_in_block⟩
 end
 /-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-/
@@ -432,7 +347,7 @@ same, except that it proves an equality in `p.block_type` rather than
 `finset α`.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-/
 
-def rank (p : partition α) : ℕ := card (p.block_set)
+def rank (p : partition α) : ℕ := fintype.card (p.block_set)
 /-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The rank of a partition is the number of blocks.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-/
@@ -566,7 +481,7 @@ it by default.  Attributes are discussed in more detail in
 <span class="tpil">Section 6.4</span>.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-/
 
-@[extensionality] theorem ext 
+@[ext] theorem ext 
  {p1 p2 : partition α} (e : ∀ a, p1.block a = p2.block a) : p1 = p2
   := eq_of_block_eq.mpr (funext e) 
 /-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -688,8 +603,10 @@ function `finset.attach` and theorem `finset.mem_attach` come from
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-/
 
 lemma block_type_card (p : partition α) : 
- fintype.card p.block_type = p.rank := 
-  @finset.card_attach (finset α) p.block_set
+ fintype.card p.block_type = p.rank := begin
+  dsimp[partition.block_type,partition.rank],unfold_coes,congr
+end
+
 /-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 We defined the rank to be the cardinality of `p.block_set`.  Here we
 just record that that is the same as the cardinality of `p.block_type`.
@@ -767,7 +684,7 @@ a proof that `a ∈ p1.block a`, and this is supplied by the theorem
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-/
 
 def of_block_set (blocks : finset (finset α))
- (no_empty_blocks : ∀ b ∈ blocks, b ≠ ∅)
+ (no_empty_blocks : ∀ b ∈ blocks, (finset.nonempty b))
  (unique_block : ∀ a : α, ∃! b, b ∈ blocks ∧ a ∈ b) : 
  { p : partition α // p.block_set = blocks } := 
 /-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -799,7 +716,7 @@ finite set and a decidable predicate, and returns the finite subset
 where that predicate is satisfied.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-/
  let block_aux :
-  ∀ (a : α), { b : finset α // blocks_for a = finset.singleton b } := 
+  ∀ (a : α), { b : finset α // blocks_for a = {b} } := 
   λ a , finset.witness blocks (λ b, a ∈ b) (unique_block a),
 /-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 We now use the function `finset.witness`.  Note that this is not in
@@ -851,7 +768,7 @@ could apply the `split` tactic.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-/
   {intro a,
    let w := block_aux a,
-   have h : w.val ∈ finset.singleton w.val := mem_singleton_self _,
+   have h : w.val ∈ { w.val } := mem_singleton_self _,
    rw[← w.property] at h,
    exact (mem_filter.mp h).right
   },
@@ -877,8 +794,8 @@ half of this conjunction, and this satisfies our goal.
    let w2 := block_aux a2,
    let b1 := w1.val,
    let b2 := w2.val,
-   have b1_in_B1 : b1 ∈ finset.singleton b1 := mem_singleton.mpr rfl,
-   have b2_in_B2 : b2 ∈ finset.singleton b2 := mem_singleton.mpr rfl,
+   have b1_in_B1 : b1 ∈ { b1 } := mem_singleton.mpr rfl,
+   have b2_in_B2 : b2 ∈ { b2 } := mem_singleton.mpr rfl,
    rw[← w1.property] at b1_in_B1,
    rw[← w2.property] at b2_in_B2,
    have b1_in_blocks : b1 ∈ blocks := (mem_filter.mp b1_in_B1).1,
@@ -942,15 +859,13 @@ divides this into two goals, one for each direction.
     let w := block_aux a,
     have w_val : w.val = p.block a := rfl,
     rw[p_block_a_eq_b] at w_val,
-    have b_in_B : b ∈ finset.singleton w.val := 
-     eq.subst (congr_arg finset.singleton w_val.symm)
-      (mem_singleton.mpr rfl),
+    have b_in_B : b ∈ { w.val } := by { rw[w_val], exact mem_singleton.mpr rfl },
     rw[← w.property] at b_in_B,
     exact (mem_filter.mp b_in_B).1,
   },{
     intro b_in_blocks,
-    have b_not_empty : b ≠ ∅ := no_empty_blocks b b_in_blocks,
-    rcases exists_mem_of_ne_empty b_not_empty with ⟨ a , a_in_b ⟩ ,
+    have b_not_empty : b.nonempty := no_empty_blocks b b_in_blocks,
+    rcases b_not_empty.bex with ⟨ a , a_in_b ⟩ ,
     have b_in_B : b ∈ blocks_for a
      := mem_filter.mpr ⟨ b_in_blocks , a_in_b ⟩ ,
     let w := block_aux a,
@@ -1334,14 +1249,14 @@ def isofunctor : (partition α) ≃ (partition β) := {
 
 lemma isofunctor_id : isofunctor (equiv.refl α) = equiv.refl (partition α) :=
 begin
- apply equiv.eq_of_to_fun_eq,
+ apply equiv.coe_fn_injective,
  dsimp[isofunctor,equiv.refl,cofunctor],
  exact cofunctor_id
 end
 
 lemma isofunctor_comp : isofunctor (f.trans g) = (isofunctor f).trans (isofunctor g) :=
 begin
- apply equiv.eq_of_to_fun_eq,
+ apply equiv.coe_fn_injective,
  dsimp[isofunctor,equiv.trans,cofunctor],
  apply cofunctor_comp,
 end
@@ -1356,7 +1271,7 @@ theorem card_partitions_eq_card_partitions_fin {n : ℕ} (h : fintype.card α = 
   card (partition α) = card (partition (fin n)) :=
 begin
   rw ←h,
-  refine trunc.induction_on (fintype.equiv_fin α) _,
+  refine trunc.induction_on (fintype.trunc_equiv_fin α) _,
   intro e,
   exact eq.subst h fintype.card_congr (isofunctor e)
 end
@@ -1397,7 +1312,7 @@ def bot : partition α := {
 }
 
 def top : partition α := {
- block := @finset.singleton α,
+ block := λ (a : α), {a},
  ispart := begin
   split,
   {apply mem_singleton_self},

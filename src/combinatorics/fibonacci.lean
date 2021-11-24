@@ -9,7 +9,7 @@ succeed very well.  Some better approaches were discussed on
 Zulip by Mario and Kenny; they should be incorporated here.
 -/
 
-import data.real.basic data.fintype algebra.big_operators data.nat.modeq
+import data.real.basic data.fintype.basic algebra.big_operators data.nat.modeq
 import tactic.find tactic.squeeze tactic.norm_num tactic.ring
 
 namespace combinatorics
@@ -64,7 +64,7 @@ lemma fibonacci_bodd : ∀ n, (fibonacci n).bodd = bnot (n % 3 = 0)
 | 1 := rfl
 | 2 := rfl
 | (n + 3) := begin
- rw[fibonacci_bodd_step n,fibonacci_bodd n],congr,
+ rw[fibonacci_bodd_step n,fibonacci_bodd n,nat.add_mod_right]
 end
 
 /-
@@ -100,7 +100,7 @@ lemma mod_step_mod (p : ℕ) : ∀ (c : ℕ × ℕ),
   ⟨b % p % p,(a % p + b % p) % p⟩,
  have e0 : b % p % p = b % p := nat.mod_mod b p,
  have e1 : (a % p + b % p) % p = (a + b) % p :=
-  nat.modeq.modeq_add (nat.mod_mod a p) (nat.mod_mod b p),
+  nat.modeq.add (nat.mod_mod a p) (nat.mod_mod b p),
  rw[e0,e1],
 end
 

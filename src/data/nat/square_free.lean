@@ -16,7 +16,7 @@ end
 lemma multiset.coprime_prod {n : ℕ} {s : multiset ℕ}
  (h : multiset.all_prop (coprime n) s) : coprime n s.prod := 
 begin
- rcases s with l,
+ rcases s with ⟨l⟩,
  have : quot.mk setoid.r l = (l : multiset ℕ) := rfl, rw[this] at *,
  rw[multiset.all_prop_coe] at h,rw[multiset.coe_prod],
  exact list.coprime_prod h
@@ -38,7 +38,7 @@ end
 lemma multiset.coprime_prod_dvd_of_dvd {s : multiset ℕ} (hc : s.pairwise coprime) 
  {n : ℕ} (hd : multiset.all_prop (λ p, p ∣ n) s) : s.prod ∣ n := 
 begin
- rcases s with l,
+ rcases s with ⟨l⟩,
  have : quot.mk setoid.r l = (l : multiset ℕ) := rfl, rw[this] at *,
  have : symmetric coprime := λ n m, coprime.symm,
  rw[multiset.pairwise_coe_iff_pairwise this] at hc,
@@ -60,7 +60,7 @@ lemma multiset.nodup_prime_coprime
  {s : multiset ℕ} (hd : s.nodup) (hp : multiset.all_prop nat.prime s) : 
   s.pairwise coprime := 
 begin
- rcases s with l,
+ rcases s with ⟨l⟩,
  have : quot.mk setoid.r l = (l : multiset ℕ) := rfl, rw[this] at *,
  rw[multiset.coe_nodup] at hd,
  rw[multiset.all_prop_coe] at hp,
@@ -80,7 +80,8 @@ lemma mem_unique_factors {n : ℕ} (h : n > 0) (p : ℕ) :
 begin
  dsimp[unique_factors],rw[multiset.mem_coe,list.mem_erase_dup],
  split,
- {intro h0,let h1 := nat.mem_factors h0,
+ {intro h0,
+  let h1 := ((nat.mem_factors h).mp h0).1,
   let h2 := (nat.mem_factors_iff_dvd h h1).mp h0,
   exact ⟨h1,h2⟩
  },{
@@ -92,14 +93,17 @@ lemma unique_factors_coprime (n : ℕ) :
  (unique_factors n).pairwise coprime := 
 begin
  by_cases h : n = 0,
- {rw[h],apply multiset.pairwise_zero},
+ {rw[h], 
+  have : unique_factors 0 = 0 := 
+   by { dsimp[unique_factors], rw[factors_zero], refl },
+   rw[this],apply multiset.pairwise_zero},
  replace h := nat.pos_of_ne_zero h,
  apply multiset.nodup_prime_coprime,
  {apply multiset.nodup_erase_dup},
  {rw[multiset.all_prop_iff],intros p hp,
   replace hp := multiset.mem_erase_dup.mp hp,
   rw[multiset.mem_coe] at hp,
-  exact nat.mem_factors hp,
+  exact ((nat.mem_factors h).mp hp).1,
  }
 end
 
@@ -114,7 +118,7 @@ begin
  let u := λ p, multiset.prod (multiset.repeat p (multiset.count p f)),
  let v := λ p, p ^ (multiset.count p f),
  change (f₁.map v).prod = n,
- have : v = u := by {ext p,dsimp[u,v],rw[multiset.prod_repeat,nat.pow_eq_pow],},
+ have : v = u := by {ext p,dsimp[u,v],rw[multiset.prod_repeat]},
  rw[this],
  let e : f.prod = n := by {rw[multiset.coe_prod],exact nat.prod_factors h},
  rw[← multiset.eq_repeat_count f,multiset.prod_bind] at e,
@@ -154,9 +158,9 @@ lemma square_free_radical_dvd (n : ℕ) :
   let ft := fm - fs,
   let hm : fm.prod = n :=
    (multiset.coe_prod fl).trans (nat.prod_factors hn),
-  have : fm = fs + ft :=
-   (multiset.add_sub_of_le (multiset.erase_dup_le n.factors)).symm,
-  rw[this,multiset.prod_add] at hm,
+  have hl : fs ≤ fm := multiset.erase_dup_le n.factors,
+  have : fm = ft + fs := (tsub_add_cancel_of_le hl).symm,
+  rw[this,multiset.prod_add,mul_comm] at hm,
   use ft.prod,exact hm.symm,
  }
 end
@@ -200,12 +204,14 @@ begin
  let f₁ := f.erase_dup,
  rcases multiset.le_smul_erase_dup f with ⟨k,hk⟩,
  use k,change n ∣ f₁.prod ^ k,
- let f₂ := add_monoid.smul k f₁, change f ≤ f₂ at hk,
- have : f₂.prod = f₁.prod ^ k := by {rw[multiset.prod_smul,nat.pow_eq_pow],},
+ let f₂ := add_monoid.nsmul k f₁, change f ≤ f₂ at hk,
+ have : f₂.prod = f₁.prod ^ k := by {
+   dsimp[f₂],rw[multiset.prod_nsmul]
+ },
  rw[← this],
  have : f.prod = n := by {rw[multiset.coe_prod,nat.prod_factors hn],},
- rw[← this,← multiset.add_sub_of_le hk,multiset.prod_add],
- apply dvd_mul_right, 
+ rw[← this,← tsub_add_cancel_of_le hk,multiset.prod_add],
+ apply dvd_mul_left, 
 end
 
 end nat

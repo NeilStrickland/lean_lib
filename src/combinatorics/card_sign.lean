@@ -17,7 +17,7 @@ Authors: Neil Strickland
  `finset.insert.powerset_filter`.
 -/
 
-import data.fintype algebra.big_operators
+import data.fintype.basic algebra.big_operators
 import algebra.prod_equiv
 
 namespace finset

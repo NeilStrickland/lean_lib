@@ -28,6 +28,7 @@
 
 import data.nat.prime
 import data.rat 
+import data.finset
 
 -- Some basic calculations with natural numbers
 #eval 2 + 2
@@ -104,7 +105,7 @@ import data.rat
  that in turn loads various other files, including 
  data/nat/basic.lean.
 -/
-#eval (nat.fact 5)
+#eval (nat.factorial 5)
 
 /-
  We can also evaluate logical expressions.  For example, `5 < 7`

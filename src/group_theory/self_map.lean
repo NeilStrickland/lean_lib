@@ -29,6 +29,9 @@ instance self_map_monoid (T : Type*) : monoid (self_map T) := {
 
 namespace self_map
 
+@[simp] lemma one_app (t : T) : (1 : self_map T) t = t := rfl
+@[simp] lemma mul_app (f g : self_map T) (t : T) : (f * g) t = f (g t) := rfl
+
 def units_equiv : units (self_map T) ≃ equiv.perm T := {
   to_fun := λ u, equiv.mk u.val u.inv 
    (begin
@@ -58,13 +61,12 @@ instance : mul_action (self_map T) T := {
  mul_smul := λ f g x, rfl   
 }
 
-def mul_action_of_hom {M X : Type*} [monoid M]
- (act : M → self_map X) [is_monoid_hom act] :
+def mul_action_of_hom {M X : Type*} [monoid M] (act : M →* self_map X) :
   mul_action M X := 
    @mul_action.mk M X _
     ⟨λ m x, (act m) x⟩
-    (λ x,by {change (act 1) x = x,rw[is_monoid_hom.map_one act],refl,})
+    (λ x,by { change (act 1) x = x, rw[act.map_one], refl })
     (λ m n x,by {change act (m * n) x = act m (act n x),
-                 rw[is_monoid_hom.map_mul act],refl})
+                 rw[act.map_mul], refl})
 
 end self_map

@@ -1,4 +1,8 @@
-lemma abs_neg_of_pos {α : Type*} [decidable_linear_ordered_comm_group α] (a : α) : 
+import data.rat
+import data.real.basic
+import tactic.ring
+
+lemma abs_neg_of_pos {α : Type*} [linear_ordered_add_comm_group α] (a : α) : 
  a > 0 → abs (- a) = a := 
  λ a_pos, (abs_of_neg (neg_neg_of_pos a_pos)).trans (neg_neg a)
 
@@ -9,30 +13,33 @@ lemma dist_neg_Q (n : ℤ) (h : n ≥ 0) :
  abs (neg_half_Q - ((- (1 + n)) : ℤ)) = (n : ℚ) + half_Q := 
 begin
  let n_Q : ℚ := n,
- have e0 : neg_half_Q + 1 = half_Q := dec_trivial,
+ have e0 : neg_half_Q + 1 = half_Q := by { dsimp[neg_half_Q,half_Q], norm_num },
  have e1  := 
   calc 
    neg_half_Q - ((- (1 + n)) : ℤ) = n + (neg_half_Q + 1) :
-    by {rw[int.cast_neg,int.cast_add],ring}
+    by { rw[int.cast_neg, int.cast_add, int.cast_one, sub_neg_eq_add],
+         ring, }
    ... = n_Q + half_Q : by rw[e0],
  have e2 : n_Q + half_Q > 0 :=
    add_pos_of_nonneg_of_pos (int.cast_nonneg.mpr h) one_half_pos,
- have e3 : abs (n_Q + half_Q) = n_Q + half_Q := 
-  @abs_of_pos ℚ _ (n_Q + half_Q) e2,
- rw[e1,e3],
+ rw[e1,abs_of_pos e2],
 end
 
 lemma dist_nonneg_Q (n : ℤ) (h : n ≥ 0) :
  abs (neg_half_Q - n) = (n : ℚ) + half_Q := 
 begin
  let n_Q : ℚ := n,
- have e1 : neg_half_Q - n = - (n_Q + half_Q) := by ring,
+ have e1 : neg_half_Q - n = - (n_Q + half_Q) := 
+   by {dsimp[neg_half_Q,half_Q], ring_nf },
  have e2 : n_Q + half_Q > 0 :=
    add_pos_of_nonneg_of_pos (int.cast_nonneg.mpr h) one_half_pos,
  have e3 : abs (- (n_Q + half_Q)) = n_Q + half_Q := 
   @abs_neg_of_pos ℚ _ (n_Q + half_Q) e2,
  rw[e1,e3],
 end
+
+noncomputable def half_R : ℝ := half_Q
+noncomputable def neg_half_R : ℝ := neg_half_Q
 
 lemma dist_neg (n : ℤ) (h : n ≥ 0) :
  abs (neg_half_R - (-(1 + n) : ℤ)) = (n : ℝ) + half_R :=
@@ -42,8 +49,8 @@ begin
  let d_Q : ℚ := abs x_Q,
  let d_R : ℝ := abs x_R,
  have e0 : x_R = x_Q := by {
-   dsimp[x_R,x_Q,neg_half_R],
-   rw[rat.cast_add,rat.cast_neg,rat.cast_coe_int],
+   dsimp[x_R,x_Q,neg_half_R,neg_half_Q,half_Q],
+   norm_cast
    },
  have e1 : d_R = d_Q := by { dsimp[d_R,d_Q],rw[e0,rat.cast_abs] },
  have e2 : d_Q = (n : ℚ) + half_Q := dist_neg_Q n h,
@@ -61,8 +68,8 @@ begin
  let d_Q : ℚ := abs x_Q,
  let d_R : ℝ := abs x_R,
  have e0 : x_R = x_Q := by { 
-  dsimp[x_R,x_Q,neg_half_R],
-  rw[rat.cast_add,rat.cast_neg,rat.cast_coe_int],
+  dsimp[x_R,x_Q,neg_half_R,neg_half_Q,half_Q],
+  norm_cast
  },
  have e1 : d_R = d_Q := by { dsimp[d_R,d_Q],rw[e0,rat.cast_abs] },
  have e2 : d_Q = (n : ℚ) + half_Q := dist_nonneg_Q n h,
@@ -71,6 +78,9 @@ begin
   ... = (n : ℚ) + half_Q : by {rw[e2,rat.cast_add]}
   ... = (n : ℝ) + half_R : by {dsimp[half_R],rw[rat.cast_coe_int]}
 end
+
+def is_closest_integer (n : ℤ) (x : ℝ) := 
+  ∀ (m : ℤ), m ≠ n → abs(x - n) < abs (x - m) 
 
 lemma no_closest_integer (n : ℤ) : ¬ (is_closest_integer n neg_half_R) := 
 begin

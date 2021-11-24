@@ -78,7 +78,7 @@ def is_odd_c (n : ℕ) : bool := if n % 2 = 0 then ff else tt
 lemma odd_ss_c : is_odd_c (n + 2) = is_odd_c n :=
 begin
  dsimp[is_odd_c],
- cases (n % 2) with k,{exact rfl},{simp}
+ rw [nat.add_mod_right n 2]
 end
 
 /- ------------------------------------------------------------ -/
@@ -91,6 +91,7 @@ with is_even_d : nat → bool
 | 0     := tt
 | (n + 1) := is_odd_d n
 
+#check n
 #reduce is_odd_d (n + 2)
 
 lemma odd_ss_d : is_odd_d (n + 2) = is_odd_d n :=
@@ -99,7 +100,7 @@ begin
 end
 
 lemma odd_even_d : ∀ (n : ℕ), is_odd_d n = bnot (is_even_d n) 
-| 0 := rfl
+| 0 := by {rw[is_odd_d,is_even_d],refl}
 | (n + 1) := by {rw[is_odd_d,is_even_d,odd_even_d n,bnot_bnot],}
 
 @[inline] def beq : bool → bool → bool

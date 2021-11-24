@@ -1,4 +1,4 @@
-import algebra.ring algebra.pi_instances algebra.big_operators
+import algebra.ring algebra.big_operators.basic
 import data.birange
 
 universes u v
@@ -9,7 +9,7 @@ def power_series := ℕ → α
 
 namespace power_series
 
-@[extensionality]
+@[ext]
 lemma ext {a b : power_series α} : a = b ↔ ∀ k, (a k) = (b k) := 
  ⟨λ e, congr_fun e,λ e,funext e⟩ 
 
@@ -158,8 +158,8 @@ lemma mul_eq_sum :
  (a * b) n = (finset.range (n + 1)).sum (λ i, (a i) * (b (n - i))) := 
 begin
  induction n with n ih generalizing a b,
- {rw[mul_coeff_zero,finset.sum_range_succ,finset.range_zero,finset.sum_empty,add_zero],},
- {rw[mul_coeff_succ,finset.sum_range_succ,nat.sub_self,ih a b.shift],
+ {rw[mul_coeff_zero,finset.sum_range_succ,finset.range_zero,finset.sum_empty,zero_add]},
+ {rw[mul_coeff_succ,finset.sum_range_succ,nat.sub_self,ih a b.shift,add_comm],
   congr' 1,apply finset.sum_congr rfl,intros i hi,rw[shift_coeff],
   congr,
   exact (nat.succ_sub (nat.le_of_lt_succ (finset.mem_range.mp hi))).symm,
