@@ -838,11 +838,11 @@ lemma C_spec (n : ℤ) : n ∈ C ↔ n ^ 2 < 9 := begin
  have e1 : (-2 : ℤ) = - ((2 : ℕ) : ℤ) := rfl, 
  have e2 : ((nat.succ 8) : ℤ)  = 9 := rfl,
  let e3 := @int.square_lt 8 n,
+ let J := finset.Ico (-2 : ℤ) (3 : ℤ),
  exact calc
-  n ∈ C ↔ n ∈ (int.range (-2) 3).to_finset :
-   by rw[(dec_trivial : C = (int.range (-2) 3).to_finset)]
-  ... ↔ n ∈ int.range (-2) 3 : by rw[list.mem_to_finset]
-  ... ↔ -2 ≤ n ∧ n < 3 : int.mem_range_iff
+  n ∈ C ↔ n ∈ J :
+   by rw[(dec_trivial : C = J)]
+  ... ↔ -2 ≤ n ∧ n < 3 : finset.mem_Ico
   ... ↔ - ((2 : ℕ) : ℤ) ≤ n ∧ n < (2 : ℕ) + 1 : by rw[e0,e1]
   ... ↔ - ((2 : ℕ) : ℤ) ≤ n ∧ n ≤ (2 : ℕ) : by rw[int.lt_succ_iff]
   ... ↔ - (nat.sqrt 8 : ℤ) ≤ n ∧ n ≤ nat.sqrt 8 : by rw[← sqrt_8]
@@ -856,11 +856,11 @@ lemma D_spec (n : ℤ) : n ∈ D ↔ n ^ 2 ≤ 9 := begin
  have e1 : (-3 : ℤ) = - ((3 : ℕ) : ℤ) := rfl, 
  have e2 : ((9 : ℕ) : ℤ)  = 9 := rfl,
  let e3 := @int.square_le 9 n,
+ let J := finset.Ico (-3 : ℤ) (4 : ℤ),
  exact calc
-  n ∈ D ↔ n ∈ (int.range (-3) 4).to_finset :
-   by rw[(dec_trivial : D = (int.range (-3) 4).to_finset)]
-  ... ↔ n ∈ int.range (-3) 4 : by rw[list.mem_to_finset]
-  ... ↔ -3 ≤ n ∧ n < 4 : int.mem_range_iff
+  n ∈ D ↔ n ∈ J :
+   by rw[(dec_trivial : D = J)]
+  ... ↔ -3 ≤ n ∧ n < 4 : finset.mem_Ico
   ... ↔ - ((3 : ℕ) : ℤ) ≤ n ∧ n < (3 : ℕ) + 1 : by rw[e0,e1]
   ... ↔ - ((3 : ℕ) : ℤ) ≤ n ∧ n ≤ (3 : ℕ) : by rw[int.lt_succ_iff]
   ... ↔ - (nat.sqrt 9 : ℤ) ≤ n ∧ n ≤ nat.sqrt 9 : by rw[← sqrt_9]
