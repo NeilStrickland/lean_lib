@@ -1,12 +1,14 @@
 import algebra.ring data.equiv.basic data.complex.basic data.zmod.basic 
-import data.nat.prime data.int.gcd data.nat.choose algebra.gcd_domain data.finsupp
+import data.nat.prime data.int.gcd data.nat.choose algebra.gcd_monoid.basic data.finsupp
 import data.list.min_max data.polynomial
-import order.lattice_extra data.nat.square_free
+import data.nat.square_free
+import ring_theory.integral_domain
 import tactic.ring tactic.squeeze
 namespace sec_elements
 
-universe u
-variables {A : Type u} [comm_ring A]
+universes u₀ u₁
+variables {A : Type u₀} [comm_ring A] {B : Type u₁} [comm_ring B]
+variable (f : A →+* B)
 
 /- -------------------------------------------------------- -/
 /- defn-el-props -/
@@ -26,13 +28,29 @@ def nilpotent_witness (a : A) := {n : ℕ // a ^ n = 0}
 
 def is_nilpotent (a : A) := nonempty (nilpotent_witness a)
 
+def is_jacobian (a : A) := ∀ (b : A), is_invertible (1 - a * b)
+
 def is_idempotent (a : A) := a ^ 2 = a
 
 lemma is_idempotent' (a : A) : is_idempotent a ↔ a * (1 - a) = 0 := 
 by { dsimp[is_idempotent],
- rw[pow_two,mul_add,mul_one,mul_neg_eq_neg_mul_symm],
- rw[← sub_eq_add_neg,sub_eq_zero],
+ rw[pow_two,mul_sub,mul_one,sub_eq_zero],
  split; intro e; exact e.symm}
+
+def inverse_hom {a : A} (u : inverse a) : inverse (f a) := 
+ ⟨f u.val,by { rw[← f.map_mul,u.property, f.map_one]}⟩
+
+lemma is_invertible_hom {a : A} (h : is_invertible a) : is_invertible (f a) := 
+ by { apply nonempty.elim h, intro u, use inverse_hom f u } 
+
+def nilpotent_witness_hom {a : A} (n : nilpotent_witness a) : nilpotent_witness (f a) := 
+ ⟨n.val, by { rw[← f.map_pow a n.val, n.property, f.map_zero] } ⟩ 
+
+lemma is_nilpotent_hom {a : A} (h : is_nilpotent a) : is_nilpotent (f a) := 
+ by { apply nonempty.elim h, intro n, use nilpotent_witness_hom f n } 
+
+lemma is_idempotent_hom {a : A} (h : is_idempotent a) : is_idempotent (f a) := 
+ by { change a ^ 2 = a at h, change (f a) ^ 2 = f a, rw[← f.map_pow, h] } 
 
 /- -------------------------------------------------------- -/
 /- prop-inv-unique -/
@@ -47,7 +65,7 @@ instance inverse_unique (a : A) : subsingleton (inverse a) :=
 
 namespace integral_domain 
 
-variables {D : Type*} [integral_domain D] (a : D)
+variables {D : Type*} [comm_ring D] [is_domain D] (a : D)
 
 lemma is_regular_iff : (is_regular a ↔ a ≠ 0) := 
 begin 
@@ -76,7 +94,7 @@ begin
  rw[is_idempotent'],split,
  {intro e,rcases eq_zero_or_eq_zero_of_mul_eq_zero e with h0 | h1,
   {exact or.inl h0},
-  {exact or.inr (sub_eq_zero_iff_eq.mp h1).symm,}
+  {exact or.inr (sub_eq_zero.mp h1).symm,}
  },{
   rintro (h | h); rw[h],rw[zero_mul],rw[sub_self,mul_zero],  
  }
@@ -128,7 +146,7 @@ end C_el_props
 
 namespace zmod_el_props
 
-variable (n : ℕ+)
+variables (n : ℕ) [fact (n > 0)]
 
 namespace int
 
@@ -199,11 +217,11 @@ begin
    ((int.coe_nat_abs_eq_normalize d).trans (normalize_gcd a n)).symm,
   rw[this,← int.coe_nat_one],congr,
   let b : ℤ := b₀.val,
-  have : (b : zmod n) = b₀ := by {rw[int.cast_coe_nat,zmod.cast_val b₀],},
+  have : (b : zmod n) = b₀ := by {rw[int.cast_coe_nat,b₀.nat_cast_zmod_val],},
   rw[← this,← int.cast_mul] at hab,
   have : (((a * b - 1) : ℤ) : (zmod n)) = 0 :=
    by {rw[int.cast_sub,hab,int.cast_one,sub_self],},
-  rcases (zmod.eq_zero_iff_dvd_int.mp this) with ⟨c,e⟩,
+  rcases (zmod.int_coe_zmod_eq_zero_iff_dvd (a * b - 1) n).mp this with ⟨c,e⟩, 
   change a * b - 1 = n * c at e,
   replace e : a * b = n * c + 1 := by {rw[← e,sub_add,sub_self,sub_zero],},
   let ha : d ∣ a := by {dsimp[d],rw[en], exact gcd_dvd_left a n},
@@ -222,7 +240,7 @@ begin
   replace h := eq_sub_of_add_eq h,
   have : (a : zmod n) * (b : zmod n) = 1 := 
   by {rw[← int.cast_mul,h,int.cast_sub,int.cast_mul,int.cast_coe_nat],
-      rw[zmod.cast_self_eq_zero,zero_mul,sub_zero,int.cast_one],},
+      rw[zmod.nat_cast_self,zero_mul,sub_zero,int.cast_one],},
   exact ⟨⟨(b : zmod n),this⟩⟩
  }
 end
@@ -256,9 +274,9 @@ begin
  {intro h,
   let f : (zmod n) → (zmod n) := λ x, a * x,
   have : function.injective f := λ x₁ x₂ e, 
-   by {rw[← sub_eq_zero_iff_eq] at e ⊢,
-    dsimp[f] at e,rw[neg_mul_eq_mul_neg,← mul_add] at e,
-    replace e := h _ e,rw[sub_eq_add_neg],exact e,
+   by {rw[← sub_eq_zero] at e ⊢,
+    dsimp[f] at e,rw[← mul_sub] at e,
+    exact h _ e
    },
   rcases (fintype.injective_iff_surjective.mp this 1) with ⟨b,e⟩,
   dsimp[f] at e,exact ⟨⟨b,e⟩⟩,
@@ -277,18 +295,18 @@ begin
  split,
  {rintro ⟨⟨k,e⟩⟩ p p_prime p_dvd_n,
   rw[← nat.cast_pow] at e,
-  replace e := dvd_trans p_dvd_n (zmod.eq_zero_iff_dvd_nat.mp e),
+  replace e := dvd_trans p_dvd_n ((zmod.nat_coe_zmod_eq_zero_iff_dvd _ _).mp e) ,
   exact nat.prime.dvd_of_dvd_pow p_prime e,
  },{
-  rcases n with ⟨n,hn⟩,
-  rcases nat.dvd_square_free_radical hn with ⟨k,⟨q,hq⟩⟩,
+  have hn : n > 0 := fact.elim (by { apply_instance }),
+  rcases nat.dvd_square_free_radical (ne_of_gt hn) with ⟨k,⟨q,hq⟩⟩,
   intro h,
-  rcases (nat.square_free_radical_dvd_iff hn a).mpr h with ⟨r,hr⟩,
+  rcases (nat.square_free_radical_dvd_iff (ne_of_gt hn) a).mpr h with ⟨r,hr⟩,
   have ha : a ^ k = n * (q * r ^ k) :=
-    by {rw[hr,nat.mul_pow,hq,mul_assoc]},
-  have hz : (n : zmod ⟨n,hn⟩) = 0 := zmod.cast_self_eq_zero,
+    by { rw[hr,mul_pow,hq,mul_assoc] },
+  have hz : (n : zmod n) = 0 := zmod.nat_cast_self n,
   have := calc
-   (a : zmod ⟨n,hn⟩) ^ k = (((a ^ k) : ℕ) : zmod ⟨n,hn⟩) : by rw[nat.cast_pow]
+   (a : zmod n) ^ k = (((a ^ k) : ℕ) : zmod n) : by rw[nat.cast_pow]
   ... = 0 : by {rw[ha,nat.cast_mul,nat.cast_mul,nat.cast_pow,hz,zero_mul]},
   exact ⟨⟨k,this⟩⟩,
  }
@@ -401,11 +419,12 @@ begin
  {exact ⟨⟨0,by {rw[pow_zero] at eb ⊢,exact eb} ⟩⟩},
  constructor,
  use n + m + 1,rw[add_pow],
- rw[← @finset.sum_const_zero ℕ A (finset.range (n + m + 1).succ)],
+ rw[← @finset.sum_const_zero A ℕ (finset.range (n + m + 1).succ)],
  congr,ext i,
  by_cases hi : i ≥ n + 1,
  {rw[← nat.add_sub_of_le hi,pow_add,ea],repeat {rw[zero_mul]},},
- {replace hi := le_of_not_gt hi,
+ {change ¬ (i > n) at hi,
+  replace hi := le_of_not_gt hi,
   have := nat.add_sub_of_le hi,
   have : n + m + 1 - i = (m + 1) + (n - i) := by {
    rw[← this,add_comm i,add_assoc,nat.add_sub_cancel],
@@ -443,7 +462,7 @@ begin
  induction n with n ih,
  {change (1 - a) * 0 = 1 - a ^ 0,rw[mul_zero,pow_zero,sub_self],},
  {have : geometric_series a n.succ = a ^ n + geometric_series a n := 
-   by {dsimp[geometric_series],rw[finset.sum_range_succ]},
+   by {dsimp[geometric_series],rw[finset.sum_range_succ,add_comm]},
   rw[this,mul_add,ih,nat.succ_eq_add_one,pow_add,pow_one],
   rw[sub_mul,one_mul,mul_comm a],
   repeat {rw[sub_eq_add_neg]},
@@ -464,6 +483,44 @@ def one_add_nilp_inv {a : A} :
 lemma one_add_nilp_inv' {a : A} :
  is_nilpotent a → is_invertible (1 + a) := 
 λ ⟨h⟩, ⟨one_add_nilp_inv h⟩ 
+
+/- -------------------------------------------------------- -/
+
+lemma is_jacobian_zero : is_jacobian (0 : A) := λ b, 
+begin
+ rw[zero_mul, sub_zero], exact is_invertible_one A
+end 
+
+lemma is_jacobian_add {a b : A}
+ (ha : is_jacobian a) (hb : is_jacobian b) : is_jacobian (a + b) := 
+begin
+ intro x,
+ rcases (ha x) with ⟨u,hu⟩,
+ rcases (hb (x * u)) with ⟨v,hv⟩,
+ use u * v,
+ rw[add_mul, sub_mul, add_mul, one_mul, ← sub_sub, mul_assoc, mul_assoc],
+ have hu' : ((1 - a * x) * u) * v = 1 * v := congr_arg (λ t, t * v) hu,
+ rw [one_mul, sub_mul, one_mul, sub_mul, mul_assoc, mul_assoc] at hu',
+ rw [sub_mul, one_mul, mul_assoc, mul_assoc] at hv,
+ rw[hu', hv],
+end
+
+lemma is_jacobian_smul (a : A) {b : A} (hb : is_jacobian b) :
+ is_jacobian (a * b) :=
+begin
+ rw[mul_comm],
+ intro x, rw[mul_assoc], exact hb (a * x)
+end
+
+lemma is_jacobian_of_nilpotent {a : A} (ha : is_nilpotent a) :
+ is_jacobian a := 
+begin
+ intro x,
+ rw [sub_eq_add_neg],
+ apply one_add_nilp_inv',
+ rw[mul_comm, ← neg_mul],
+ exact is_nilpotent_smul (-x) ha,
+end
 
 /- -------------------------------------------------------- -/
 /- cor-nilp-inv -/
@@ -494,6 +551,17 @@ lemma one_mem : is_idempotent (1 : A) :=
 
 variable {A}
 
+lemma pow_eq_self {a : A} (h : is_idempotent a) (n : ℕ) : 
+ a ^ n.succ = a := 
+begin
+ induction n with n ih,
+ { rw[pow_one] },
+ { rw[pow_succ, ih, ← pow_two], exact h }
+end
+
+lemma mul_self {a : A} (h : is_idempotent a) : a * a = a := 
+  by { rw[← pow_two], exact h }
+
 def not (a : A) := 1 - a
 def and (a b : A) := a * b
 def or  (a b : A) := a + b - a * b
@@ -503,7 +571,7 @@ lemma one_sub_mem {a : A} :
  is_idempotent a → is_idempotent (1 - a) := 
 by {
  dsimp[is_idempotent],rw[pow_two,pow_two],intro e,
- rw[mul_add,mul_one,add_mul,one_mul,neg_mul_neg,e,neg_add_self,add_zero],
+ rw[mul_sub,mul_one,sub_mul,one_mul,e,sub_self,sub_zero],
 }
 
 lemma mul_mem {a b : A} : 
@@ -580,26 +648,28 @@ begin
     ... = (i + (n - i)) + 1 - i : by {rw[nat.add_sub_of_le hi]}  
     ... = (n - i) + 1 : by {simp only [add_comm,add_assoc,nat.add_sub_cancel_left],}, 
    rw[this,pow_succ,pow_succ],repeat {rw[mul_assoc]},congr' 1,
-   repeat {rw[← mul_assoc]},rw[mul_comm (1 + - e) (e ^ i)],   
+   repeat {rw[← mul_assoc]},rw[mul_comm (1 - e) (e ^ i)],   
  },
  have hf₀ : f 0 = (1 - e) ^ (n + 2) :=
-  by {dsimp[f],rw[nat.choose,nat.cast_one,one_mul,mul_one],},
+  by {dsimp[f],rw[nat.choose,nat.cast_one,mul_one,pow_zero,one_mul],},
  have hf₁ : f (n + 2) = e ^ (n + 2) := 
   by {dsimp[f],rw[nat.choose_self,nat.cast_one,nat.sub_self,pow_zero,mul_one,mul_one],},
+ dsimp[f] at hf₀ hf₁,
  have := calc
   (1 : A) = (1 : A) ^ (n + 2) : (one_pow (n + 2)).symm
   ... = (e + (1 - e)) ^ (n + 2) :
    by {congr,rw[add_sub,add_comm,add_sub_cancel]}
   ... = (finset.range (n + 2).succ).sum f : add_pow e (1 - e) (n + 2) 
   ... = e ^ (n + 2) + (finset.range (n + 2)).sum f : 
-         by {rw[finset.sum_range_succ,hf₁],}
+         by {rw[finset.sum_range_succ,hf₁,add_comm],}
   ... = e ^ (n + 2) + (xz + (1 - e) ^ (n + 2)) : 
-         by {rw[finset.sum_range_succ',hf₀]} 
+         by { congr' 1,rw[finset.sum_range_succ'],
+              change xz + _ = _,congr' 1} 
   ... = e ^ (n + 2) + (x * z + (1 - e) ^ (n + 2)) : by {rw[hxz]},
  have hxyz := calc 
   y = 1 - e ^ (n + 2) - (1 - e) ^ (n + 2) : rfl 
   ... = (e ^ (n + 2) + (x * z + (1 - e) ^ (n + 2))) - e ^ (n + 2) - (1 - e) ^ (n + 2) : 
-   by {congr' 2,exact this}
+   by {congr' 2}
   ... = x * z : by {simp only [sub_eq_add_neg,add_comm,add_left_comm,
                                add_neg_cancel_left,add_neg_cancel_right],},
  have hy : y ^ n = 0 := by {rw[hxyz,mul_pow,hx,zero_mul],},
@@ -630,7 +700,7 @@ begin
  },
  have := calc
   e₁ - e = e ^ (n + 2) * u - e : rfl
-  ... = e ^ (n + 2) * (1 + x * z * u) - e : by {congr' 2,exact hu''}
+  ... = e ^ (n + 2) * (1 + x * z * u) - e : by {congr' 2}
   ... = (e ^ (n + 2) * (x * z * u) + e ^ (n + 2)) - e : 
          by {rw[mul_add,mul_one,add_comm],}
   ... = x * (e ^ (n + 2) * z * u) - (e - e ^ (n + 2)) : 
@@ -676,27 +746,299 @@ open polynomial
 
 variables [decidable_eq A] (p : polynomial A)
 
+lemma leading_mul {p q : polynomial A} {n m : ℕ} 
+ (hp : ∀ i, i > n → p.coeff i = 0) (hq : ∀ j, j > m → q.coeff j = 0) :
+  (∀ k, k > n + m → (p * q).coeff k = 0) ∧ 
+   (p * q).coeff (n + m) = (p.coeff n) * (q.coeff m) := 
+begin
+ split,
+ { intros k hk,
+   rw[coeff_mul], apply finset.sum_eq_zero,
+   rintro ⟨i,j⟩ hij,
+   replace hij : i + j = k := finset.nat.mem_antidiagonal.mp hij,
+   change p.coeff i * q.coeff j = 0,
+   by_cases hi : i > n,
+   { rw[hp i hi, zero_mul] },
+   { replace hi : i ≤ n := le_of_not_gt hi,
+     have hj : j > m := begin 
+      apply lt_of_not_ge, intro hj',
+      have := lt_of_le_of_lt (add_le_add hi hj') hk,
+      rw[hij] at this, exact lt_irrefl k this,
+     end,
+     rw[hq j hj, mul_zero],
+   }
+ },{
+  rw[coeff_mul],
+  let nm : ℕ × ℕ := ⟨n,m⟩,
+  have hnm : nm ∈ finset.nat.antidiagonal (n + m) := 
+    finset.nat.mem_antidiagonal.mpr rfl,
+  have h_single : ∀ (x : ℕ × ℕ) (hx₀ : x ∈ finset.nat.antidiagonal (n + m))
+    (hx₁ : x ≠ nm), (p.coeff x.1) * (q.coeff x.2) = 0 := 
+  begin
+    intros,
+    replace hx₁ : x.1 ≠ n := λ e, hx₁ ((finset.nat.antidiagonal_congr hx₀ hnm).mpr e),
+    replace hx₀ : x.1 + x.2 = n + m := finset.nat.mem_antidiagonal.mp hx₀, 
+    by_cases hx₂ : x.1 ≥ n,
+    { rw[hp x.1 (lt_of_le_of_ne hx₂ hx₁.symm), zero_mul] },
+    { have : x.2 > m := lt_of_not_ge (λ hk, by {
+       have := add_lt_add_of_lt_of_le (lt_of_not_ge hx₂) hk,
+       rw[hx₀] at this, exact lt_irrefl (n + m) this
+      }),
+      rw[hq x.2 this, mul_zero]
+    }
+   end,
+   rw[finset.sum_eq_single_of_mem nm hnm h_single]
+ }
+end
+
+lemma trailing_mul {p q : polynomial A} {n m : ℕ} 
+ (hp : ∀ i, i < n → p.coeff i = 0) (hq : ∀ j, j < m → q.coeff j = 0) :
+  (∀ k, k < n + m → (p * q).coeff k = 0) ∧ 
+   (p * q).coeff (n + m) = (p.coeff n) * (q.coeff m) := 
+begin
+ split,
+ { intros k hk,
+   rw[coeff_mul], apply finset.sum_eq_zero,
+   rintro ⟨i,j⟩ hij,
+   replace hij : i + j = k := finset.nat.mem_antidiagonal.mp hij,
+   change p.coeff i * q.coeff j = 0,
+   by_cases hi : i < n,
+   { rw[hp i hi, zero_mul] },
+   { replace hi : n ≤ i := le_of_not_gt hi,
+     have hj : j < m := begin 
+      apply lt_of_not_ge, intro hj',
+      have := lt_of_lt_of_le hk (add_le_add hi hj'),
+      rw[hij] at this, exact lt_irrefl k this,
+     end,
+     rw[hq j hj, mul_zero],
+   }
+ },{
+  rw[coeff_mul],
+  let nm : ℕ × ℕ := ⟨n,m⟩,
+  have hnm : nm ∈ finset.nat.antidiagonal (n + m) := 
+    finset.nat.mem_antidiagonal.mpr rfl,
+  have h_single : ∀ (x : ℕ × ℕ) (hx₀ : x ∈ finset.nat.antidiagonal (n + m))
+    (hx₁ : x ≠ nm), (p.coeff x.1) * (q.coeff x.2) = 0 := 
+  begin
+    intros,
+    replace hx₁ : x.1 ≠ n := λ e, hx₁ ((finset.nat.antidiagonal_congr hx₀ hnm).mpr e),
+    replace hx₀ : x.1 + x.2 = n + m := finset.nat.mem_antidiagonal.mp hx₀, 
+    by_cases hx₂ : x.1 ≤ n,
+    { rw[hp x.1 (lt_of_le_of_ne hx₂ hx₁), zero_mul] },
+    { have : x.2 < m := lt_of_not_ge (λ hk, by {
+       have := add_lt_add_of_lt_of_le (lt_of_not_ge hx₂) hk,
+       rw[hx₀] at this, exact lt_irrefl (n + m) this
+      }),
+      rw[hq x.2 this, mul_zero]
+    }
+   end,
+   rw[finset.sum_eq_single_of_mem nm hnm h_single]
+ }
+end
+
+lemma nat_degree_spec (p : polynomial A) :
+ (∀ (i : ℕ), i > p.nat_degree → p.coeff i = 0) ∧ 
+  (p = 0 ∨ p.coeff p.nat_degree ≠ 0) := 
+begin
+ by_cases hp : p = 0,
+ { split, 
+   { intros i hi, rw[hp, coeff_zero], },
+   { left, exact hp }
+ }, 
+ { split,
+  { intros i hi,
+    by_cases hc : p.coeff i = 0, { assumption },
+    exfalso,
+    exact lt_irrefl i (lt_of_le_of_lt (le_nat_degree_of_ne_zero hc) hi)
+  },
+  { exact or.inr (leading_coeff_ne_zero.mpr hp) }
+ }
+end
+
+noncomputable def div_X_aux : ℕ → polynomial A 
+| 0 := 0
+| (n + 1) := monomial n 1
+
+noncomputable def div_X (f : polynomial A) : polynomial A := 
+ div_by_monic f X 
+
+lemma div_X_prop (f : polynomial A) : f = C (coeff f 0) + X * (div_X f) := 
+begin
+ have := mod_by_monic_X_sub_C_eq_C_eval f 0,
+ rw[C.map_zero,sub_zero,← coeff_zero_eq_eval_zero] at this,
+ rw[← this], symmetry,
+ exact mod_by_monic_add_div f monic_X
+end
+
+lemma div_X_deg {f : polynomial A} {n : ℕ} (h : f.nat_degree ≤ n.succ) : 
+ (div_X f).nat_degree ≤ n := 
+begin
+ nontriviality A, 
+ have := nat_degree_div_by_monic f monic_X,
+ rw[nat_degree_X] at this,
+ change (div_X f).nat_degree = f.nat_degree.pred at this,
+ rw[this],
+ exact nat.pred_le_iff.mpr h
+end
+
+example (a b c d : ℕ) (h1 : a ≤ b) (h2 : c < d) : a + c < b + d := by library_search
+
+lemma is_regular_bot (n : ℕ)
+ (h₀ : ∀ i, i < n → coeff p i = 0) (h₁ : is_regular (coeff p n)) : 
+  is_regular p :=
+begin
+  intros q hpq,
+  ext k, rw[coeff_zero],
+  induction k using nat.strong_induction_on with k ih,
+  change ∀ (m : ℕ), m < k → q.coeff m = 0 at ih,
+  have := (trailing_mul h₀ ih).2,
+  rw[hpq, coeff_zero] at this,
+  exact h₁ (q.coeff k) this.symm
+end
+
+lemma is_regular_top (h : is_regular (leading_coeff p)) : is_regular p :=
+begin
+  intros q hpq,
+  by_cases hq : q = 0, {assumption}, exfalso,
+  have hq' := leading_coeff_ne_zero.mpr hq,
+  have hpq' : p.leading_coeff * q.leading_coeff ≠ 0 := begin 
+   intro e,
+   exact hq' (h q.leading_coeff e),
+  end,
+  have hpq'' := leading_coeff_mul' hpq',
+  rw[← hpq'', hpq, leading_coeff_zero] at hpq',
+  exact hpq' rfl,
+end
+
+lemma is_nilpotent_iff : 
+ is_nilpotent p ↔ (∀ n, is_nilpotent (coeff p n)) := 
+begin
+ let ev : polynomial A →+* A := eval_ring_hom 0,
+ have h₀ : ∀ (q : polynomial A), is_nilpotent q → is_nilpotent (q.coeff 0) := 
+  by { intros q hq, rw[coeff_zero_eq_eval_zero], exact is_nilpotent_hom ev hq},
+ have h₁ : ∀ (a : A), is_nilpotent a ↔ is_nilpotent (C a) := λ a, by {
+  split; intro h, { exact is_nilpotent_hom C h },
+  { have := h₀ (C a) h, rw[coeff_C_zero] at this, exact this }
+ },
+ have h₂ : ∀ (d : ℕ) (q : polynomial A) (hq : q.nat_degree ≤ d), 
+  is_nilpotent q ↔ (∀ n, is_nilpotent (coeff q n)) := 
+ begin 
+  intro d, induction d with d hd; intros q hq;
+  have hq' := nat_degree_le_iff_coeff_eq_zero.mp hq,
+  { let c := q.coeff 0, 
+    have hc : q = C c := by {
+      ext, cases n, 
+      { rw[coeff_C_zero] },
+      { rw[hq' n.succ,coeff_C,if_neg (n.succ_ne_zero)], exact n.zero_lt_succ }
+    },
+    split,
+    { intros h n, rw[hc, ← h₁] at h, cases n,
+      { exact h },
+      { rw[hq' n.succ n.succ_pos], exact is_nilpotent_zero }
+    },
+    { intro h, replace h := h 0, change is_nilpotent c at h,
+      rw[hc, ← h₁ c], exact h
+    }
+  },
+  { let r := div_X q,
+    let c := q.coeff 0,
+    have hrc : q = (C c) + X * r := div_X_prop q,
+    have hr : r.nat_degree ≤ d := div_X_deg hq,
+    have hr' := nat_degree_le_iff_coeff_eq_zero.mp hr,
+    have hrq : ∀ (n : ℕ), r.coeff n = q.coeff n.succ := 
+     λ n, by
+      rw[hrc,coeff_add,coeff_C_ne_zero n.succ_ne_zero,zero_add,coeff_X_mul],
+    split,
+    { intros hnq n, cases n,
+      { exact h₀ q hnq },
+      { rw[← hrq n], 
+        have : is_nilpotent (C c) := is_nilpotent_hom C (h₀ q hnq),
+        have := is_nilpotent_sub hnq this,
+        rw[hrc, add_comm, add_sub_cancel] at this,
+        rcases this with ⟨m,hm⟩,
+        rw[mul_pow] at hm,
+        have hnr : is_nilpotent r :=
+         by { use m, exact (monic_X_pow m).mul_right_eq_zero_iff.mp hm},
+        exact (hd r hr).mp hnr n,
+      }
+    },{
+     intro hnq, 
+     rw[hrc],
+     have hnc : is_nilpotent (C c) := is_nilpotent_hom C (hnq 0),
+     have hnr : is_nilpotent r := (hd r hr).mpr (λ n, by { rw[hrq n], exact hnq n.succ, }),
+     exact is_nilpotent_add hnc (is_nilpotent_smul X hnr),
+    }
+  }
+ end,
+ exact h₂ p.nat_degree p (le_refl _),
+end
+
 lemma is_invertible_iff : 
  is_invertible p ↔
   (is_invertible (coeff p 0)) ∧ (∀ n : ℕ, (is_nilpotent (coeff p n.succ))) :=
 sorry
 
-lemma is_regular_bot (n : ℕ)
- (h₀ : ∀ i, i < n → coeff p i = 0) (h₁ : is_invertible (coeff p n)) : 
-  is_regular p := sorry
-
-lemma is_regular_top (n : ℕ)
- (h₀ : ∀ i, i > n → coeff p i = 0) (h₁ : is_invertible (coeff p n)) : 
-  is_regular p := sorry
-
-lemma is_nilpotent_iff : 
- is_nilpotent p ↔ (∀ n, is_nilpotent (coeff p n)) := sorry
+lemma is_idempotent_aux {p : polynomial A} (h₀ : p.coeff 0 = 0) (h₁ : is_idempotent p) : p = 0 := 
+begin
+ replace h₁ := idempotent.mul_self h₁,
+ ext n, rw[coeff_zero],
+ induction n using nat.strong_induction_on with n ih,
+ cases n,
+ { exact h₀ },
+ { rw[← h₁, coeff_mul],
+   apply finset.sum_eq_zero,
+   rintro ⟨i,j⟩ hij,
+   replace hij : i + j = n.succ := finset.nat.mem_antidiagonal.mp hij,
+   change p.coeff i * p.coeff j = 0,
+   cases j,
+   { rw[h₀, mul_zero] },
+   { replace hij : i + j = n :=  nat.succ_inj'.mp hij,
+     have : i < (i + j).succ := lt_of_le_of_lt le_self_add (i + j).lt_succ_self,
+     rw[hij] at this,
+     rw[ih i this, zero_mul] 
+   }
+ }
+end
 
 lemma is_idempotent_iff : 
  is_idempotent p ↔ 
-  (is_idempotent (coeff p 0)) ∧ (∀ n : ℕ, (coeff p n.succ) = 0) :=
-  sorry
- 
+  (is_idempotent (coeff p 0)) ∧ (p = C (p.coeff 0)) :=
+begin
+ split,
+ { let e := coeff p 0, 
+   intro hp, 
+   have he : is_idempotent (eval 0 p) := 
+    is_idempotent_hom (eval_ring_hom (0 : A)) hp,
+   rw [← coeff_zero_eq_eval_zero p] at he,
+   change is_idempotent e at he,
+   let q := (C (1 - e)) * p,
+   have hq : is_idempotent q := 
+    idempotent.mul_mem (is_idempotent_hom C (idempotent.one_sub_mem he)) hp,
+   have hqc : coeff q 0 = 0 := begin
+    dsimp[q], rw[coeff_zero_eq_eval_zero, eval_C_mul, mul_comm, ← coeff_zero_eq_eval_zero],
+    exact (is_idempotent' e).mp he,
+   end,
+   have hqz : q = 0 := is_idempotent_aux hqc hq,
+   dsimp[q] at hqz, 
+   rw[ring_hom.map_sub, ring_hom.map_one, sub_mul, one_mul] at hqz,
+   replace hqz := eq_of_sub_eq_zero hqz,
+   let r := (C e) - p,
+   have hr : is_idempotent r := begin
+     change r ^ 2 = r, 
+     dsimp[r],
+     rw[pow_two, mul_sub, sub_mul, sub_mul, mul_comm p],
+     rw[← hqz, idempotent.mul_self hp, sub_self, sub_zero], 
+     rw[← ring_hom.map_mul, idempotent.mul_self he],
+   end,
+   have hr' : r.coeff 0 = 0 := by rw[coeff_sub, coeff_C_zero, sub_self],
+   exact ⟨he,(eq_of_sub_eq_zero (is_idempotent_aux hr' hr)).symm⟩,
+ },
+ { rintro ⟨h₀,h₁⟩,
+   rw[h₁],
+   exact is_idempotent_hom C h₀,
+ }
+end
+
 end poly_el_props
 
 /- -------------------------------------------------------- -/
@@ -736,64 +1078,45 @@ instance : has_mul (axis he) :=
 
 @[simp] lemma val_mul (b₁ b₂ : axis he) : (b₁ * b₂).val = b₁.val * b₂.val := rfl
 
-instance : comm_ring (axis he) := by { 
-  refine_struct {
-  zero := has_zero.zero _,
-  one  := has_one.one _,
-  neg  := has_neg.neg,
-  add  := has_add.add,
+instance : comm_ring (axis he) := {
+  zero := has_zero.zero,
+  one  := has_one.one,
   mul  := has_mul.mul,
-  ..
- };
- try { rintro ⟨a,ha⟩ }; 
- try { rintro ⟨b,hb⟩ }; 
- try { rintro ⟨c,hc⟩ }; 
- apply subtype.eq, 
- {repeat {rw[val_add]},apply add_assoc},
- {rw[val_add,val_zero,zero_add]},
- {rw[val_add,val_zero,add_zero]},
- {rw[val_add,val_neg,val_zero,neg_add_self]},
- {rw[val_add,val_add,add_comm]},
- {repeat {rw[val_mul]},rw[mul_assoc]},
- {rw[val_mul,val_one,mul_comm,ha]},
- {rw[val_mul,val_one,ha]},
- {rw[val_mul,val_add,val_add,val_mul,val_mul,mul_add]},
- {rw[val_mul,val_add,val_add,val_mul,val_mul,add_mul]},
- {rw[val_mul,val_mul,mul_comm]}
-}
+  add  := has_add.add,
+  neg  := has_neg.neg,
+  zero_add := λ a, subtype.eq $ by {rw[val_add,val_zero,zero_add]},
+  add_zero := λ a, subtype.eq $ by {rw[val_add,val_zero,add_zero]},
+  add_left_neg := λ a, subtype.eq $ by {rw[val_add,val_neg,add_left_neg,val_zero]},
+  add_comm := λ a b, subtype.eq $ by {rw[val_add,val_add,add_comm]},
+  add_assoc := λ a b c, subtype.eq $ by {repeat {rw[val_add]},apply add_assoc},
+  one_mul := λ a, subtype.eq $ by {rw[val_mul,val_one,mul_comm,a.property]},
+  mul_one := λ a, subtype.eq $ by {rw[val_mul,val_one,a.property]},
+  mul_comm := λ a b, subtype.eq $ by {rw[val_mul,val_mul,mul_comm]},
+  mul_assoc := λ a b c, subtype.eq $ by {repeat {rw[val_mul]},apply mul_assoc},
+  left_distrib := λ a b c, subtype.eq $ by {rw[val_mul,val_add,val_add,val_mul,val_mul,left_distrib]},
+  right_distrib := λ a b c, subtype.eq $ by {rw[val_mul,val_add,val_add,val_mul,val_mul,right_distrib]},
+ }
 
-def proj : A → axis he :=
- λ a, ⟨a * e,by {dsimp[is_idempotent] at he, rw[mul_assoc,← pow_two,he]}⟩
-
-instance proj_ring_hom : is_ring_hom (proj he) := {
- map_one := by { apply subtype.eq, change 1 * e = e, rw[one_mul] },
- map_add := λ a b, by { apply subtype.eq, 
-                        change (a + b) * e = a * e + b * e,
-                        rw[add_mul]},
- map_mul := λ a b, by { dsimp[is_idempotent] at he, rw[pow_two] at he,
-                        apply subtype.eq,
-                        change (a * b) * e = (a * e) * (b * e),
-                        rw[mul_assoc a e,← mul_assoc e b e,mul_comm e b,
+def proj : A →+* axis he := {
+ to_fun :=  λ a, ⟨a * e,by {dsimp[is_idempotent] at he, rw[mul_assoc,← pow_two,he]}⟩,
+ map_zero' := subtype.eq $ by { change 0 * e = 0, rw[zero_mul] },
+ map_add' := λ a b, by { apply subtype.eq, 
+                         change (a + b) * e = a * e + b * e,
+                         rw[add_mul]},
+ map_one' := subtype.eq $ by { change 1 * e = e, rw[one_mul] },
+ map_mul' := λ a b, by { dsimp[is_idempotent] at he, rw[pow_two] at he,
+                         apply subtype.eq,
+                         change (a * b) * e = (a * e) * (b * e),
+                         rw[mul_assoc a e,← mul_assoc e b e,mul_comm e b,
                            mul_assoc b e,he,mul_assoc]}
 }
 
-def split : A → (axis he) × (axis (one_sub_mem he)) := 
- λ a, ⟨(proj he a),(proj (one_sub_mem he) a)⟩
-
-instance split_ring_hom : is_ring_hom (split he) := 
- let he' := one_sub_mem he in {
- map_one := by { 
-  ext, 
-  exact is_ring_hom.map_one (proj he),
-  exact is_ring_hom.map_one (proj he'),},
- map_add := λ a b, by {
-  dsimp[split],ext,
-  exact @is_ring_hom.map_add _ _ _ _ (proj he ) _ a b,
-  exact @is_ring_hom.map_add _ _ _ _ (proj he') _ a b,},
- map_mul := λ a b, by {
-  dsimp[split],ext,
-  exact @is_ring_hom.map_mul _ _ _ _ (proj he ) _ a b,
-  exact @is_ring_hom.map_mul _ _ _ _ (proj he') _ a b,},
+def split : A →+* (axis he) × (axis (one_sub_mem he)) := {
+ to_fun := λ a, ⟨(proj he a),(proj (one_sub_mem he) a)⟩,
+ map_zero' := by { ext1, exact (proj _).map_zero, exact (proj _).map_zero},
+ map_one'  := by { ext1, exact (proj _).map_one, exact (proj _).map_one},
+ map_add' := λ a b, by { ext1, exact (proj _).map_add _ _, exact (proj _).map_add _ _},
+ map_mul' := λ a b, by { ext1, exact (proj _).map_mul _ _, exact (proj _).map_mul _ _}
 }
 
 lemma mul_eq_zero (b : axis he) (c : axis (one_sub_mem he)) : 
@@ -807,18 +1130,17 @@ lemma mul_eq_zero (b : axis he) (c : axis (one_sub_mem he)) :
    ... = 0 : by {rw[(is_idempotent' e).mp he,mul_zero,zero_mul]}
 }
 
-def combine : (axis he) × (axis (one_sub_mem he)) → A := 
- λ bc, bc.1.val + bc.2.val
-
-instance combine_ring_hom : is_ring_hom (combine he) := {
- map_one := by {change e + (1 - e) = 1,rw[add_sub_cancel'_right]},
- map_add := λ bc₁ bc₂, by {
+def combine : (axis he) × (axis (one_sub_mem he)) →+* A := { 
+ to_fun := λ bc, bc.1.val + bc.2.val,
+ map_zero' := zero_add _,
+ map_one' := by {change e + (1 - e) = 1,rw[add_sub_cancel'_right]},
+ map_add' := λ bc₁ bc₂, by {
   rcases bc₁ with ⟨⟨b₁,hb₁⟩,⟨c₁,hc₁⟩⟩,
   rcases bc₂ with ⟨⟨b₂,hb₂⟩,⟨c₂,hc₂⟩⟩,
   change (b₁ + b₂) + (c₁ + c₂) = (b₁ + c₁) + (b₂ + c₂),
   rw[add_assoc,← add_assoc b₂,add_comm b₂ c₁,add_assoc,add_assoc],
  },
- map_mul := λ bc₁ bc₂, by {
+ map_mul' := λ bc₁ bc₂, by {
   rcases bc₁ with ⟨⟨b₁,hb₁⟩,⟨c₁,hc₁⟩⟩,
   rcases bc₂ with ⟨⟨b₂,hb₂⟩,⟨c₂,hc₂⟩⟩,
   change (b₁ * b₂) + (c₁ * c₂) = (b₁ + c₁) * (b₂ + c₂),
@@ -838,7 +1160,7 @@ lemma split_combine (bc : (axis he) × (axis (one_sub_mem he))) :
 by {
  have he' : e * (1 - e) = 0 := (is_idempotent' e).mp he,
  rcases bc with ⟨⟨b,hb⟩,⟨c,hc⟩⟩,
- ext; apply subtype.eq,
+ ext1; apply subtype.eq,
  {change (b + c) * e = b,
   rw[← hc,add_mul,hb,mul_assoc,mul_comm (1 - e),he',mul_zero,add_zero],},
  {change (b + c) * (1 - e) = c,

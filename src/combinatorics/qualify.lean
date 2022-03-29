@@ -28,6 +28,7 @@ compatibility with some existing code.
 -/
 
 import data.list.basic
+import data.list.nodup
 
 variables {α : Type*} 
 

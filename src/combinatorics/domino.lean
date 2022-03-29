@@ -19,7 +19,7 @@ Authors: Neil Strickland
  the converse fails.
 -/
 
-import data.fintype.basic algebra.group tactic.ring
+import data.fintype.basic algebra.group algebra.big_operators.basic tactic.ring
 
 namespace combinatorics
 
@@ -164,7 +164,17 @@ def delta : bool → count_pair
 
 def delta' (n : ℕ) : count_pair := delta n.bodd
 
-def tot (x : count_pair) : ℕ := (x ff) + (x tt)
+def tot : count_pair →+ ℕ := {
+  to_fun := λ x, (x ff) + (x tt),
+  map_zero' := rfl,
+  map_add' := λ u v, 
+   begin
+    change ((u ff) + (v ff)) + ((u tt) + (v tt)) = 
+           ((u ff) + (u tt)) + ((v ff) + (v tt)),
+    rw[add_assoc,← add_assoc (v ff)],
+    rw[add_comm (v ff) (u tt),add_assoc,add_assoc],
+   end
+}
 
 lemma tot_both : tot both = 2 := rfl
 
@@ -180,25 +190,11 @@ by { dsimp [delta'], rw [nat.bodd_succ], exact delta_succ n.bodd }
 
 lemma tot_delta' (n : ℕ) : tot (delta' n) = 1 := tot_delta n.bodd
 
-instance tot_hom : is_add_monoid_hom tot := {
- map_zero := rfl,
- map_add := λ u v, 
+def diff : count_pair →+ ℤ := {
+ to_fun := λ x, (x tt) - (x ff),
+ map_zero' := rfl,
+ map_add' := λ u v, 
  begin
-  unfold tot, 
-  change ((u ff) + (v ff)) + ((u tt) + (v tt)) = 
-         ((u ff) + (u tt)) + ((v ff) + (v tt)),
-  rw[add_assoc,← add_assoc (v ff)],
-  rw[add_comm (v ff) (u tt),add_assoc,add_assoc],
- end
-}
-
-def diff (x : count_pair) : ℤ := (x tt) - (x ff)
-
-instance diff_hom : is_add_monoid_hom diff := {
- map_zero := rfl,
- map_add := λ u v, 
- begin
-  unfold diff, 
   have : (u + v) tt = (u tt) + (v tt) := rfl, rw[this,int.coe_nat_add],
   have : (u + v) ff = (u ff) + (v ff) := rfl, rw[this,int.coe_nat_add],
   ring,
@@ -223,10 +219,10 @@ def color_diff (s : finset (ℕ × ℕ)) : ℤ := (color_count s).diff
 lemma count_eq (s : finset (ℕ × ℕ)) : 
  (color_count s).tot = s.card := 
 begin
- rw[color_count,← finset.sum_hom _ count_pair.tot],
+ rw[color_count,count_pair.tot.map_sum],
  have : (λ x : square, (count_pair.delta x.color).tot) = (λ x, 1) := 
   by {funext, apply count_pair.tot_delta},
- rw[this,finset.sum_const,nat.smul_eq_mul,mul_one],
+ rw[this,finset.sum_const,smul_eq_mul,mul_one]
 end
 
 namespace color_count
@@ -308,6 +304,9 @@ begin
   rw [square.color_vstep, count_pair.delta_succ]
 end
 
+lemma color_diff (d : domino) : (chess.color_count d.to_finset).diff = 0 := 
+ by { rw[color_count],refl }
+ 
 def overlap : domino → domino → Prop
 | (horizontal u) (horizontal v) := u = v ∨ u = v.hstep ∨ u.hstep = v 
 | (horizontal u) (vertical v)   := u = v ∨ u = v.vstep ∨ u.hstep = v ∨ u.hstep = v.vstep  
@@ -341,16 +340,24 @@ def is_cover (s : finset (ℕ × ℕ)) (l : list domino) :=
 
 def has_cover (s : finset (ℕ × ℕ)) := ∃ l, is_cover s l
 
+lemma diff_eq_zero_aux (l : list domino) :
+ (((l.map to_finset).map chess.color_count).map count_pair.diff).sum = 0 := 
+begin 
+ induction l with d l0 ih,
+ {refl},
+ { rw[list.map_cons,list.map_cons,list.map_cons,color_diff,list.sum_cons,ih,add_zero] }
+end 
+
 lemma diff_eq_zero {l : list domino} 
   (hl : l.pairwise disjoint) : 
       (chess.color_count (track l)).diff = 0 :=
 begin
-  rw [chess.count_pair.diff],
   let h₀ := list.pairwise.imp 
     (λ a b,(@disjoint_iff a b).mp) hl,
   let h₁ := (list.pairwise_map to_finset).mpr h₀,
-  let h₂ := 
+  let h₂ : (chess.color_count (track l)) = _ := 
    chess.color_count.disjoint_sum' (l.map to_finset) h₁,
+  rw[h₂,count_pair.diff.map_list_sum,diff_eq_zero_aux],
 end
 
 end domino

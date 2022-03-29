@@ -58,44 +58,63 @@ lemma mem_mul_iff (s t : ring_of_subsets V) :
  x ∈ s * t ↔ (x ∈ s ∧ x ∈ t) := 
  by { unfold has_mul.mul, rw[set.mem_inter_iff], }
 
-instance : comm_ring (ring_of_subsets V) := begin
- refine_struct {
+instance : comm_ring (ring_of_subsets V) := {
   zero := (0 : ring_of_subsets V), one := 1, 
-  neg := has_neg.neg, add := (+), mul := (*) 
- }; intros;ext x;
- repeat{rw[mem_add_iff]};repeat{rw[mem_mul_iff]};repeat{rw[mem_neg_iff]};
- repeat{rw[mem_add_iff]};repeat{rw[mem_mul_iff]};repeat{rw[mem_neg_iff]};
- repeat{rw[mem_zero_iff]};repeat{rw[mem_one_iff]};
- try {by_cases ha : x ∈ a};
- try {by_cases hb : x ∈ b};
- try {by_cases hc : x ∈ c};
- try{simp[ha,hb,hc]};
- try{simp[ha,hb]};
- try{simp[ha]},
-end
+  neg := has_neg.neg, add := (+), mul := (*),
+  add_zero := λ a, by { ext x, rw[mem_add_iff, mem_zero_iff], simp },
+  zero_add := λ a, by { ext x, rw[mem_add_iff, mem_zero_iff], simp },
+  add_left_neg := λ a, begin 
+    ext x, rw[mem_add_iff, mem_neg_iff, mem_zero_iff], 
+    by_cases ha : x ∈ a;
+    simp[ha]
+  end,
+  add_comm := λ a b, begin 
+    ext x, rw[mem_add_iff, mem_add_iff],
+    by_cases ha : x ∈ a; by_cases hb : x ∈ b;
+    simp[ha,hb]
+  end,
+  add_assoc := λ a b c, begin 
+    ext x, repeat { rw[mem_add_iff] },
+    by_cases ha : x ∈ a; by_cases hb : x ∈ b; by_cases hc : x ∈ c; 
+    simp[ha,hb,hc],
+  end,
+  mul_one := λ a, by { ext x, rw[mem_mul_iff, mem_one_iff], simp },
+  one_mul := λ a, by { ext x, rw[mem_mul_iff, mem_one_iff], simp },
+  mul_comm := λ a b, begin 
+    ext x, rw[mem_mul_iff, mem_mul_iff, and_comm],
+  end,
+  mul_assoc := λ a b c, begin
+    ext x, repeat { rw[mem_mul_iff] }, rw[and_assoc],
+  end,
+  left_distrib := λ a b c, begin
+    ext x, rw[mem_add_iff, mem_mul_iff, mem_add_iff, mem_mul_iff, mem_mul_iff],
+    by_cases ha : x ∈ a; by_cases hb : x ∈ b;
+    simp[ha,hb]
+  end,
+  right_distrib := λ a b c, begin 
+    ext x, rw[mem_add_iff, mem_mul_iff, mem_add_iff, mem_mul_iff, mem_mul_iff],
+    by_cases ha : x ∈ a; by_cases hb : x ∈ b;
+    simp[ha,hb]
+  end
+ }
 
 variable {V}
 
-noncomputable def indicator : ring_of_subsets V → ring_of_bool_subsets V := 
- λ s x, (if x ∈ s then tt else ff) 
-
-lemma indicator_val (s : ring_of_subsets V) (x : V) : 
- indicator s x = (if x ∈ s then tt else ff) := rfl
-
-instance : is_ring_hom (@indicator V) := {
- map_one := by { ext x, dsimp[indicator], rw[mem_one_iff V x,if_true], refl,},
- map_mul := λ s t, by { 
+noncomputable def indicator : ring_of_subsets V →+* ring_of_bool_subsets V := { 
+ to_fun := λ s x, (if x ∈ s then tt else ff), 
+ map_zero' := by { ext x, rw[mem_zero_iff V x,if_false], refl },
+ map_add' := λ s t, by { 
   ext x, 
-  change indicator (s * t) x = band (indicator s x) (indicator t x),
-  dsimp[indicator],rw[mem_mul_iff],
+  rw[mem_add_iff, val_add],
   by_cases hs : x ∈ s; by_cases ht : x ∈ t; simp[hs,ht],
  },
- map_add := λ s t, by { 
+ map_one' := by { ext x, rw[mem_one_iff V x,if_true], refl },
+ map_mul' := λ s t, by { 
   ext x, 
-  change indicator (s + t) x = bxor (indicator s x) (indicator t x),
-  dsimp[indicator],rw[mem_add_iff],
-  by_cases hs : x ∈ s; by_cases ht : x ∈ t; simp[hs,ht],
- },
+  rw[mem_mul_iff, val_mul],
+  by_cases hs : x ∈ s; by_cases ht : x ∈ t;
+  simp[hs, ht],
+ }
 }
 
 end ring_of_subsets
@@ -104,25 +123,25 @@ namespace ring_of_bool_subsets
 
 variable {U}
 
-def support : (ring_of_bool_subsets U) → (ring_of_subsets U) := 
- λ (f : U → bool), (λ x, f x = tt)
-
-lemma mem_support {f : ring_of_bool_subsets U} {x : U} : 
- x ∈ (support f) ↔ f x = tt := by {dsimp[support], refl}
-
-instance : is_ring_hom (@support U) := {
- map_one := begin 
-  ext x, rw[mem_support,val_one,ring_of_subsets.mem_one_iff,eq_self_iff_true], 
+def support : (ring_of_bool_subsets U) →+* (ring_of_subsets U) := {
+ to_fun := λ (f : U → bool), (λ x, f x = tt),
+ map_zero' := begin 
+  ext x, rw[set.mem_def, val_zero, ring_of_subsets.mem_zero_iff], simp only [],
  end,
- map_mul := λ s t, begin
-  ext x, rw[ring_of_subsets.mem_mul_iff],
-  repeat{rw[mem_support]},rw[val_mul],
-  cases (s x); cases (t x); rw[band]; exact dec_trivial,
- end,
- map_add := λ s t, begin
+ map_add' := λ s t, begin
   ext x, rw[ring_of_subsets.mem_add_iff],
-  repeat{rw[mem_support]},rw[val_add],
+  repeat { rw[set.mem_def] },
+  rw[val_add],
   cases (s x); cases (t x); rw[bxor]; exact dec_trivial,
+ end,
+ map_one' := begin 
+  ext x, rw[set.mem_def, val_one, ring_of_subsets.mem_one_iff, eq_self_iff_true]
+ end,
+ map_mul' := λ s t, begin
+  ext x, rw[ring_of_subsets.mem_mul_iff],
+  repeat { rw[set.mem_def] },
+  rw[val_mul],
+  cases (s x); cases (t x); rw[band]; exact dec_trivial,
  end,
 }
 

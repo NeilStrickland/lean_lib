@@ -1,4 +1,4 @@
-import algebra.ring
+import algebra.ring algebra.field.basic
 
 @[derive decidable_eq]
 inductive F4 : Type 
@@ -38,14 +38,24 @@ def inv : F4 → F4
 | alpha := beta
 | beta  := alpha
 
-instance : discrete_field F4 := 
+instance : field F4 := 
 begin 
+ letI : has_zero F4 := ⟨F4.zero⟩,
+ letI : has_add F4 := ⟨F4.add⟩,
+ letI : has_neg F4 := ⟨id⟩,
+ letI : has_one F4 := ⟨F4.one⟩,
+ letI : has_mul F4 := ⟨F4.mul⟩,
+ letI : has_inv F4 := ⟨F4.inv⟩,
  refine_struct {
-  zero := F4.zero, one := F4.one,
-  neg := id, inv := F4.inv,
-  add := F4.add, mul := F4.mul,
-  zero_ne_one := λ e, by {cases e},
-  has_decidable_eq := by { apply_instance }
+  zero := F4.zero, add := (+), neg := id, sub := (+), 
+  one := F4.one, mul := (*), inv := F4.inv, div := λ a b, a * b⁻¹,
+  nsmul := nsmul_rec, npow := npow_rec, 
+  zsmul := zsmul_rec, zpow := zpow_rec,
+  nsmul_succ' := λ n x, rfl, 
+  npow_succ' := λ n x, rfl,
+  zsmul_succ' := λ n x, rfl, zsmul_neg' := λ n x, rfl,
+  zpow_succ' := λ n x, rfl, zpow_neg' := λ n x, rfl,
+  exists_pair_ne := by { use F4.zero, use F4.one }
  };
  try { repeat { intro a, cases a }; exact dec_trivial, },
 end

@@ -10,7 +10,7 @@ subsets `U ⊆ P` that are closed upwards.  We order this by
 `upper P` is a bounded distributive lattice with this order.
 -/
 
-import poset.basic order.bounded_lattice
+import poset.basic order.bounded order.lattice
 
 universes uP uQ uR uS
 
@@ -101,21 +101,17 @@ end
 
 /-- upper P has a natural structure as a bounded distributive lattice. 
 -/
-instance bdl : bounded_distrib_lattice (upper P) := {
+instance dl : distrib_lattice (upper P) := {
   le := λ U V, V.val ⊆ U.val,
   le_refl := λ U, le_refl U.val,
   le_antisymm := λ U V (h0 : V.val ⊆ U.val) (h1 : U.val ⊆ V.val),
                    begin apply subtype.eq, exact le_antisymm h1 h0, end,
   le_trans := λ U V W (h0 : V.val ⊆ U.val) (h1 : W.val ⊆ V.val), 
                  @le_trans (finset P) _ W.val V.val U.val h1 h0,
-  bot := ⟨finset.univ,is_upper_univ P⟩,
-  top := ⟨finset.empty,is_upper_empty P⟩,
   inf := λ U V, ⟨U.val ∪ V.val,
                 is_upper_union U.val V.val U.property V.property⟩,
   sup := λ U V, ⟨U.val ∩ V.val,
                 is_upper_inter U.val V.val U.property V.property⟩,
-  bot_le := λ U,finset.subset_univ U.val,
-  le_top := λ U,finset.empty_subset U.val,
   le_sup_left  := λ U V,finset.inter_subset_left  U.val V.val,
   le_sup_right := λ U V,finset.inter_subset_right U.val V.val,
   sup_le := λ U V W 
@@ -130,6 +126,13 @@ instance bdl : bounded_distrib_lattice (upper P) := {
              finset.union_subset U_le_V U_le_W,
   le_sup_inf := λ U V W A h,
     distrib U.val V.val W.val h,
+}
+
+instance bo : bounded_order (upper P) := {
+  bot := ⟨finset.univ,is_upper_univ P⟩,
+  top := ⟨finset.empty,is_upper_empty P⟩,
+  bot_le := λ U,finset.subset_univ U.val,
+  le_top := λ U,finset.empty_subset U.val
 }
 
 variable {P}

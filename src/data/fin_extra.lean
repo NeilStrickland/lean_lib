@@ -14,6 +14,7 @@ import data.list data.fintype.basic data.finset.interval data.fin.interval
 namespace fin
 open fin finset
 
+/- (reflect i) is essentially n - 1 - i -/
 def reflect : ∀ {n : ℕ} (i : fin n), fin n
 | 0 i := fin.elim0 i
 | (n + 1) i := ⟨n - i, nat.lt_succ_of_le (nat.sub_le n i)⟩  
@@ -56,6 +57,7 @@ begin
   exact not_lt_of_ge hr h
 end
 
+/- inc is the inclusion of (fin n) in (fin (n + 1)) -/
 def inc {n : ℕ} : fin n → fin n.succ := 
   λ i, ⟨i.val, lt_trans i.is_lt n.lt_succ_self⟩ 
 
@@ -265,65 +267,46 @@ def finset_least_element {n : ℕ} (s : finset (fin n)) (e : s.nonempty) :
  a finite subset of (fin n).  For technical reasons we have found it
  more convenient to do this directly with finite sets rather than 
  predicates.
-
- I am not sure why Lean thinks this is noncomputable
 -/
-noncomputable def finset_largest_element {n : ℕ} (s : finset (fin n)) (e : s.nonempty) :
+
+def finset_largest_element {n : ℕ} (s : finset (fin n)) (e : s.nonempty) :
  {k : fin n // k ∈ s ∧ ∀ j, j ∈ s → j ≤ k} :=
 begin
- tactic.unfreeze_local_instances,
  induction n with n0 ih,
  {exfalso,
   cases (nonempty.bex e) with i _,
   exact fin.elim0 i,},
- {let s0 := univ.filter (λ i0 : fin n0, i0.succ ∈ s),
-  by_cases e0 : s0.nonempty,
-  {rcases (ih s0 e0) with ⟨⟨k0_val,k0_is_lt⟩,⟨k0_in_s0,k0_max⟩⟩,
-   let k0 : fin n0 := ⟨k0_val,k0_is_lt⟩,
-   let k := k0.succ,
-   let k_in_s : k ∈ s := (mem_filter.mp k0_in_s0).right,
-   let k_max : ∀ j, j ∈ s → j ≤ k := begin
-    intros j j_in_s,
-    cases j with j_val j_is_lt, cases j_val with j0_val,
-    {exact fin.zero_le k,},
-    {have j0_is_lt : j0_val < n0 := nat.lt_of_succ_lt_succ j_is_lt,
-     let j0 : fin n0 := ⟨j0_val,j0_is_lt⟩,
-     have j0_in_s0 : j0 ∈ s0 := mem_filter.mpr ⟨mem_univ j0,j_in_s⟩,
-     dsimp[has_le.le,fin.le,k,fin.succ],
-     exact nat.succ_le_succ (k0_max j0 j0_in_s0),
-    }
-   end,
-   exact ⟨k,⟨k_in_s,k_max⟩⟩,
-  },{
-   let z : fin n0.succ := 0,
-   have zero_in_s : z ∈ s := begin 
-    let h : ∀ k, k ∈ s → z ∈ s := begin
-     intro k,cases k with k_val k_is_lt,cases k_val with k0_val,
-     {intro z_in_s,exact z_in_s,},
-     {intro k_in_s,exfalso,
-      have k0_is_lt : k0_val < n0 := nat.lt_of_succ_lt_succ k_is_lt,
-      let k0 : fin n0 := ⟨k0_val,k0_is_lt⟩,
-      have k0_in_s0 : k0 ∈ s0 := mem_filter.mpr ⟨mem_univ k0,k_in_s⟩,
-      exact e0 ⟨k0,k0_in_s0⟩,
-     }
+ {by_cases hn1 : fin.last n0 ∈ s,
+  { exact ⟨fin.last n0,⟨hn1,λ j _,j.le_last⟩⟩ },
+  { have h_last : ∀ (i : fin n0.succ) (h₁ : ¬ (i < fin.last n0))
+            (h₂ : i ∈ s), false := 
+     begin intros,
+      have : (i = fin.last n0) := le_antisymm (fin.le_last i) (le_of_not_gt h₁),
+      rw[this] at h₂, exact hn1 h₂,
+     end,
+    let s0 := univ.filter (λ i0 : fin n0, i0.inc ∈ s),
+    have e0 : s0.nonempty := begin
+     rcases (nonempty.bex e) with ⟨i,i_in_s⟩,
+     by_cases i_lt_n0 : i < fin.last n0,
+     { let i0 : fin n0 := ⟨i,i_lt_n0⟩,
+       have : i = i0.inc := by { ext, refl },
+       rw[this] at i_in_s,
+       have i_in_s0 : i0 ∈ s0 := finset.mem_filter.mpr ⟨mem_univ i0,i_in_s⟩,
+       exact ⟨i0,i_in_s0⟩,
+     },{exfalso, exact h_last i i_lt_n0 i_in_s}
     end,
-    exact exists.elim (nonempty.bex e) h,
-   end,
-   have zero_max : ∀ j, j ∈ s → j ≤ z := 
-   begin
-    intros j j_in_s,
-    cases j with j_val j_is_lt, cases j_val with j0_val,
-    {exact fin.zero_le z},
-    {exfalso,
-     have j0_is_lt : j0_val < n0 := nat.lt_of_succ_lt_succ j_is_lt,
-     let j0 : fin n0 := ⟨j0_val,j0_is_lt⟩,
-     have j0_in_s0 : j0 ∈ s0 := mem_filter.mpr ⟨mem_univ j0,j_in_s⟩,
-     exact e0 ⟨j0,j0_in_s0⟩,
-    }
-   end,
-   exact ⟨z,zero_in_s,zero_max⟩,
-  }
- }
+    rcases (ih s0 e0) with ⟨k0,⟨k0_in_s0,k0_max⟩⟩,
+    let k : fin n0.succ := k0.inc,
+    have k_in_s : k ∈ s := (mem_filter.mp k0_in_s0).2,
+    have k_max : ∀ j, j ∈ s → j ≤ k := λ j j_in_s, begin
+     by_cases j_lt_n0 : (j : ℕ) < n0,
+     { rcases j with ⟨j,j_lt_n⟩,
+       exact k0_max ⟨j,j_lt_n0⟩ (mem_filter.mpr ⟨mem_univ _,j_in_s⟩) },
+     { exfalso,exact h_last j j_lt_n0 j_in_s}
+    end,
+    exact ⟨k,⟨k_in_s,k_max⟩⟩,
+  },
+ } 
 end
 
 def fin.list_Ico {n : ℕ} (i : fin n) (j : fin n.succ) : 

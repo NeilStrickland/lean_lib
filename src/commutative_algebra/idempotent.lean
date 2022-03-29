@@ -11,10 +11,7 @@ namespace commutative_algebra
 def is_idempotent (a : A) := a * a = a
 
 theorem is_idempotent' {a : A} : is_idempotent a ↔ a * (1 - a) = 0 := 
-by { dsimp [is_idempotent],
-  rw [mul_add, mul_one, mul_neg_eq_neg_mul_symm],
-  rw [← sub_eq_add_neg, sub_eq_zero],
-  split; intro e; exact e.symm }
+by { dsimp [is_idempotent], rw [mul_sub, mul_one,sub_eq_zero], exact comm}
 
 namespace is_idempotent 
 
@@ -64,14 +61,15 @@ by { rcases hn with ⟨n, hn'⟩, rw [← pow ha n, pow_succ, hn', mul_zero] }
 
 theorem mul_self_invol : a * (invol a) = - a := 
 by { dsimp [is_idempotent, invol] at *,
-    rw [mul_add, mul_one, two_mul, neg_add, mul_add],
-    rw [mul_neg_eq_neg_mul_symm, ha, add_neg_cancel_left] }
+    rw [mul_sub, mul_one, two_mul, mul_add, ha],
+    rw [← sub_sub, sub_self, zero_sub] }
 
 theorem invol_square : (invol a) * (invol a) = 1 := 
 begin
   change (1 - 2 * a) * invol a = 1,
   rw [sub_mul, mul_assoc, mul_self_invol ha, one_mul],
-  dsimp [invol], rw [mul_neg_eq_neg_mul_symm, add_neg_cancel_right],
+  dsimp [invol], 
+  rw[mul_neg, sub_sub, add_neg_self, sub_zero]
 end
 
 end one_variable
@@ -112,7 +110,7 @@ begin
   have hv := and (not ha) hb,
   have huv : u * v = 0 := 
   by { dsimp [u, v], rw [mul_comm a, mul_assoc, ← mul_assoc a],
-       have : a * (1 + (-a)) = 0 := is_idempotent'.mp ha,
+       have : a * (1 - a) = 0 := is_idempotent'.mp ha,
        rw [this, zero_mul, mul_zero] },
   exact add hu hv huv
 end
@@ -170,26 +168,28 @@ begin
     ... = (i + (n - i)) + 1 - i : by { rw [nat.add_sub_of_le hi] }  
     ... = (n - i) + 1 : by { simp only [add_comm, add_assoc, nat.add_sub_cancel_left] }, 
    rw [this, pow_succ, pow_succ], repeat { rw [mul_assoc] }, congr' 1,
-   repeat { rw [← mul_assoc] }, rw [mul_comm (1 + - e) (e ^ i)],   
+   repeat { rw [← mul_assoc] }, rw [mul_comm (1 - e) (e ^ i)],   
  },
  have hf₀ : f 0 = (1 - e) ^ (n + 2) :=
-  by { dsimp [f], rw [nat.choose, nat.cast_one, one_mul, mul_one] },
- have hf₁ : f (n + 2) = e ^ (n + 2) := 
+  by { dsimp [f], rw [nat.choose, nat.cast_one, pow_zero, one_mul, mul_one] },
+ have hf₁ := finset.sum_range_succ' f (n + 1),
+ rw[hf₀] at hf₁,
+ have hf₂ : f (n + 2) = e ^ (n + 2) := 
   by { dsimp [f], rw [nat.choose_self, nat.cast_one, nat.sub_self, pow_zero, mul_one, mul_one] },
+ have hf₃ := finset.sum_range_succ f (n + 2),
+ rw[hf₂] at hf₃,
  have := calc
   (1 : A) = (1 : A) ^ (n + 2) : (one_pow (n + 2)).symm
   ... = (e + (1 - e)) ^ (n + 2) :
    by { congr, rw [add_sub, add_comm, add_sub_cancel] }
   ... = (finset.range (n + 2).succ).sum f : add_pow e (1 - e) (n + 2) 
-  ... = e ^ (n + 2) + (finset.range (n + 2)).sum f : 
-         by { rw [finset.sum_range_succ, hf₁] }
-  ... = e ^ (n + 2) + (xz + (1 - e) ^ (n + 2)) : 
-         by { rw [finset.sum_range_succ', hf₀] } 
-  ... = e ^ (n + 2) + (x * z + (1 - e) ^ (n + 2)) : by { rw [hxz] },
+  ... = ((finset.range (n + 2)).sum f)  + e ^ (n + 2): hf₃ 
+  ... = (xz + (1 - e) ^ (n + 2)) + e ^ (n + 2) :  by { rw [hf₁] } 
+  ... = (x * z + (1 - e) ^ (n + 2)) + e ^ (n + 2) : by { rw [hxz] },
  have hxyz := calc 
   y = 1 - e ^ (n + 2) - (1 - e) ^ (n + 2) : rfl 
-  ... = (e ^ (n + 2) + (x * z + (1 - e) ^ (n + 2))) - e ^ (n + 2) - (1 - e) ^ (n + 2) : 
-   by { congr' 2, exact this }
+  ... = ((x * z + (1 - e) ^ (n + 2)) + e ^ (n + 2)) - e ^ (n + 2) - (1 - e) ^ (n + 2) : 
+   by { congr' 2 }
   ... = x * z : by { simp only [sub_eq_add_neg, add_comm, add_left_comm,
                                add_neg_cancel_left, add_neg_cancel_right] },
  have hy : y ^ n = 0 := by { rw [hxyz, mul_pow, hx, zero_mul] },
@@ -212,7 +212,7 @@ begin
   ... = u * (x ^ (n + 2) * u) : by { rw [mul_pow, pow_add] }
   ... = 0 : by { rw [pow_add, hx, zero_mul, zero_mul, mul_zero] },
  split, exact is_idempotent'.mpr this,
- let w := geom_series₂ 1 e (n + 1), 
+ let w := geom_sum₂ 1 e (n + 1), 
  have hw : x * w = e - e ^ (n + 2) := calc 
   x * w = e * (w * (1 - e)) : by { dsimp [x], rw [mul_assoc, mul_comm _ w] }
   ... = e * (1 - e ^ (n + 1)) : by { rw [geom_sum₂_mul 1 e (n + 1), one_pow] }
@@ -222,7 +222,7 @@ begin
  },
  have := calc
   e₁ - e = e ^ (n + 2) * u - e : rfl
-  ... = e ^ (n + 2) * (1 + x * z * u) - e : by { congr' 2, exact hu'' }
+  ... = e ^ (n + 2) * (1 + x * z * u) - e : by { congr' 2 }
   ... = (e ^ (n + 2) * (x * z * u) + e ^ (n + 2)) - e : 
          by { rw [mul_add, mul_one, add_comm] }
   ... = x * (e ^ (n + 2) * z * u) - (e - e ^ (n + 2)) : 
@@ -295,64 +295,66 @@ instance : has_mul (axis he) :=
 @[simp] theorem mul_coe (b₁ b₂ : axis he) : 
  ((b₁ * b₂ : axis he) : A) = b₁ * b₂ := rfl
 
-instance : comm_ring (axis he) := by { 
-  refine_struct {
-  zero := has_zero.zero _,
-  one  := has_one.one _,
-  neg  := has_neg.neg,
-  add  := has_add.add,
-  mul  := has_mul.mul,
-  ..
+instance : comm_ring (axis he) := begin
+  refine_struct { 
+   zero := has_zero.zero, add := (+), neg := has_neg.neg, sub := λ a b, a + (-b), 
+   one := has_one.one, mul := (*),
+   nsmul := nsmul_rec,
+   npow := npow_rec, 
+   zsmul := zsmul_rec,
+   nsmul_zero' := λ x, rfl,
+   nsmul_succ' := λ n x, rfl, 
+   zsmul_zero' := λ x, rfl,
+   zsmul_succ' := λ n x, rfl,
+   zsmul_neg'  := λ n x, rfl,
+   npow_zero'  := λ x, rfl,
+   npow_succ'  := λ n x, rfl
  };
- try { rintro ⟨a, ha⟩ }; 
- try { rintro ⟨b, hb⟩ }; 
- try { rintro ⟨c, hc⟩ }; 
- apply eq, 
- { repeat { rw [add_coe] }, apply add_assoc },
- { rw [add_coe, zero_coe, zero_add] },
- { rw [add_coe, zero_coe, add_zero] },
- { rw [add_coe, neg_coe, zero_coe, neg_add_self] },
- { rw [add_coe, add_coe, add_comm] },
- { repeat { rw [mul_coe] }, rw [mul_assoc] },
- { rw [mul_coe, one_coe, mul_comm], exact ha },
- { rw [mul_coe, one_coe], exact ha },
- { rw [mul_coe, add_coe, add_coe, mul_coe, mul_coe, mul_add] },
- { rw [mul_coe, add_coe, add_coe, mul_coe, mul_coe, add_mul] },
- { rw [mul_coe, mul_coe, mul_comm] }
-}
+ try { rintro a }; 
+ try { rintro b }; 
+ try { rintro c }; 
+ apply eq;
+ repeat { rw[add_coe] };
+ repeat { rw[neg_coe] };
+ repeat { rw[mul_coe] };
+ repeat { rw[add_coe] };
+ repeat { rw[zero_coe] };
+ repeat { rw[one_coe] },
+ { rw[add_assoc] },
+ { rw[zero_add] },
+ { rw[add_zero] },
+ { rw[neg_add_self] },
+ { rw[add_comm] },
+ { rw[mul_assoc] },
+ { rw[mul_comm], exact a.property },
+ { exact a.property },
+ { rw[mul_add] },
+ { rw[add_mul] },
+ { rw[mul_comm] }
+end
 
-def proj : A → axis he :=
- λ a, ⟨a * e, by { dsimp [is_idempotent] at he, rw [mul_assoc, he] }⟩
-
-instance proj_ring_hom : is_ring_hom (proj he) := {
- map_one := by { apply eq, change 1 * e = e, rw [one_mul] },
- map_add := λ a b, by { apply eq, 
+def proj : A →+* axis he := {
+ to_fun := λ a, ⟨a * e, by { dsimp [is_idempotent] at he, rw [mul_assoc, he] }⟩,
+ map_zero' := by { apply eq, change 0 * e = 0, exact zero_mul e },
+ map_one' := by { apply eq, change 1 * e = e, exact one_mul e },
+ map_add' := λ a b, by { apply eq, 
                         change (a + b) * e = a * e + b * e,
                         rw [add_mul] },
- map_mul := λ a b, by { dsimp [is_idempotent] at he, 
+ map_mul' := λ a b, by { dsimp [is_idempotent] at he, 
                         apply eq,
                         change (a * b) * e = (a * e) * (b * e),
                         rw [mul_assoc a e, ← mul_assoc e b e, mul_comm e b,
                             mul_assoc b e, he, mul_assoc] }
 }
 
-def split : A → (axis he) × (axis (is_idempotent.not he)) := 
-λ a, ⟨(proj he a), (proj (is_idempotent.not he) a)⟩
-
-instance split_ring_hom : is_ring_hom (split he) := 
-let he' := is_idempotent.not he in
-{ map_one := by { 
-    ext, 
-    { exact is_ring_hom.map_one (proj he) },
-    { exact is_ring_hom.map_one (proj he') } },
-  map_add := λ a b, by {
-    dsimp [split], ext,
-    { exact @is_ring_hom.map_add _ _ _ _ (proj he ) _ a b },
-    { exact @is_ring_hom.map_add _ _ _ _ (proj he') _ a b } },
-  map_mul := λ a b, by {
-    dsimp [split], ext,
-    { exact @is_ring_hom.map_mul _ _ _ _ (proj he ) _ a b },
-    { exact @is_ring_hom.map_mul _ _ _ _ (proj he') _ a b } } }
+def split : A →+* (axis he) × (axis (is_idempotent.not he)) := 
+ let he' := is_idempotent.not he in {
+ to_fun := λ a, ⟨(proj he a), (proj (is_idempotent.not he) a)⟩,
+ map_zero' := by { rw[(proj he).map_zero, (proj _).map_zero], refl },
+ map_one' := by { rw[(proj he).map_one, (proj _).map_one], refl },
+ map_add' := λ a b, by { rw[(proj he).map_add, (proj _).map_add], refl },
+ map_mul' := λ a b, by { rw[(proj he).map_mul, (proj _).map_mul], refl }
+}
 
 theorem mul_eq_zero (b : axis he) (c : axis (is_idempotent.not he)) : 
  (b : A) * (c : A) = 0 := 
@@ -367,17 +369,21 @@ begin
     ... = 0 : by { rw [is_idempotent'.mp he, mul_zero, zero_mul] }
 end
 
-def combine : (axis he) × (axis (is_idempotent.not he)) → A := 
-λ bc, bc.1.val + bc.2.val
-
-instance combine_ring_hom : is_ring_hom (combine he) := 
-{ map_one := by { change e + (1 - e) = 1, rw [add_sub_cancel'_right] },
-  map_add := λ bc₁ bc₂, by {
+def combine : (axis he) × (axis (is_idempotent.not he)) →+* A := { 
+ to_fun := λ bc, (bc.1 : A) + (bc.2 : A),
+ map_zero' := by { 
+   change ((0 : axis he) : A) + ((0 : axis (is_idempotent.not he)) : A) = 0,
+   rw[zero_coe, zero_coe, zero_add] 
+ },
+ map_one' := by { 
+   change e + (1 - e) = 1, rw [add_sub_cancel'_right]
+ },
+ map_add' := λ bc₁ bc₂, by {
     rcases bc₁ with ⟨⟨b₁, hb₁⟩, ⟨c₁, hc₁⟩⟩,
     rcases bc₂ with ⟨⟨b₂, hb₂⟩, ⟨c₂, hc₂⟩⟩,
     change (b₁ + b₂) + (c₁ + c₂) = (b₁ + c₁) + (b₂ + c₂),
     rw [add_assoc, ← add_assoc b₂, add_comm b₂ c₁, add_assoc, add_assoc] },
-  map_mul := λ bc₁ bc₂, by {
+  map_mul' := λ bc₁ bc₂, by {
     rcases bc₁ with ⟨⟨b₁, hb₁⟩, ⟨c₁, hc₁⟩⟩,
     rcases bc₂ with ⟨⟨b₂, hb₂⟩, ⟨c₂, hc₂⟩⟩,
     change (b₁ * b₂) + (c₁ * c₂) = (b₁ + c₁) * (b₂ + c₂),
@@ -395,7 +401,7 @@ theorem split_combine (bc : (axis he) × (axis (is_idempotent.not he))) :
 begin
   have he' : e * (1 - e) = 0 := is_idempotent'.mp he,
   rcases bc with ⟨⟨b, hb⟩, ⟨c, hc⟩⟩,
-  ext; apply subtype.eq,
+  ext, 
   { change (b + c) * e = b,
     rw [← hc, add_mul, hb, mul_assoc, mul_comm (1 - e), he', mul_zero, add_zero] },
   { change (b + c) * (1 - e) = c,
@@ -424,53 +430,54 @@ theorem mul_self : (a * a : A) = a := a.property
 theorem mul_not : (a * (1 - a) : A) = 0 := is_idempotent'.mp a.property
 
 instance : has_le (idempotent A) := ⟨λ a b, (a * b : A) = a⟩
-instance : lattice.has_bot (idempotent A) := ⟨⟨0, is_idempotent.zero⟩⟩
-instance : lattice.has_top (idempotent A) := ⟨⟨1, is_idempotent.one⟩⟩
+instance : has_bot (idempotent A) := ⟨⟨0, is_idempotent.zero⟩⟩
+instance : has_top (idempotent A) := ⟨⟨1, is_idempotent.one⟩⟩
 
-instance : has_neg (idempotent A) :=
+instance : has_compl (idempotent A) :=
 ⟨λ a, ⟨((1 - a) : A), is_idempotent.not a.property⟩⟩
 
-instance : lattice.has_inf (idempotent A) := 
+instance : has_inf (idempotent A) := 
 ⟨λ a b, ⟨a * b, is_idempotent.and a.property b.property⟩⟩
 
-instance : lattice.has_sup (idempotent A) := 
+instance : has_sup (idempotent A) := 
 ⟨λ a b, ⟨a + b - a * b, is_idempotent.or a.property b.property⟩⟩
 
 theorem le_iff {a b : idempotent A} : a ≤ b ↔ (a * b : A) = a := by { refl }
 theorem bot_coe : ((⊥ : idempotent A) : A) = 0 := rfl
 theorem top_coe : ((⊤ : idempotent A) : A) = 1 := rfl
 
-theorem neg_coe : ((- a : idempotent A) : A) = 1 - a := rfl
+theorem compl_coe : ((aᶜ : idempotent A) : A) = 1 - a := rfl
 theorem inf_coe : ((a ⊓ b : idempotent A) : A) = a * b := rfl
 theorem sup_coe : ((a ⊔ b : idempotent A) : A) = a + b - a * b := rfl
 
-theorem neg_neg : - (- a) = a := 
-by { apply eq, rw [neg_coe, neg_coe, sub_sub_cancel] }
+theorem compl_compl : aᶜᶜ = a := 
+by { apply eq, rw [compl_coe, compl_coe, sub_sub_cancel] }
 
-theorem neg_inj {a b : idempotent A} (h : - a = - b) : a = b := 
-by { rw [← neg_neg a, ← neg_neg b, h] }
+theorem compl_inj {a b : idempotent A} (h : aᶜ = bᶜ) : a = b := 
+by { rw [← compl_compl a, ← compl_compl b, h] }
 
-theorem neg_le_neg {a b : idempotent A} : a ≤ b ↔ (- b) ≤ (- a) := 
+theorem compl_le_compl {a b : idempotent A} : a ≤ b ↔ bᶜ ≤ aᶜ := 
 begin
-  rw [le_iff, le_iff, neg_coe, neg_coe, mul_sub, sub_mul, sub_mul],
-  rw [mul_one, mul_one, one_mul, sub_sub, mul_comm (b : A), sub_left_inj],
+  rw [le_iff, le_iff, compl_coe, compl_coe, mul_sub, sub_mul, sub_mul],
+  rw [mul_one, mul_one, one_mul, sub_sub, mul_comm (b : A)], 
+  rw[sub_right_inj],
   split,
   { intro h, rw [h, sub_self, add_zero] },
   { intro h, symmetry, rw [← sub_eq_zero],
-    exact (add_left_inj (b : A)).mp (h.trans (add_zero (b : A)).symm) }
+    exact (add_right_inj (b : A)).mp (h.trans (add_zero (b : A)).symm) }
 end
 
-theorem neg_bot : - (⊥ : idempotent A) = ⊤ := 
-by { apply eq, rw [neg_coe, bot_coe, top_coe, sub_zero] }
+theorem compl_bot : (⊥ : idempotent A)ᶜ = ⊤ := 
+by { apply eq, rw [compl_coe, bot_coe, top_coe, sub_zero] }
 
-theorem neg_sup : - (a ⊔ b) = (- a) ⊓ (- b) := 
-by { apply eq, rw [neg_coe, sup_coe, inf_coe, neg_coe, neg_coe], ring }
+theorem compl_sup : (a ⊔ b)ᶜ = aᶜ ⊓ bᶜ := 
+by { apply eq, rw [compl_coe, sup_coe, inf_coe, compl_coe, compl_coe], ring }
 
-theorem neg_top : - (⊤ : idempotent A) = ⊥ := 
-by { apply eq, rw [neg_coe, bot_coe, top_coe, sub_self] }
+theorem compl_top : (⊤ : idempotent A)ᶜ = ⊥ := 
+by { apply eq, rw [compl_coe, bot_coe, top_coe, sub_self] }
 
-theorem neg_inf : - (a ⊓ b) = (- a) ⊔ (- b) := 
-by { apply neg_inj, rw [neg_sup, neg_neg, neg_neg, neg_neg] }
+theorem compl_inf : (a ⊓ b)ᶜ = aᶜ ⊔ bᶜ := 
+by { apply compl_inj, rw [compl_sup, compl_compl, compl_compl, compl_compl] }
 
 theorem le_refl : a ≤ a := by { rw [le_iff, a.mul_self] }
 
@@ -497,13 +504,13 @@ theorem bot_le : ⊥ ≤ a :=
  by { rw [le_iff, bot_coe, zero_mul] }
 
 theorem sup_le (hac : a ≤ c) (hbc : b ≤ c) : a ⊔ b ≤ c := 
-  by { rw [neg_le_neg] at *, rw [neg_sup], exact le_inf _ _ _ hac hbc }
+  by { rw [compl_le_compl] at *, rw [compl_sup], exact le_inf _ _ _ hac hbc }
 
 theorem le_sup_left : a ≤ a ⊔ b := 
- by { rw [neg_le_neg, neg_sup], apply inf_le_left }
+ by { rw [compl_le_compl, compl_sup], apply inf_le_left }
 
 theorem le_sup_right : b ≤ a ⊔ b := 
- by { rw [neg_le_neg, neg_sup], apply inf_le_right }
+ by { rw [compl_le_compl, compl_sup], apply inf_le_right }
 
 theorem inf_sup_distrib : a ⊓ (b ⊔ c) = (a ⊓ b) ⊔ (a ⊓ c) := 
   by { apply eq, simp only [inf_coe, sup_coe, mul_add, mul_sub],
@@ -511,23 +518,22 @@ theorem inf_sup_distrib : a ⊓ (b ⊔ c) = (a ⊓ b) ⊔ (a ⊓ c) :=
       rw [mul_assoc, mul_comm (b : A), ← mul_assoc, a.mul_self] }
 
 theorem sup_inf_distrib : a ⊔ (b ⊓ c) = (a ⊔ b) ⊓ (a ⊔ c) := 
-by { apply neg_inj, 
-     rw [neg_sup, neg_inf, neg_inf, neg_sup, neg_sup, inf_sup_distrib] }
+by { apply compl_inj, 
+     rw [compl_sup, compl_inf], rw[compl_inf, compl_sup, compl_sup, inf_sup_distrib] }
 
-theorem inf_neg_eq_bot (a : idempotent A) : a ⊓ (- a) = ⊥ := 
-by { apply eq, rw [inf_coe, bot_coe, neg_coe, mul_not] }
+theorem inf_compl_eq_bot (a : idempotent A) : a ⊓ aᶜ = ⊥ := 
+by { apply eq, rw [inf_coe, bot_coe, compl_coe, mul_not] }
 
-theorem sup_neg_eq_top (a : idempotent A) : a ⊔ (- a) = ⊤ := 
-by { apply neg_inj, rw [neg_sup, neg_top, inf_neg_eq_bot] }
+theorem sup_compl_eq_top (a : idempotent A) : a ⊔ aᶜ = ⊤ := 
+by { apply compl_inj, rw [compl_sup, compl_top, inf_compl_eq_bot] }
 
-instance : lattice.boolean_algebra (idempotent A) := {
+instance : boolean_algebra (idempotent A) := boolean_algebra.of_core {
   le := has_le.le,
   bot := ⊥, 
   top := ⊤,
-  sup := lattice.has_sup.sup,
-  inf := lattice.has_inf.inf,
-  neg := has_neg.neg,
-  sub := λ a b, a ⊓ (- b),
+  sup := has_sup.sup,
+  inf := has_inf.inf,
+  compl := has_compl.compl,
   le_refl := le_refl,
   le_antisymm := λ a b hab hba, le_antisymm hab hba, 
   le_trans := λ a b c hab hbc, le_trans hab hbc,
@@ -540,9 +546,8 @@ instance : lattice.boolean_algebra (idempotent A) := {
   le_sup_left := le_sup_left,
   le_sup_right := le_sup_right,
   le_sup_inf := λ a b c, by { rw [sup_inf_distrib] },
-  inf_neg_eq_bot := inf_neg_eq_bot,
-  sup_neg_eq_top := sup_neg_eq_top,
-  sub_eq := λ a b, rfl
+  inf_compl_le_bot := λ a, by { rw[inf_compl_eq_bot] },
+  top_le_sup_compl := λ a, by { rw[sup_compl_eq_top] }
 }
 
 end idempotent

@@ -1,15 +1,12 @@
-import algebra.ring algebra.pi_instances data.rat data.real.basic data.complex.basic
-import data.nat.prime ring_theory.subring data.zsqrtd.gaussian_int data.zmod.basic
-import ring_theory.subring 
-import topology.constructions topology.algebra.continuous_functions topology.instances.real
+import algebra.ring data.rat data.real.basic data.complex.basic
+import data.nat.prime ring_theory.subring.basic number_theory.zsqrtd.gaussian_int data.zmod.basic
+import topology.constructions topology.continuous_function.algebra topology.instances.real
 import data.mv_polynomial
 import tactic.ring
 
 import commutative_algebra.local_integers 
 import commutative_algebra.galois_field_4
 import commutative_algebra.ring_of_subsets
-import commutative_algebra.zmod_extra
-import commutative_algebra.ring_hom_extra
 
 namespace sec_rings
 
@@ -35,7 +32,7 @@ variable (n : ℕ+)
 
 /- -------------------------------------------------------- -/
 /- defn-subring -/
-#print is_subring
+#print subring
 
 /- -------------------------------------------------------- -/
 /- eg-subrings -/
@@ -47,9 +44,7 @@ variable (n : ℕ+)
 
 /- -------------------------------------------------------- -/
 /- eg-trivial-ring -/
-def unit_comm_ring : comm_ring unit := begin 
- refine_struct {..}; repeat { rintro ⟨_⟩ }; try {exact unit.star}; refl,
-end
+def unit_comm_ring : comm_ring unit := by { apply_instance }
 
 /- -------------------------------------------------------- -/
 /- eg-square-matrices -/
@@ -57,7 +52,8 @@ end
 
 /- -------------------------------------------------------- -/
 /- eg-F-four -/
-#check (by apply_instance : comm_ring F4) -- from galois_field_4.lean
+#check F4
+#check (by apply_instance : field F4) -- from galois_field_4.lean
 
 /- -------------------------------------------------------- -/
 /- eg-boolean -/
@@ -86,13 +82,13 @@ end defn_binary_product
 
 namespace axis_not_subring
 
-lemma axis_not_subring (A B : Type*) [comm_ring A] [comm_ring B]:
- (1 : B) ≠ 0 → (is_subring (λ ab : (A × B), ab.snd = 0)) → false := 
+lemma axis_not_subring (A B : Type*) [comm_ring A] [comm_ring B]
+ (hB : (1 : B) ≠ 0) {S : subring (A × B)}
+ (hS : S.carrier = (λ ab : (A × B), ab.snd = 0)) : false := 
 begin
- intros h_ne h_subring,
- let h := h_subring.one_mem,
- dsimp[has_mem.mem,set.mem] at h,
- exact h_ne h,
+ let h := S.one_mem,
+ rw[← subring.mem_carrier, hS] at h,
+ exact hB h,
 end
 
 end axis_not_subring
@@ -119,7 +115,8 @@ namespace rem_function_rings
 universe uX 
 variables (X : Type uX) [topological_space X]
 
-noncomputable def R : (comm_ring {f : X → ℝ // continuous f}) := continuous_comm_ring
+noncomputable def R : (comm_ring (continuous_map X ℝ)) := 
+ continuous_map.comm_ring
 
 end rem_function_rings
 
@@ -132,24 +129,24 @@ def X := { xy : ℝ × ℝ // (xy.1 ^ 2 + xy.2 ^ 2 - 1) * xy.2 = 0 }
 noncomputable instance :
  topological_space X := by { unfold X, apply_instance }
 
-def C := { f : X → ℝ // continuous f }
+@[reducible ]
+def CX := continuous_map X ℝ 
 
-noncomputable instance C_comm_ring : comm_ring C :=
- by { unfold C, exact continuous_comm_ring }
+noncomputable instance CX_comm_ring : comm_ring CX :=
+ by { unfold CX, exact continuous_map.comm_ring }
 
-def C.x : C := ⟨prod.fst ∘ subtype.val,
+noncomputable def CX.x : CX := ⟨prod.fst ∘ subtype.val,
  continuous.comp continuous_fst continuous_subtype_val⟩
 
-def C.y : C := ⟨prod.snd ∘ subtype.val,
+noncomputable def CX.y : CX := ⟨prod.snd ∘ subtype.val,
  continuous.comp continuous_snd continuous_subtype_val⟩
 
-lemma C.x_def (xy : X) : C.x.val xy = xy.val.1 := rfl
-lemma C.y_def (xy : X) : C.y.val xy = xy.val.2 := rfl
+lemma CX.x_def (xy : X) : CX.x xy = xy.val.1 := rfl
+lemma CX.y_def (xy : X) : CX.y xy = xy.val.2 := rfl
 
-lemma C.rel : (C.x ^ 2 + C.y ^2 - 1) * C.y = 0 := 
+lemma CX.rel : (CX.x ^ 2 + CX.y ^2 - 1) * CX.y = 0 := 
 begin
- apply subtype.eq,funext u,
- rcases u with ⟨⟨x,y⟩,e⟩, exact e,
+ ext ab, rcases ab with ⟨⟨a,b⟩,e⟩, exact e
 end
 
 @[derive decidable_eq]
@@ -157,29 +154,29 @@ inductive A_gens
 | x : A_gens
 | y : A_gens
 
-def P := mv_polynomial A_gens ℝ 
-noncomputable instance P_comm_ring :
- comm_ring P := by {unfold P, apply_instance}
+def PX := mv_polynomial A_gens ℝ 
+noncomputable instance PX_comm_ring :
+ comm_ring PX := by {unfold PX, apply_instance}
 
-noncomputable def P.x : P := @mv_polynomial.X ℝ A_gens _ A_gens.x
-noncomputable def P.y : P := @mv_polynomial.X ℝ A_gens _ A_gens.y
+noncomputable def PX.x : PX := @mv_polynomial.X ℝ A_gens _ A_gens.x
+noncomputable def PX.y : PX := @mv_polynomial.X ℝ A_gens _ A_gens.y
 
-noncomputable def P.relator : P := (P.x ^ 2 + P.y ^ 2 - 1) * P.y
+noncomputable def PX.relator : PX := (PX.x ^ 2 + PX.y ^ 2 - 1) * PX.y
 
-def φ₀ : ℝ → C := λ c, ⟨(λ u, c),continuous_const⟩
-
-instance φ₀_hom : is_ring_hom φ₀ := {
- map_one := by {apply subtype.eq,funext u,refl,},
- map_add := λ c d, by {apply subtype.eq,funext u,refl,},
- map_mul := λ c d, by {apply subtype.eq,funext u,refl,},
+noncomputable def φ₀ : ℝ →+* CX := {
+ to_fun := λ c, ⟨(λ u, c),continuous_const⟩,
+ map_zero' := by { ext, refl },
+ map_add' := λ c d, by { ext, refl },
+ map_one' := by { ext, refl },
+ map_mul' := λ c d, by { ext, refl }
 }
 
-def φ₁ : A_gens → C
-| A_gens.x := C.x
-| A_gens.y := C.y
+noncomputable def φ₁ : A_gens → CX
+| A_gens.x := CX.x
+| A_gens.y := CX.y
 
-noncomputable def φ : P → C := mv_polynomial.eval₂ φ₀ φ₁  
-instance φ_hom : is_ring_hom φ := by {unfold φ, apply_instance}
+noncomputable def φ : PX →+* CX :=
+ mv_polynomial.eval₂_hom φ₀ φ₁
 
 end eg_sunset
 
@@ -198,119 +195,99 @@ end eg_sunset
 
 namespace eg_padic
 
-variables {p : ℕ} (hp : nat.prime p)
+variables (p : ℕ) [fact (p > 0)]
 
-def p_pow : ℕ → ℕ+ := 
- λ k, ⟨p ^ (k + 1),nat.pow_pos hp.pos (k + 1)⟩
+lemma p_pow_pos (k : ℕ) : fact (p ^ k > 0) := fact.mk begin
+ have h : p > 0 := fact.elim (by apply_instance),
+ exact pow_pos h k
+end
 
-lemma p_pow_coe (k : ℕ) : ((p_pow hp k) : ℕ) = p ^ (k + 1) := rfl 
+local attribute [instance] p_pow_pos
 
-lemma p_pow_dvd (k : ℕ) : ((p_pow hp k) : ℕ) ∣ ((p_pow hp (k + 1)) : ℕ) := 
-by { change p ^ (k + 1) ∣ p ^ (k + 2),
-     let h0 : k + 1 ≤ k + 2 := le_of_lt (nat.lt_succ_self (k + 1)), 
-     let h1 := dvd_refl (p ^ (k + 2)),
-     exact nat.pow_dvd_of_le_of_pow_dvd h0 h1,}
+def P := ∀ (k : ℕ), (zmod (p ^ k))
+instance P_ring : comm_ring (P p) := by { unfold P, apply_instance }
 
-lemma p_pow_mod_self (k : ℕ) : ((p ^ (k + 1) : ℕ) : zmod (p_pow hp k)) = 0 := 
- by { have := @zmod.self_eq_zero (p_pow hp k), rw[p_pow_coe] at this,exact this}
+def π (k : ℕ) : zmod (p ^ (k + 1)) →+* zmod (p ^ k) := 
+ zmod.cast_hom (pow_dvd_pow p (le_of_lt (nat.lt_succ_self k))) (zmod (p ^ k))
 
-lemma p_pow_mod_self' (k : ℕ) : (((p ^ (k + 1) : ℕ) : ℤ) : zmod (p_pow hp k)) = 0 := 
- by { rw[int.cast_coe_nat,p_pow_mod_self], }
+def is_coherent (a : P p) := ∀ (k : ℕ), π p k (a (k + 1)) = (a k)
 
-lemma p_pow_mod_self'' (k : ℕ) : ((p ^ (k + 1) : ℤ) : zmod (p_pow hp k)) = 0 := 
- by { 
-  let e0 := congr_arg (int.cast : ℤ → (zmod (p_pow hp k))) (int.coe_nat_pow p (k + 1)),
-  exact e0.symm.trans (p_pow_mod_self' hp k),
- }
-
-def Q (k : ℕ) := zmod (p_pow hp k)
-
-instance (k : ℕ) : comm_ring (Q hp k) := by {unfold Q, apply_instance}
-
-def P := ∀ (k : ℕ), (zmod (p_pow hp k))
-instance P_ring : comm_ring (P hp) := by { unfold P, apply_instance }
-
-def π (k : ℕ) : zmod (p_pow hp (k + 1)) → zmod (p_pow hp k) := 
- zmod.cast
-
-instance π_hom (k : ℕ) : is_ring_hom (π hp k) := 
- by { unfold π, 
-      exact zmod.zmod_cast_is_ring_hom (p_pow_dvd hp k),
-    }
-
-def is_coherent (a : P hp) := ∀ (k : ℕ), π hp k (a (k + 1)) = (a k)
-
-instance : is_subring (is_coherent hp) := {
- zero_mem := by { intro k, change π hp k 0 = 0,
-                  exact is_ring_hom.map_zero (π hp k), },
- one_mem  := by { intro k, change π hp k 1 = 1,
-                  exact is_ring_hom.map_one (π hp k), },
- neg_mem  := by { intros a ha k,
-                  change π hp k (- (a (k + 1))) = - (a k),
-                  rw[is_ring_hom.map_neg (π hp k),ha k],
-                },
- add_mem  := by { intros a b ha hb k,
-                  change π hp k ((a (k + 1)) + (b (k + 1))) = (a k) + (b k),
-                  rw[is_ring_hom.map_add (π hp k),ha k,hb k],
-                },
- mul_mem  := by { intros a b ha hb k,
-                  change π hp k ((a (k + 1)) * (b (k + 1))) = (a k) * (b k),
-                  rw[is_ring_hom.map_mul (π hp k),ha k,hb k],
+def p_adic_integers : subring (P p) := {
+ carrier := is_coherent p,
+ zero_mem' := by { intro k, change π p k 0 = 0,
+                   exact ring_hom.map_zero _ },
+ add_mem'  := by { intros a b ha hb k,
+                   change π p k ((a (k + 1)) + (b (k + 1))) = (a k) + (b k),
+                   rw[ring_hom.map_add, ha k, hb k],
+                 },
+ neg_mem'  := by { intros a ha k,
+                  change π p k (- (a (k + 1))) = - (a k),
+                  rw[ring_hom.map_neg,ha k],
+                 },
+ one_mem'  := by { intro k, change π p k 1 = 1,
+                  exact ring_hom.map_one _ },
+ mul_mem'  := by { intros a b ha hb k,
+                  change π p k ((a (k + 1)) * (b (k + 1))) = (a k) * (b k),
+                  rw[ring_hom.map_mul, ha k, hb k],
                 }
 }
 
-def padic_integers := { a : P hp // is_coherent hp a }
+variables (q : ℕ) [fact q.prime] 
 
-instance padic_ring : comm_ring (padic_integers hp) := 
- by { unfold padic_integers, apply_instance }
+lemma q_pos : fact (q > 0) :=
+ ⟨nat.prime.pos (fact.elim (by { apply_instance }))⟩
 
-def a₀ {p : ℕ} (hp : p.prime) : ℕ → ℤ 
-| 0 := 1
-| (k + 1) := (a₀ k) + p ^ (k + 1)
+lemma q_pred (k : ℕ) : (q.pred : (zmod (q ^ k))) = (q : (zmod (q ^ k))) - 1 := 
+begin
+ have h : q.pred + 1 = q := 
+  nat.succ_pred_eq_of_pos (fact.elim (by {apply_instance})),
+ symmetry, rw[sub_eq_iff_eq_add, ← nat.cast_one, ← nat.cast_add, h]
+end
 
-def a : padic_integers hp := ⟨λ k, (a₀ hp k), 
+local attribute [instance] q_pos
+
+def a₀ : ℕ → ℕ
+| 0 := 0
+| (k + 1) := (a₀ k) + q ^ k
+
+lemma a₀_step (k : ℕ) : a₀ q (k + 1) = 1 + q * (a₀ q k) := 
 begin 
- intro k,
- change π hp k (a₀ hp (k + 1)) = a₀ hp k,
- rw[is_ring_hom.map_cast (π hp k),a₀],
- rw[int.cast_add,p_pow_mod_self'',add_zero],
-end
-⟩ 
-
-def b₀ {p : ℕ} (hp : p.prime) : ℤ := (p : ℤ) - 1
-
-def b : padic_integers hp := ⟨λ k, b₀ hp,
-begin
- intro k,
- change π hp k (b₀ hp) = b₀ hp,
- rw[is_ring_hom.map_cast (π hp k)],
-end
-⟩ 
-
-lemma ab₀ (k : ℕ) : (b₀ hp) * (a₀ hp k) = p ^ (k + 1) - 1 := 
-begin
  induction k with k ih,
- {dsimp[a₀,b₀],rw[mul_one,zero_add,pow_one],},
- {dsimp[a₀],rw[mul_add (b₀ hp),ih,b₀,nat.succ_eq_add_one],
-  rw[pow_add _ (k + 1) 1,pow_one,sub_mul,mul_comm (p : ℤ)],simp,
+ { dsimp[a₀], rw[pow_zero, mul_zero, zero_add] },
+ { have h₀ : 1 + q * (a₀ q (k + 1)) = 1 + q * (a₀ q k) + q ^ (k + 1) := 
+    by { rw[a₀, mul_add, add_assoc, pow_succ] },
+   have h₁ : a₀ q (k + 2) = a₀ q (k + 1) + q ^ (k + 1) := rfl,
+   rw[h₀, h₁, ih]
  }
 end
 
-lemma ab : (a hp) * (b hp) + 1 = 0 := 
+def a : p_adic_integers q := ⟨
+ λ k, (a₀ q k), 
+begin 
+ intro k,
+ change π q k (a₀ q (k + 1)) = a₀ q k,
+ rw[map_nat_cast,a₀],
+ rw[nat.cast_add,zmod.nat_cast_self,add_zero]
+end
+⟩ 
+
+def b : p_adic_integers q := ⟨λ k, (q : zmod (q ^ k)) - 1,
+begin
+ intro k,
+ change π q k (q - 1) = (q - 1),
+ rw[← q_pred, ← q_pred, map_nat_cast],
+end
+⟩ 
+
+lemma ab : (a q) * (b q) = - 1 := 
 begin
  rw[mul_comm],
- apply subtype.eq,ext k,
- let a'  : ℤ := a₀ hp k,
- let b'  : ℤ := b₀ hp,
- have e' : b' * a' + 1 = p ^ (k + 1) := by {dsimp[a',b'],rw[ab₀ hp k],simp,},
- let a'' : zmod (p_pow hp k) := a',
- let b'' : zmod (p_pow hp k) := b',
- change b'' * a'' + 1 = 0,
- exact calc 
-  b'' * a'' + 1 = (((b' * a' + 1) : ℤ) : zmod (p_pow hp k)) 
-   : by {dsimp[a'',b''],rw[int.cast_add,int.cast_mul,int.cast_one],}
-   ... = (p ^ (k + 1) : ℤ) : by {rw[e'],}
-   ... = 0 : by rw[p_pow_mod_self''],
+ ext k,
+ change ((q : zmod (q ^ k)) - 1) * (a₀ q k) = - (1 : (zmod (q ^ k))),
+ rw[sub_mul, one_mul, sub_eq_iff_eq_add', ← sub_eq_add_neg],
+ symmetry,
+ rw[sub_eq_iff_eq_add', ← nat.cast_one, ← nat.cast_mul, ← nat.cast_add],
+ rw[← a₀_step, a₀, nat.cast_add, zmod.nat_cast_self, add_zero]
 end
 
 end eg_padic

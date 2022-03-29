@@ -58,10 +58,8 @@ variables {n : ℕ} {p : partition (fin n)}
  block.  For this to make sense we need to know that each block is
  nonempty; this is proved by the lemma block_not_empty from 
  partition.lean.
-
- I am not sure why Lean thinks this is noncomputable
 -/
-noncomputable def block_max (b : p.block_type) : fin n := 
+def block_max (b : p.block_type) : fin n := 
  (finset_largest_element b.val (block_not_empty b.property)).val
 
 /-
@@ -84,7 +82,8 @@ variable (p)
  We now define our order on the set of blocks, packaging it as an 
  instance of the linear_order typeclass.
 -/
-noncomputable instance block_order : linear_order p.block_type := {
+
+instance block_order : linear_order p.block_type := {
  le := λ b c ,(block_max b) ≤ (block_max c),
  lt := λ b c ,(block_max b) < (block_max c),
  lt_iff_le_not_le := λ b c, @lt_iff_le_not_le (fin n) _ (block_max b) (block_max c),
@@ -113,7 +112,7 @@ noncomputable instance block_order : linear_order p.block_type := {
  If the number of blocks is r, then the following function returns the
  unique order-equivalence from the set of blocks to (fin r).
 -/
-noncomputable def block_rank_equiv {r : ℕ} (p_rank : p.rank = r) := 
+def block_rank_equiv {r : ℕ} (p_rank : p.rank = r) := 
  fintype.rank_equiv ((block_type_card p).trans p_rank)
 
 end block_max
@@ -259,7 +258,7 @@ end
  left_inv and right_inv) that their composites are equal 
  (pointwise) to identity functions.
 -/
-noncomputable def to_partition_blocks (p : fin_map n r) : 
+def to_partition_blocks (p : fin_map n r) : 
  (to_partition p).block_type ≃ fin r := 
 begin
  let q := (to_partition p),
@@ -379,7 +378,7 @@ end
  This function accepts a partition of (fin n) of rank r and 
  produces the corresponding element of (fin_map n r).
 -/
-noncomputable def of_partition (q : partition (fin n)) (e : q.rank = r) : 
+def of_partition (q : partition (fin n)) (e : q.rank = r) : 
  fin_map n r := 
 begin
  let r0 := fintype.card q.block_type,
@@ -487,7 +486,7 @@ begin
  {intro b1_eq_b2,rw[e1a,e2a,b1_eq_b2],},
 end
 
-noncomputable def partition_equiv : (fin_map n r) ≃ { q : partition (fin n) // q.rank = r} := 
+def partition_equiv : (fin_map n r) ≃ { q : partition (fin n) // q.rank = r} := 
 {
  to_fun := λ p, ⟨to_partition p,to_partition_rank p⟩,
  inv_fun := λ q, of_partition q.val q.property, 
@@ -499,7 +498,7 @@ noncomputable def partition_equiv : (fin_map n r) ≃ { q : partition (fin n) //
  end
 }
 
-noncomputable def partition_equiv_tot : tot n ≃ partition (fin n) := 
+def partition_equiv_tot : tot n ≃ partition (fin n) := 
 {
  to_fun := λ rp, to_partition rp.2, 
  inv_fun := λ q, ⟨q.rank,@of_partition n q.rank q rfl⟩,
@@ -543,6 +542,8 @@ end
 lemma bump.zth {p q : ℕ} (v : vector (fin p) q) : (bump v).nth 0 = 0 := 
  by { apply vector.zth }
 
+lemma bump.sth {p q : ℕ} (v : vector (fin p) q) (j : fin q) : (bump v).nth j.succ = (v.nth j).succ := 
+ by { dsimp[bump], rw[vector.nth_cons_succ,vector.nth_map] }
 /- 
  Suppose that p is a partition of (fin n), of rank r.  We can then 
  produce a partition of (fin (n + 1)) of rank r + 1, as follows: 
@@ -595,6 +596,18 @@ begin
  exact ⟨block,top,block_top,top_block,top_mono⟩ 
 end
 
+lemma add_block_zero (p : fin_map n r) : p.add.block.nth 0 = 0 := 
+ by { dsimp[add], apply bump.zth }
+
+lemma add_top_zero (p : fin_map n r) : p.add.top.nth 0 = 0 := 
+ by { dsimp[add], apply bump.zth }
+
+lemma add_block_succ (p : fin_map n r) (i : fin n) : p.add.block.nth i.succ = (p.block.nth i).succ := 
+ by { dsimp[add], apply bump.sth }
+
+lemma add_top_succ (p : fin_map n r) (i : fin r) : p.add.top.nth i.succ = (p.top.nth i).succ := 
+ by { dsimp[add], apply bump.sth }
+
 /- 
  Suppose that p is a partition of (fin n), of rank r, and that u is
  in (fin r).  We can then produce a partition of (fin (n + 1)) of rank r, 
@@ -630,6 +643,17 @@ begin
  end,
  exact ⟨block,top,block_top,top_block,top_mono⟩ 
 end
+
+lemma join_block_zero (p : fin_map n r) (u : fin r) : (p.join u).block.nth 0 = u := 
+ by { dsimp[join], apply vector.zth, }
+
+lemma join_block_succ (p : fin_map n r) (u : fin r) (i : fin n) : 
+ (p.join u).block.nth i.succ = p.block.nth i := 
+  by { dsimp[join], apply vector.nth_cons_succ }
+
+lemma join_top (p : fin_map n r) (u : fin r) (j : fin r) :
+ (p.join u).top.nth j = (p.top.nth j).succ := 
+  by { dsimp[join], apply vector.nth_map } 
 
 def add_cond (q : fin_map n.succ r.succ) := (q.top.nth 0 = 0)
 
@@ -747,22 +771,14 @@ lemma res_add (p : fin_map n r) (e : add_cond (add p)) :
  (add_res (add p) e) = ⟨p,rfl⟩ := 
 begin
  apply subtype.eq,
- ext ⟨i,i_is_lt⟩,
  cases (p.add.add_res e) with p₀ hp₀,simp only [],
- unfold_coes,
- simp[add_res],
- have h0 : (add p).block.nth ⟨i.succ,nat.succ_lt_succ i_is_lt⟩ = 
-   (p.block.nth ⟨i,i_is_lt⟩).succ := 
-   begin 
-    dsimp[add,bump],
-    have h1 := vector.sth (0 : fin r.succ) (vector.map fin.succ p.block) i i_is_lt
-      (nat.succ_lt_succ i_is_lt),
-      rw[vector.nth_map] at h1,
-      rw[← h1],
-    end,
- have h1 : (add p).block.nth (fin.succ ⟨i,i_is_lt⟩) ≠ 0 := 
-     λ h2, fin.zero_ne_succ (h2.symm.trans h0),
- simp[add,add_res,e,h1,bump,vector.nth_map],
+ have : ∀ (i : fin n), p.block.nth i = p₀.block.nth i := λ i, 
+  begin 
+   apply fin.succ_inj.mp,
+   rw[← add_block_succ,← add_block_succ,hp₀],
+  end,
+ ext i,
+ rw[this]
 end
 
 /-
@@ -812,20 +828,22 @@ begin
   intros j1 j2 j1_lt_j2,
   dsimp[block_vec,top_vec],
   simp[vector.nth_of_fn],
-  apply fin.lt_of_succ_lt_succ,rw[top_map_spec,top_map_spec],
-  exact q.top_mono j1 j2 j1_lt_j2,
+  exact q.top_mono j1 j2 j1_lt_j2
  end,
  let p : fin_map n r.succ :=
   ⟨block_vec,top_vec,block_top,top_block,top_mono⟩,
  let u : fin r.succ := q.block.nth 0,
  have eq : q = join p u := 
  begin
-  ext i,cases i, cases i_val with i0_val,
-  {exact (vector.zth u block_vec i_is_lt).symm,},
-  {
-   let i0_is_lt := nat.lt_of_succ_lt_succ i_is_lt,
-   exact (vector.nth_of_fn block_map ⟨i0_val,i0_is_lt⟩).symm.trans
-          (vector.sth u block_vec i0_val i0_is_lt i_is_lt).symm,
+  ext i,
+  cases i with i_val i_is_lt, cases i_val with i0_val,
+  { change _ = ((p.join u).block.nth 0 : ℕ), 
+    rw[join_block_zero p u], refl
+  },
+  { let i0 : fin n := ⟨i0_val,nat.lt_of_succ_lt_succ i_is_lt⟩,
+    have : i0.succ = ⟨i0_val.succ,i_is_lt⟩ := rfl,
+    rw[← this,join_block_succ],
+    dsimp[p,block_vec],rw[vector.nth_of_fn],dsimp[block_map],refl
   }
  end,
  exact ⟨⟨p,u⟩,eq⟩, 
@@ -863,6 +881,19 @@ inductive fin_ind_partition : ℕ → ℕ → Type
 
 namespace fin_ind_partition
 
+def {u} elim0 {r : ℕ} {α : fin_ind_partition 0 r.succ → Sort u} : 
+  Π (x : fin_ind_partition 0 r.succ), α x := 
+begin
+ intro x, cases x,
+end
+
+def {u} elim1 {n : ℕ} {α : fin_ind_partition n.succ 0 → Sort u} : 
+  Π (x : fin_ind_partition n.succ 0), α x := 
+begin
+ intro x, cases x,
+ have i : fin 0 := by { assumption }, exact i.elim0
+end
+
 def tot (n : ℕ) := Σ (r : ℕ), fin_ind_partition n r
 
 def to_tot {n r : ℕ} (p : fin_ind_partition n r) : tot n := ⟨r,p⟩ 
@@ -890,8 +921,8 @@ begin
  intro n,
  induction n with n0 ih_n; intros r q; cases r with r0,
  {exact empty,},
- {exact fin.elim0 (q.top.nth 0),},
- {exact fin.elim0 (q.block.nth 0),},
+ {have := (q.top.nth 0), exact fin.elim0 this},
+ {have := (q.block.nth 0), exact fin.elim0 this},
  {
    by_cases h : q.top.nth 0 = 0,
    {exact add (ih_n (fin_map.add_res q h).val),},
@@ -902,12 +933,26 @@ begin
  }
 end
 
+lemma eq_empty (p : fin_ind_partition 0 0) : p = empty := 
+ by { cases p, refl}
+ 
+lemma of_eq_add {n0 r0 : ℕ} {q : fin_map n0.succ r0.succ} (h : q.top.nth 0 = 0) :
+ of_map_partition q = add (of_map_partition (fin_map.add_res q h)) := 
+begin
+ dsimp[of_map_partition], rw[dif_pos h],
+end
+
+lemma of_eq_join {n0 r0 : ℕ} {q : fin_map n0.succ r0.succ} (h : q.top.nth 0 ≠ 0) :
+ of_map_partition q = join (of_map_partition (fin_map.join_res q h).1.1) (fin_map.join_res q h).1.2 := 
+begin
+ dsimp[of_map_partition], rw[dif_neg h],
+end
+
 lemma of_add {n r : ℕ} (q : fin_map n r) :
  of_map_partition q.add = (of_map_partition q).add := 
 begin
  have h0 : q.add.top.nth 0 = 0 := fin_map.add_add_cond q,
- let h1 := q.res_add h0,
- simp[of_map_partition,h0,h1]
+ rw[of_eq_add h0,q.res_add h0],refl
 end
 
 lemma of_join {n r : ℕ} (q : fin_map n r) (u : fin r) :
@@ -917,8 +962,7 @@ begin
  {exact fin.elim0 u,},
  {
    have h0 : (q.join u).top.nth 0 ≠ 0 := fin_map.join_join_cond q u,
-   let h1 := q.res_join u h0,
-   simp[of_map_partition,h0,h1],
+   rw[of_eq_join h0,q.res_join u h0]
  }
 end
 
@@ -935,8 +979,8 @@ lemma of_to_map_partition : ∀ {n r : ℕ} (p : fin_ind_partition n r),
 lemma to_of_map_partition : ∀ {n r : ℕ} (q : fin_map n r),
  to_map_partition (of_map_partition q) = q 
 | 0 0 q := by {ext i, exact fin.elim0 i,}
-| 0 (nat.succ r) q := fin.elim0 (q.top.nth fin.has_zero.zero)
-| (nat.succ n) 0 q := fin.elim0 (q.block.nth fin.has_zero.zero)
+| 0 (nat.succ r) q := begin have := q.top.nth 0, exact fin.elim0 this end
+| (nat.succ n) 0 q := begin have := q.block.nth 0, exact fin.elim0 this end
 | (nat.succ n) (nat.succ r) q := 
   begin
    by_cases h : q.top.nth 0 = 0,
@@ -1000,19 +1044,19 @@ instance enum : ∀ (n r : ℕ), enumeration (fin_ind_partition n r)
 | 0 0 := {
    elems := [empty],
    nodup := list.nodup_singleton empty,
-   complete := begin 
-    intro p,cases p,exact list.mem_cons_self empty list.nil
+   complete := λ p, begin 
+    cases p,exact list.mem_cons_self empty list.nil
    end
   }
 | 0 (r + 1) := {
    elems := list.nil,
    nodup := list.nodup_nil,
-   complete := by {intro p, cases p}
+   complete := λ p, p.elim0
   }
 | (n + 1) 0 :=  {
    elems := list.nil,
    nodup := list.nodup_nil,
-   complete := by {intro p, exfalso, cases p,apply fin.elim0,assumption}
+   complete := λ p, p.elim1
   }
 | (n + 1) (r + 1) := begin
    let e0 := enum n r,
@@ -1200,7 +1244,7 @@ end
 lemma card_bell (n : ℕ) :
  fintype.card (tot n) = partition.number.bell n :=
 begin
- let f := λ (r : ℕ), list.map to_tot (enumeration.elems (fin_ind_partition n r)),
+ let f := λ (r : ℕ), list.map to_tot (enumeration.elems : list (fin_ind_partition n r)),
  have h : list.length ∘ f = partition.number.stirling2 n := 
  begin
   ext r,simp,rw[← enumeration.enum_card],exact card_stirling n r,
@@ -1247,7 +1291,7 @@ lemma card_bell (n : ℕ) :
 lemma card_bell' (α : Type*) [fintype α] [decidable_eq α] :
  fintype.card (partition α) = partition.number.bell (fintype.card α) :=
 begin
- refine trunc.induction_on (fintype.equiv_fin α) _,
+ refine trunc.induction_on (fintype.trunc_equiv_fin α) _,
  intro equiv_fin,
  exact (fintype.card_congr (isofunctor equiv_fin)).trans 
             (card_bell (fintype.card α)),

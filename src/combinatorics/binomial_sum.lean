@@ -29,7 +29,7 @@ lemma choose_sum' (k m : ℕ) :
 begin
  induction m with m ih,
  {rw[finset.range_zero,finset.sum_empty,add_zero,nat.choose_succ_self]},
- {rw[finset.sum_range_succ,← ih,nat.add_succ,nat.choose],}
+ {rw[finset.sum_range_succ,← ih,nat.add_succ,nat.choose, add_comm],}
 end
 
 lemma choose_sum (n k : ℕ) : 
@@ -48,10 +48,13 @@ begin
    have : finset.range m = finset.Ico 0 m := 
    begin
      ext i,
-     simp only [finset.mem_range, finset.Ico.mem, nat.zero_le i, true_and]
+     simp only [finset.mem_range, finset.mem_Ico, nat.zero_le i, true_and]
    end,
-   rw [this, finset.Ico.image_add 0 m k, zero_add k, add_comm m k] },
-  { replace h := lt_of_not_ge h,
-    rw [finset.Ico.eq_empty_iff.mpr (le_of_lt h), finset.sum_empty],
-    rw [nat.choose_eq_zero_of_lt (lt_trans h k.lt_succ_self)] }
+   rw [this], 
+   have := finset.image_add_left_Ico 0 m k,
+   rw[add_zero] at this, rw[← this]},
+  { have : finset.Ico k n.succ = ∅ := 
+     finset.Ico_eq_empty_iff.mpr (λ h₀, h (le_of_lt h₀)),
+    rw[this, finset.sum_empty],
+    rw [nat.choose_eq_zero_of_lt (lt_trans (lt_of_not_ge h) k.lt_succ_self)] }
 end

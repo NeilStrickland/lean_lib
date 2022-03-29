@@ -28,12 +28,11 @@ def fin.z {n : ℕ} : fin (n.succ) := 0
 
 lemma fin.z_val {n : ℕ} : (@fin.z n).val = 0 := rfl
 
-lemma fin.succ_ne_z {n : ℕ} (a : fin n) : a.succ ≠ fin.z := 
+lemma fin.succ_ne_z {n : ℕ} (i : fin n) : i.succ ≠ fin.z := 
 begin
+ cases i with i i_is_lt,
  intro e,
- replace e := fin.veq_of_eq e,
- rw[fin.succ_val,fin.z_val] at e,
- injection e,
+ cases e
 end
 
 /- Definition of gappiness -/
@@ -58,6 +57,11 @@ instance {n : ℕ} : fintype (gappy n) :=
 instance {n : ℕ} : decidable_eq (gappy n) := 
  by { dsimp[gappy], apply_instance }
 
+instance {n : ℕ} : has_coe (gappy n) (finset (fin n)) :=
+ by { dsimp[gappy], apply_instance }
+
+lemma gappy_spec {n : ℕ} (s : gappy n) : is_gappy (s : finset (fin n)) := s.property 
+
 /- How to generate a string describing a gappy set -/
 instance {n : ℕ} : has_repr (gappy n) := 
  ⟨λ (s : gappy n), repr s.val⟩
@@ -71,13 +75,14 @@ lemma shift_gappy : ∀ {n : ℕ} {s : finset (fin n)},
  rintros a ⟨a_in_shift,a_succ_in_shift⟩,
  let a_in_s : a ∈ s := (succ_mem_shift_iff s a).mp a_succ_in_shift,
  rcases (mem_shift s a.cast_succ).mp a_in_shift with ⟨b,⟨b_in_s,eb⟩⟩,
- replace eb := congr_arg fin.val eb,
- rw[fin.succ_val,fin.cast_succ_val] at eb,
- let c_is_lt : b.val < n :=
-  nat.lt_of_succ_lt_succ (eb.symm ▸ a.is_lt), 
- let c : fin n := ⟨b.val,c_is_lt⟩,
- have ebc : b = fin.cast_succ c := fin.eq_of_veq (by rw[fin.cast_succ_val]),
- have eac : a = fin.succ c := fin.eq_of_veq (nat.succ_inj (by rw[← eb,fin.succ_val])),
+ replace eb := congr_arg (coe : (fin _) → ℕ) eb,
+ rw[fin.coe_succ,fin.coe_cast_succ] at eb,
+ have a_is_lt : (a : ℕ) < n.succ := a.property,
+ rw[← eb] at a_is_lt,
+ let c_is_lt : (b : ℕ) < n := nat.lt_of_succ_lt_succ a_is_lt, 
+ let c : fin n := ⟨b,c_is_lt⟩,
+ have ebc : b = fin.cast_succ c := fin.ext (by { rw[fin.coe_cast_succ], refl } ),
+ have eac : a = fin.succ c := fin.ext (nat.succ_inj'.mp (by { rw[← eb,fin.coe_succ], refl })),
  rw[ebc] at b_in_s,
  rw[eac] at a_in_s,
  exact s_gappy c ⟨b_in_s,a_in_s⟩, 
@@ -91,8 +96,8 @@ lemma unshift_gappy : ∀ {n : ℕ} {s : finset (fin n.succ)},
  let a_succ_in_s := (mem_unshift s a.cast_succ).mp a_in_unshift,
  let a_succ_succ_in_s := (mem_unshift s a.succ).mp a_succ_in_unshift,
  have e : a.cast_succ.succ = a.succ.cast_succ := 
-  fin.eq_of_veq
-   (by {rw[fin.succ_val,fin.cast_succ_val,fin.cast_succ_val,fin.succ_val]}),
+  fin.ext
+   (by { rw[fin.coe_succ,fin.coe_cast_succ,fin.coe_cast_succ,fin.coe_succ]}),
  rw[e] at a_succ_in_s,
  exact s_gappy a.succ ⟨a_succ_in_s,a_succ_succ_in_s⟩,
 end
@@ -104,11 +109,12 @@ begin
  rintros n s s_gappy s_big a ⟨a_in_t,a_succ_in_t⟩,
  rcases finset.mem_insert.mp a_succ_in_t with a_succ_zero | a_succ_in_s,
  {exact fin.succ_ne_z a a_succ_zero},
- let a_pos : 0 < a.val :=
-  nat.lt_of_succ_lt_succ ((fin.succ_val a) ▸ (s_big a.succ a_succ_in_s)),
+ have a_pos₀ : (a.succ : ℕ) ≥ 2 := (s_big a.succ a_succ_in_s),
+ rw[fin.coe_succ] at a_pos₀,
+ let a_pos : 0 < (a : ℕ) := nat.lt_of_succ_lt_succ a_pos₀,
  rcases finset.mem_insert.mp a_in_t with a_zero | a_in_s,
- {replace a_zero : a.val = 0 :=
-  (fin.cast_succ_val a).symm.trans (congr_arg fin.val a_zero),
+ {replace a_zero : (a : ℕ) = 0 :=
+  (fin.coe_cast_succ a).symm.trans (congr_arg coe a_zero),
   rw[a_zero] at a_pos,
   exact lt_irrefl 0 a_pos,
  },{
@@ -121,16 +127,16 @@ def i {n : ℕ} (s : gappy n) : gappy n.succ :=
 
 lemma i_val {n : ℕ} (s : gappy n) : (i s).val = shift s.val := rfl
 
-lemma zero_not_in_i {n : ℕ} (s : gappy n) : (0 : fin _) ∉ (i s).val := 
+lemma zero_not_in_i {n : ℕ} (s : gappy n) : (0 : fin _) ∉ ((i s) : finset (fin n.succ)) := 
  zero_not_mem_shift s.val
 
 lemma shift_big {n : ℕ} (s : finset (fin n)) : 
- ∀ (a : fin n.succ.succ), a ∈ shift (shift s) → a.val ≥ 2 := 
+ ∀ (a : fin n.succ.succ), a ∈ shift (shift s) → (a : ℕ) ≥ 2 := 
 begin
  intros a ma,
  rcases (mem_shift (shift s) a).mp ma with ⟨b,⟨mb,eb⟩⟩,
  rcases (mem_shift s b).mp mb with ⟨c,⟨mc,ec⟩⟩,
- rw[← eb,← ec,fin.succ_val,fin.succ_val],
+ rw[← eb,← ec,fin.coe_succ,fin.coe_succ],
  apply nat.succ_le_succ,
  apply nat.succ_le_succ,
  exact nat.zero_le c.val,
@@ -146,7 +152,7 @@ def j {n : ℕ} (s : gappy n) : gappy n.succ.succ :=
 lemma j_val {n : ℕ} (s : gappy n) :
  (j s).val = insert (0 : fin _) (shift (shift s.val)) := rfl
 
-lemma zero_in_j {n : ℕ} (s : gappy n) : (0 : fin _) ∈ (j s).val := 
+lemma zero_in_j {n : ℕ} (s : gappy n) : (0 : fin _) ∈ (j s : finset (fin n.succ.succ)) := 
  finset.mem_insert_self _ _
 
 def p {n : ℕ} : (gappy n) ⊕ (gappy n.succ) → gappy n.succ.succ 
@@ -204,8 +210,8 @@ lemma gappy_card_step (n : ℕ) :
   fintype.card (gappy n) + fintype.card (gappy n.succ) := 
 begin
  let e0 := fintype.card_congr (@gappy_equiv n),
- let e1 := fintype.card_sum (gappy n) (gappy n.succ),
- exact e0.symm.trans e1,
+ rw[fintype.card_sum] at e0,
+ exact e0.symm
 end
 
 lemma gappy_card : ∀ (n : ℕ), fintype.card (gappy n) = fibonacci n.succ.succ

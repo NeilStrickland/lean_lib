@@ -58,31 +58,36 @@ def is_zero_divisor_iff_not_regular {a : A} :
                 { exfalso, exact hx (λ hax', (hax hax').elim) } } } ⟩
 
 variable (A)
-def regular : set A := is_regular 
+def regular : submonoid A := {
+ carrier := is_regular,
+ one_mem' := is_regular_one A,
+ mul_mem' := λ a b ha hb x hx, hb x (ha (b * x) ((mul_assoc a b x) ▸ hx))
+}
 variable {A}
+
+namespace units
+
+def to_regular : (units A) →* (regular A) := {
+ to_fun := λ u, ⟨u, λ x hx, begin
+  rw[← (one_mul x), ← u.inv_mul, mul_assoc, hx, mul_zero]
+ end⟩,
+ map_one' := rfl,
+ map_mul' := λ u v, by { ext, refl }
+}
+
+instance : has_coe (units A) (regular A) := ⟨to_regular⟩ 
+
+end units
 
 namespace regular 
 
-instance : is_submonoid (regular A : set A) := 
-{ one_mem := is_regular_one A,
-  mul_mem := λ a b ha hb x hx, hb x (ha (b * x) ((mul_assoc a b x) ▸ hx)) }
-
-instance : has_coe (units A) (regular A) := 
-⟨λ u,
- ⟨u.val, 
-  λ x hx, 
-   calc x = 1 * x : (one_mul x).symm
-        ... = 0 : by rw[← u.inv_val,mul_assoc u.inv u.val x,hx,mul_zero] ⟩ ⟩ 
+def coe_hom : (regular A) →* A := {
+ to_fun := coe,
+ map_one' := by refl,
+ map_mul' := λ a b, by refl
+}
 
 lemma coe_coe_unit (u : units A) : ((u : regular A) : A) = u := rfl
-
-instance of_unit_hom : is_monoid_hom (coe : units A → regular A) :=
-{ map_one := by { apply subtype.eq, refl },
-  map_mul := λ u v, by { apply subtype.eq, refl} }
-
-instance val_hom : is_monoid_hom (subtype.val : regular A → A) := 
-{ map_one := rfl,
-  map_mul := λ a b, rfl }
 
 lemma add_nilpotent_aux {a b : A} (ha : is_regular a) (hb : is_nilpotent b) : 
  is_regular (a + b) := 

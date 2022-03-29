@@ -34,8 +34,8 @@ track of nilpotence exponents:
 
 import algebra.ring
 import algebra.group_power algebra.geom_sum
-import ring_theory.ideals
 import data.nat.choose
+import ring_theory.ideal.basic ring_theory.ideal.quotient
 
 universe u
 variables {A : Type u} [comm_ring A]
@@ -105,12 +105,12 @@ begin
   { rw[pow_zero] at eb, exact hz eb _ },
   have : mul_exp n.succ m.succ = n + m + 1 := rfl,
   rw [this, add_pow],
-  rw[← @finset.sum_const_zero ℕ A (finset.range (n + m + 1).succ)],
+  rw[← @finset.sum_const_zero A ℕ (finset.range (n + m + 1).succ)],
   congr, ext i,
   by_cases hi : i ≥ n + 1,
   { rw[← nat.add_sub_of_le hi,pow_add,ea],
     repeat {rw[zero_mul]} },
-  { replace hi := le_of_not_gt hi,
+  { replace hi := nat.le_of_lt_succ (lt_of_not_ge hi),
     have := nat.add_sub_of_le hi,
     have : n + m + 1 - i = (m + 1) + (n - i) :=
       by rw [← this, add_comm i, add_assoc, nat.add_sub_cancel,
@@ -148,8 +148,9 @@ def as_nilpotent_neg {b : A} :
 
 lemma as_nilpotent_neg_exp {a : A} (ha : as_nilpotent a) : 
   (as_nilpotent_neg ha).1 = ha.1 := 
-by { dsimp[as_nilpotent_neg], 
-     rw [as_nilpotent_congr_exp, as_nilpotent_smul_exp] }
+by { rw[ ← as_nilpotent_smul_exp (-1) ha],
+     rw[ ← as_nilpotent_congr_exp (neg_eq_neg_one_mul a).symm (as_nilpotent_smul (-1) ha)],
+     refl }
 
 lemma is_nilpotent_neg {b : A} : 
   is_nilpotent b → is_nilpotent (-b) := 
@@ -157,13 +158,15 @@ lemma is_nilpotent_neg {b : A} :
 
 def as_nilpotent_sub {a b : A} 
   (ha : as_nilpotent a) (hb : as_nilpotent b) : as_nilpotent (a - b) := 
-as_nilpotent_congr (sub_eq_add_neg a b) (as_nilpotent_add ha (as_nilpotent_neg hb))
+as_nilpotent_congr (sub_eq_add_neg a b).symm (as_nilpotent_add ha (as_nilpotent_neg hb))
 
 lemma as_nilpotent_sub_exp {a b : A}
   (ha : as_nilpotent a) (hb : as_nilpotent b) : 
   (as_nilpotent_sub ha hb).1 = mul_exp ha.1 hb.1 := 
-by { dsimp[as_nilpotent_sub],
-     rw [as_nilpotent_congr_exp, as_nilpotent_add_exp, as_nilpotent_neg_exp] }
+by { 
+  rw [← as_nilpotent_neg_exp hb, ← as_nilpotent_add_exp ha (as_nilpotent_neg hb)], 
+  dsimp[as_nilpotent_sub], refl
+}
 
 lemma is_nilpotent_sub {a b : A} : 
   is_nilpotent a → is_nilpotent b → is_nilpotent (a - b) := 
@@ -231,7 +234,7 @@ lemma exp_sub (a b : w_nilradical A) : (a - b).exp = mul_exp a.exp b.exp :=
  as_nilpotent_sub_exp a.2 b.2
 
 instance : add_comm_monoid (w_nilradical A) := {
-  zero := has_zero.zero _,
+  zero := has_zero.zero,
   add := (+),
   zero_add := λ a,
    by {ext, rw[add_coe,zero_coe,zero_add], 
@@ -273,15 +276,15 @@ def is_reduced: Prop := ∀ (x : A), (is_nilpotent x) → (x = 0)
 
 def nilradical : ideal A := {
   carrier := is_nilpotent,
-  zero := is_nilpotent_zero,
-  add := λ _ _, is_nilpotent_add,
-  smul := λ (a : A) {b : A} (hb : is_nilpotent b),is_nilpotent_smul a hb
+  zero_mem' := is_nilpotent_zero,
+  add_mem' := λ _ _, is_nilpotent_add,
+  smul_mem' := λ (a : A) {b : A} (hb : is_nilpotent b),is_nilpotent_smul a hb
 }
 
 lemma mem_nilradical (x : A) : x ∈ nilradical A ↔ is_nilpotent x := 
  by {refl}
 
-def reduced_quotient := (nilradical A).quotient 
+def reduced_quotient := A ⧸ (nilradical A)
 
 namespace reduced_quotient
 
@@ -290,10 +293,7 @@ instance : comm_ring (reduced_quotient A) :=
 
 variable {A}
 
-def mk : A → reduced_quotient A := ideal.quotient.mk (nilradical A)
-
-instance : is_ring_hom mk :=
-  ideal.quotient.is_ring_hom_mk (nilradical A)
+def mk : A →+* reduced_quotient A := ideal.quotient.mk (nilradical A)
 
 lemma mk_eq_zero_iff {x : A} : mk x = 0 ↔ (is_nilpotent x) :=
  ideal.quotient.eq_zero_iff_mem
@@ -301,10 +301,12 @@ lemma mk_eq_zero_iff {x : A} : mk x = 0 ↔ (is_nilpotent x) :=
 lemma is_reduced : is_reduced (reduced_quotient A) :=
 begin
  rintros ⟨x0⟩ ⟨n,e0⟩,
+ change (mk x0) ^ n = 0 at e0,
+ rw[← (map_pow mk x0 n)] at e0,
+ rcases (mk_eq_zero_iff.mp e0) with ⟨m,e1⟩,
+ rw[← pow_mul] at e1,
  apply mk_eq_zero_iff.mpr,
- have := (is_semiring_hom.map_pow mk x0 n).trans e0,
- have := mk_eq_zero_iff.mp this,
- exact is_nilpotent_chain this
+ exact ⟨⟨n * m, e1⟩⟩,
 end
 
 end reduced_quotient
@@ -317,16 +319,9 @@ lemma unit_not_nilpotent (a b : A) :
  hz (by {rw[← _root_.one_pow m,← hab,mul_pow,ha,zero_mul]})
 
 lemma one_sub_nilpotent_aux {a : A} {n : ℕ} (ha : a ^ n = 0) :
- (1 - a) * (geom_series a n) = 1 := 
-begin
- rw[mul_comm],
- let u := geom_series a n,
- exact calc
-  u * (1 - a) = - (u * (a - 1)) : by {rw [← neg_sub,mul_neg_eq_neg_mul_symm],}
-  ... = - (a ^ n - 1) : by { rw [geom_sum_mul] }
-  ... = 1 : by { rw [ha,zero_sub,neg_neg] }
-end
-
+ (1 - a) * (geom_sum a n) = 1 := 
+by rw[mul_neg_geom_sum, ha, sub_zero]
+ 
 lemma unit_add_nilpotent_aux {u v a : A} {n : ℕ}
  (hu : u * v = 1) (ha : a ^ n = 0) :
   (u + a) * (v * (finset.range n).sum (λ i, (- v * a) ^ i)) = 1 := 

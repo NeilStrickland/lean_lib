@@ -6,7 +6,7 @@ Authors: Neil Strickland
 -/
 
 import data.list.basic data.vector data.finset data.nat.choose
-import data.fintype
+import data.fintype.basic
 import combinatorics.shift
 
 import tactic.squeeze
@@ -71,7 +71,7 @@ begin
   induction n with n ih; rw[enum_by_length],
   { simp },
   { rw[list.length_append, list.length_map, list.length_map,
-       ih, nat.pow_succ, mul_two] }
+       ih, pow_succ, two_mul] }
 end
 
 lemma nodup (n : ℕ) : (enum_by_length n).nodup := 
@@ -79,9 +79,9 @@ begin
   induction n with n ih; rw[enum_by_length],
   { exact list.nodup_singleton _ },
   { rw[list.nodup_append], split,
-    { exact list.nodup_map (@list.cons_inj _ ff) ih },
+    { exact list.nodup_map list.cons_injective ih },
     split,
-    {  exact list.nodup_map (@list.cons_inj _ tt) ih },
+    { exact list.nodup_map list.cons_injective ih },
     { intros u hff htt,
       rcases list.mem_map.mp hff with ⟨v,⟨mv,ev⟩⟩,
       rcases list.mem_map.mp htt with ⟨w,⟨mw,ew⟩⟩,
@@ -104,7 +104,7 @@ begin
     { intro mu,
       cases u with b v,
       {cases mu},
-      {cases b; rw[list.length] at mu; replace mu := nat.succ_inj mu;
+      {cases b; rw[list.length] at mu; replace mu := nat.succ_inj'.mp mu;
        let hu := ih.mpr mu,
        { left , apply list.mem_map.mpr, use v, exact ⟨hu,rfl⟩ },
        { right, apply list.mem_map.mpr, use v, exact ⟨hu,rfl⟩ } } } }
@@ -145,7 +145,7 @@ begin
   { rintro ⟨_|k⟩; simp[enum_by_length_and_rank] },
   { rintro ⟨_|k⟩; simp[enum_by_length_and_rank, nat.choose], 
     { rw[ih_n, nat.choose_zero_right] },
-    { rw[ih_n, ih_n] } }
+    { rw[ih_n, ih_n, add_comm] } }
 end
 
 lemma nodup : forall (n k : ℕ) , (enum_by_length_and_rank n k).nodup := 
@@ -154,11 +154,12 @@ begin
   induction n with n ih; rintro ⟨_|k⟩; rw[enum_by_length_and_rank],
   { exact list.nodup_singleton _ },
   { exact list.nodup_nil},
-  { exact list.nodup_map (@list.cons_inj _ ff) (ih 0) },
+  { have : function.injective (list.cons ff) := λ _ _ h, (list.cons_inj ff).mp h,
+    exact list.nodup_map list.cons_injective (ih 0) },
   { rw[list.nodup_append], split,
-    { exact list.nodup_map (@list.cons_inj _ ff) (ih (k + 1)) },
+    { exact list.nodup_map list.cons_injective (ih (k + 1)) },
     split,
-    { exact list.nodup_map (@list.cons_inj _ tt) (ih k) },
+    { exact list.nodup_map list.cons_injective (ih k) },
     { intros u hff htt,
       rcases list.mem_map.mp hff with ⟨v,⟨mv,ev⟩⟩,
       rcases list.mem_map.mp htt with ⟨w,⟨mw,ew⟩⟩,
@@ -249,14 +250,14 @@ begin
     { split, { rintro ⟨k,⟨h,⟨_⟩⟩⟩ }, { rintro ⟨_⟩ } } },
   { rw [list.mem_map],
     { split,
-     { rintro ⟨j,⟨hm,he⟩⟩, rw [nat.succ_inj he] at hm, exact ih.mp hm },
+     { rintro ⟨j,⟨hm,he⟩⟩, rw [nat.succ_inj'.mp he] at hm, exact ih.mp hm },
      { intro h, use i, exact ⟨ih.mpr h,rfl⟩ } } },
   { rw [option.mem_def, eq_self_iff_true, iff_true],
     exact list.mem_cons_self _ _ },
   { split, 
     { intro h, rw [list.mem_cons_iff] at h, rcases h with ⟨⟨_⟩|h⟩,
       rcases list.mem_map.mp h with ⟨j,⟨hm,he⟩⟩,
-      rw [nat.succ_inj he] at hm, exact ih.mp hm },
+      rw [nat.succ_inj'.mp he] at hm, exact ih.mp hm },
     { intro h, apply list.mem_cons_of_mem, apply list.mem_map_of_mem,
       exact ih.mpr h } } 
 end
@@ -352,7 +353,7 @@ namespace to_fin_list
 
 variables {n : ℕ} (u : binseq) (h : u.length = n)
 
-lemma val : (u.to_fin_list h).map fin.val = u.to_nat_list := 
+lemma val : (u.to_fin_list h).map subtype.val = u.to_nat_list := 
 begin
   rw[to_fin_list, list.map_pmap],
   have : (λ (i : ℕ) (h : i < n), (fin.mk i h).val) = 
@@ -375,7 +376,7 @@ begin
   split,
   { rintro ⟨j,⟨hj,he⟩⟩,
     let ho := option.mem_def.mp (to_nat_list.mem_iff.mp hj),
-    have hv : i.val = j := by { rw[← he] },
+    have hv : i.val = j := by { rw[← he], refl },
     rw [← hv] at ho,
     rw [ho] at hn,
     exact (option.some_inj.mp hn).symm },
@@ -387,11 +388,11 @@ variables (u h)
 
 lemma sorted : (u.to_fin_list h).sorted has_lt.lt := 
 begin
-  have hs : ((u.to_fin_list h).map fin.val).pairwise has_lt.lt := 
+  have hs : ((u.to_fin_list h).map subtype.val).pairwise has_lt.lt := 
   by { rw [val], exact to_nat_list.sorted u },
   have hp : ∀ i j : fin n, i.val < j.val → i < j := 
     λ i j hij, hij,
-  exact list.pairwise_of_pairwise_map fin.val hp hs
+  exact list.pairwise_of_pairwise_map subtype.val hp hs
 end
 
 lemma nodup : (u.to_fin_list h).nodup := 
@@ -430,21 +431,21 @@ lemma ff_cons :
    shift (to_fin_finset u h) :=
 begin
   have hi : ∀ (p : ℕ) (l m : list (fin p)), 
-    l.map fin.val = m.map fin.val → l = m :=
+    l.map subtype.val = m.map subtype.val → l = m :=
   begin
     intros p l m e,
-    exact list.injective_map_iff.mpr
+    exact list.map_injective_iff.mpr
       (λ (i j : fin p) (e₀ : i.val = j.val), fin.eq_of_veq e₀) e,
   end,
   rw [to_fin_finset, to_fin_finset], congr,
   apply hi,
   rw [to_fin_list.val, to_nat_list, list.map_map],
-  have : fin.val ∘ (fin.succ_emb n) = 
-         nat.succ ∘ fin.val := 
+  have : subtype.val ∘ (fin.succ_emb n) = 
+         nat.succ ∘ subtype.val := 
   begin
     ext ⟨i,hi⟩, unfold_coes, simp [fin.succ_emb]
   end,
-  rw [this, ← list.map_map nat.succ fin.val, to_fin_list.val]
+  rw [this, ← list.map_map nat.succ subtype.val, to_fin_list.val]
 end
 
 lemma tt_cons : 
@@ -452,10 +453,10 @@ lemma tt_cons :
    insert (0 : fin n.succ) (shift (to_fin_finset u h)) :=
 begin
   have hi : ∀ (p : ℕ) (l m : list (fin p)), 
-    l.map fin.val = m.map fin.val → l = m :=
+    l.map subtype.val = m.map subtype.val → l = m :=
   begin
     intros p l m e,
-    exact list.injective_map_iff.mpr
+    exact list.map_injective_iff.mpr
       (λ (i j : fin p) (e₀ : i.val = j.val), fin.eq_of_veq e₀) e,
   end,
   rw [to_fin_finset, to_fin_finset], congr,
@@ -466,17 +467,17 @@ begin
     exact fin.succ_ne_zero _ he,
   end,
   apply hi,
-  let hh := congr_arg (list.map fin.val) (list.insert_of_not_mem hn),
+  let hh := congr_arg (list.map subtype.val) (list.insert_of_not_mem hn),
   rw [to_fin_list.val, to_nat_list], 
   have : (list.insert 0 (list.map ⇑(fin.succ_emb n) (to_fin_list u h))) = 
          (insert 0 (list.map ⇑(fin.succ_emb n) (to_fin_list u h))) := rfl,
   rw [this, hh, list.map, list.map_map],
-  have : fin.val ∘ (fin.succ_emb n) = 
-         nat.succ ∘ fin.val := 
+  have : subtype.val ∘ (fin.succ_emb n) = 
+         nat.succ ∘ subtype.val := 
   begin
     ext ⟨i,hi⟩, unfold_coes, simp [fin.succ_emb]
   end,
-  rw [this, ← list.map_map nat.succ fin.val, to_fin_list.val],
+  rw [this, ← list.map_map nat.succ subtype.val, to_fin_list.val],
   have : (0 : fin n.succ).val = 0 := rfl,
   rw [this],
 end
@@ -559,7 +560,7 @@ begin
     { intro h, exfalso, exact nat.succ_ne_zero u.length h } },
   { intro u, cases u with b u,
     { intro h, exfalso, exact nat.succ_ne_zero n h.symm },
-    { intro h, have hl := nat.succ_inj h, 
+    { intro h, have hl := nat.succ_inj'.mp h, 
       cases b,
       { rw [to_fin_finset.ff_cons u hl, of_fin_finset.shift, ih u hl] },
       { rw [to_fin_finset.tt_cons u hl, of_fin_finset.insert, ih u hl] } } }

@@ -117,7 +117,7 @@ theorem add'_gap (a : V) (t : translations V) : gap a (add' t a) = t :=
 by { rcases t with ⟨⟨x,y⟩⟩, change gap a (fill x y a) = gap x y,
      rw [gap_eq_iff, flip_iff], apply fill_prop }
 
-def zero : translations V := gap (default V) (default V)
+def zero : translations V := gap default default
 
 lemma gap_eq_zero_iff (a b : V) : gap a b = zero ↔ a = b :=
 begin
@@ -148,7 +148,8 @@ theorem add_gap' : add (gap a b) (gap b c) = gap a c :=
 theorem zero_add (t : translations V) : add zero t = t := 
 begin
   rcases t with ⟨a,b⟩, 
-  change gap a (fill (default V) (default V) b) = gap a b,
+  change _ = gap a b,
+  change gap a (fill default default b) = gap a b,
   rw [gap_eq_iff, fill_zero],
   apply thin
 end

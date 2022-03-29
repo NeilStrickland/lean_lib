@@ -51,7 +51,7 @@ open nat
   in the current file allows us to drop the `nat` prefix.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-/
 
-lemma larger_prime : ∀ n : ℕ, ∃ p, (prime p) ∧ (p > n) := 
+lemma larger_prime : ∀ n : ℕ, ∃ (p : ℕ), p.prime ∧ (p > n) := 
 /-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   This line states the result that we want to prove, and attaches the name
   `larger_prime` to the result.
@@ -183,7 +183,7 @@ Our goal is to prove that there exists a number with certain
 properties.  The tactic `use p` converts this to the goal of proving
 that the specific number `p` has those properties.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-/
- have p_prime : prime p,
+ have p_prime : p.prime,
 /-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Our goal is to prove `prime p ∧ p > n`.  The most obvious thing to do
 next would be to split this into two goals: the proof that `p` is 
@@ -418,7 +418,7 @@ to `n < p`.  The theorem `lt_of_not_ge` converts this goal to
  extracts the right-to-left half of this equivalence, which we can
  then apply to the fact `d1` to obtain a proof that $p$ divides $1$.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-/
- exact prime.not_dvd_one p_prime d
+ exact nat.prime.not_dvd_one p_prime d
 /-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  Our goal is to produce a contradiction, or equivalently to prove the
  proposition `false`.  We do this using the keyword `exact` (which is
@@ -444,7 +444,7 @@ get more positive feedback, we can enter
 the fact that we have proved in the message window.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-/
 
-lemma larger_prime' : ∀ n : ℕ, ∃ p, (prime p) ∧ (p > n) := 
+lemma larger_prime' : ∀ n : ℕ, ∃ (p : ℕ), p.prime ∧ (p > n) := 
 /-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 We now start again and give essentially the same proof in a different 
 style.
@@ -465,7 +465,7 @@ the next line, we will need to refer back to the fact that `m ≠ 1`,
 but we will just use the keyword `this`, which refers back to the most
 recent anonymous `have`.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-/
- have p_prime : prime p := min_fac_prime this,
+ have p_prime : p.prime := min_fac_prime this,
  have p_gt_0 : p > 0 := min_fac_pos m,
  have not_p_le_n : ¬ p ≤ n, {
   intro p_le_n,
@@ -476,7 +476,7 @@ These lines are much the same as before, but with proof terms instead
 of tactics.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-/
   have : p ∣ 1 := (nat.dvd_add_iff_right d0).mpr d1,
-  exact prime.not_dvd_one p_prime ‹p ∣ 1›
+  exact nat.prime.not_dvd_one p_prime ‹p ∣ 1›
 /-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Here is another anonymous `have`.  We could again use the keyword 
 `this` to refer to the result, but instead we illustrate another 
@@ -511,7 +511,7 @@ of the goal `∃ p, prime p ∧ p > n`, and Lean can work everything out
 from this.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-/
 
-lemma larger_prime'' : ∀ n : ℕ, ∃ p, (prime p) ∧ (p > n) := 
+lemma larger_prime'' : ∀ n : ℕ, ∃ (p : ℕ), p.prime ∧ (p > n) := 
 λ n, 
  let m := factorial n + 1 in
  let p := min_fac m in 
@@ -520,7 +520,7 @@ lemma larger_prime'' : ∀ n : ℕ, ∃ p, (prime p) ∧ (p > n) :=
   ⟨p,⟨p_prime,
      (lt_of_not_ge
       (λ p_le_n,
-        prime.not_dvd_one
+        nat.prime.not_dvd_one
          p_prime
           ((nat.dvd_add_iff_right
             (dvd_factorial p_prime.pos p_le_n)).mpr

@@ -320,6 +320,7 @@ section rank_equiv
 variables {s : finset α} {n : ℕ} (s_card : s.card = n)
 include s_card
 
+#check list.mem_to_finset
 def rank_equiv : { a // a ∈ s } ≃ fin n := 
 begin
  let l := s.sort has_le.le,
@@ -330,7 +331,7 @@ begin
              (list.to_finset_card_of_nodup l_nodup)).symm).trans s_card,
  let mem_equiv : ∀ a : α, a ∈ s ↔ a ∈ l :=
   λ a, @eq.subst (finset α) (λ t, a ∈ t ↔ a ∈ l) _ _ l_eq_s
-         (@list.mem_to_finset α _ a l),
+         list.mem_to_finset,
  let to_fun : { a // a ∈ s } → fin n := 
  begin
   intro a,

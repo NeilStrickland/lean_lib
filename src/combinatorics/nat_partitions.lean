@@ -291,7 +291,7 @@ instance enum : ∀ (k n : ℕ), enumeration (pnat_sols k n)
         use i1, use hi1,
         rw [list.mem_map],
         rw [add_comm, add_comm i0] at hs,
-        let hs1 := nat.sub_eq_of_eq_add hs.symm,
+        let hs1 : n - (1 + i0) = (l.map coe).sum := tsub_eq_of_eq_add_rev hs.symm,
         rw [← nat.sub_sub] at hs1,
         use ⟨l,⟨hl,hs1.symm⟩⟩,
         split,
@@ -302,8 +302,10 @@ instance enum : ∀ (k n : ℕ), enumeration (pnat_sols k n)
     end
   }
 
+/-
 def to_finset {n k : ℕ} : pnat_sols (k + 1) (n + 1) → 
  { s : finset (fin n) // s.card = k} := sorry
+-/
 
 end pnat_sols
 

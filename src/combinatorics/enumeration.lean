@@ -43,10 +43,11 @@ begin
   dsimp[fintype.card,finset.univ,fintype.elems,finset.card],refl,
 end
 
+#check function.left_inverse.injective
+
 def of_equiv (f : α ≃ β) : enumeration β := 
 { elems := (univ_list α).map f.to_fun,
-  nodup := list.nodup_map 
-    (function.injective_of_left_inverse f.left_inv) (univ_nodup α),
+  nodup := list.nodup_map f.left_inv.injective (univ_nodup α),
   complete := 
   begin
     intro b,
@@ -61,7 +62,7 @@ begin
   let els := univ_list α,
   let inv_fun : (fin n) → α := 
     λ i, els.nth_le i.val (@eq.subst ℕ (nat.lt i.val) _ _ h.symm i.is_lt),
-  let to_fun_aux : α → {i : fin n // inv_fun i = a} := 
+  let to_fun_aux : ∀ (a : α), {i : fin n // inv_fun i = a} := 
   begin
     intro a,
     let i_val := els.index_of a,
@@ -77,7 +78,7 @@ begin
     λ a, (to_fun_aux a).property,
   let right_inv : ∀ i : (fin n), to_fun (inv_fun i) = i := 
   begin
-   intro i,cases i,
+   intro i,cases i with i_val i_is_lt,
    apply fin.eq_of_veq,
    let i_lt_l : i_val < els.length := 
     @eq.subst ℕ (nat.lt i_val) _ _ h.symm i_is_lt,
@@ -102,7 +103,7 @@ begin
  begin
   intro a,
   dsimp[decode,encode],
-  simp[(f.to_fun a).is_lt,f.left_inv a],
+  rw[dif_pos (f a).is_lt],simp[f.left_inv a],
  end,
  exact ⟨encode,decode,encodek⟩ 
 end
@@ -155,7 +156,7 @@ instance enum : ∀ (n : ℕ), combinatorics.enumeration (fin n)
       rw [list.nodup_cons], split,
       { intro h, rcases list.mem_map.mp h with ⟨i,⟨hm,he⟩⟩,
         exact fin.succ_ne_zero i he },
-      { exact list.nodup_map (λ i j e, fin.succ.inj e) (enum n).nodup }
+      { exact list.nodup_map (λ i j e, fin.succ_inj.mp e) (enum n).nodup }
     end,
     complete := 
     λ i, begin

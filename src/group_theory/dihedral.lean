@@ -129,7 +129,7 @@ begin
   { have : int.of_nat j = j := rfl, rw this,
     have : ((j : ℤ) : zmod n) = j := rfl, rw this,
     rw [zpow_coe_nat, r_pow_nat] },
-  { rw [zpow_neg_succ_of_nat,r_pow_nat, r_inv, int.cast_neg_succ_of_nat,mul_neg_eq_neg_mul_symm],
+  { rw [zpow_neg_succ_of_nat,r_pow_nat, r_inv, int.cast_neg_succ_of_nat,mul_neg],
     congr' 1, }
 end
 
@@ -422,7 +422,7 @@ begin
   cases j with j,
   { have : int.of_nat j = j := rfl, rw[this,zpow_coe_nat,r_pow_nat] },
   { have : int.neg_succ_of_nat j = - (j + 1) := rfl,
-    rw [zpow_neg_succ_of_nat,r_pow_nat,r_inv,this,mul_neg_eq_neg_mul_symm],
+    rw [zpow_neg_succ_of_nat,r_pow_nat,r_inv,this,mul_neg],
     congr' 1, 
   }
 end

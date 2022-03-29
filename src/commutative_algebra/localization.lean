@@ -58,7 +58,7 @@ way to formulate this.  Ideally, the resulting maps out of
 
 -/
 
-import algebra.ring group_theory.submonoid ring_theory.ideals linear_algebra.basic
+import algebra.ring group_theory.submonoid ring_theory.ideal.basic linear_algebra.basic
 import tactic.ring tactic.abel
 
 namespace localization_alt
@@ -68,10 +68,9 @@ universes u v w x
 structure prelog_semiring := 
 (A : Type u)
 (S : Type v)
-(i : S → A)
 (A_comm_semiring : comm_semiring A)
 (S_comm_monoid : comm_monoid S)
-(i_hom : is_monoid_hom i)
+(i : S →* A)
 
 namespace prelog_semiring
 open prelog_semiring 
@@ -91,8 +90,6 @@ instance to_monoid_S (P : prelog_semiring) : monoid P.S :=
 instance to_monoid_A (P : prelog_semiring) : monoid P.A := 
  @comm_monoid.to_monoid P.A (@prelog_semiring.to_comm_monoid_A P)
 
-instance to_monoid_hom (P : prelog_semiring) : is_monoid_hom P.i := P.i_hom
-
 structure preloc (P : prelog_semiring) :=
 (numer : P.A) (denom : P.S)
 
@@ -103,7 +100,7 @@ variable {P : prelog_semiring}
 
 notation a `/₀` s := preloc.mk a s
 
-@[extensionality]
+@[ext]
 lemma ext : ∀ (a₁ a₂ : P.A) (s₁ s₂ : P.S), a₁ = a₂ → s₁ = s₂ →
  (a₁ /₀ s₁) = (a₂ /₀ s₂) := 
  by { intros; congr; assumption } 
@@ -153,7 +150,7 @@ instance : add_comm_monoid (preloc P) := begin
  let zero_add : ∀ (x : preloc P), add zero x = x := 
  begin
   intro x,cases x with a s,
-  let h0 := (congr_fun (congr_arg P.A_comm_semiring.mul P.i_hom.map_one) a),
+  let h0 := (congr_fun (congr_arg P.A_comm_semiring.mul P.i.map_one) a),
   let h1 := congr (congr_arg P.A_comm_semiring.add (zero_mul (P.i s))) h0,
   let h2 := h1.trans ((zero_add (1 * a)).trans (one_mul a)),
   exact congr (congr_arg preloc.mk h2) (one_mul s),
@@ -162,7 +159,7 @@ instance : add_comm_monoid (preloc P) := begin
  begin
   intro x,cases x with a s,
   dsimp[zero,add],
-  let h0 := (congr_arg ((*) a) P.i_hom.map_one).trans (mul_one a),
+  let h0 := (congr_arg ((*) a) P.i.map_one).trans (mul_one a),
   let h1 := (congr (congr_arg (+) h0) (mul_zero (P.i s))).trans (add_zero a),
   exact congr (congr_arg preloc.mk h1) (mul_one s),
  end,
@@ -176,7 +173,7 @@ instance : add_comm_monoid (preloc P) := begin
  begin
   intros x y z,cases x with a s, cases y with b t, cases z with c u,
   dsimp[add],
-  rw[P.i_hom.map_mul,P.i_hom.map_mul,add_mul,mul_add],
+  rw[P.i.map_mul,P.i.map_mul,add_mul,mul_add],
   rw[add_assoc,mul_assoc s t u,mul_assoc a (P.i t) (P.i u),
      mul_assoc (P.i s) b (P.i u),mul_assoc (P.i s) (P.i t) c],
  end,
@@ -225,7 +222,7 @@ lemma eta_map_add (a b : P.A) : η₀ (a + b) = (η₀ a) + (η₀ b) :=
 begin
  ext, 
  rw[numer_eta,numer_eta,denom_eta,denom_eta,
-    P.i_hom.map_one,mul_one,one_mul],
+    P.i.map_one,mul_one,one_mul],
  rw[denom_eta,denom_eta,mul_one],
 end
 
@@ -245,12 +242,12 @@ begin
   let ss := m.s * n.s * u',
   let ee := calc
    P.i (ss * u'') * a = P.i (n.s * u'') * (P.i (m.s * u') * a)
-    : by {repeat {rw[P.i_hom.map_mul]}, ring,}
+    : by {repeat {rw[P.i.map_mul]}, ring,}
    ... = P.i (n.s * u'') * (P.i (m.s * u) * a') : by rw[m.e]
    ... = P.i (m.s * u) * (P.i (n.s * u'') * a') : by ring
    ... = P.i (m.s * u) * (P.i (n.s * u') * a'') : by rw[n.e]
    ... = P.i (ss * u) * a'' 
-    : by {repeat {rw[P.i_hom.map_mul]}, ring,},
+    : by {repeat {rw[P.i.map_mul]}, ring,},
    exact { s := ss, e := ee }
 end
 
@@ -268,12 +265,12 @@ begin
      (P.i (ss * (u' * v'))) * (a * (P.i v) + (P.i u) * b)
        = P.i (n.s * v * v') * (P.i (m.s * u') * a) + 
          P.i (m.s * u * u') * (P.i (n.s * v') * b) 
-         : by {repeat {rw[P.i_hom.map_mul]}, ring,}
+         : by {repeat {rw[P.i.map_mul]}, ring,}
    ... = P.i (n.s * v * v') * (P.i (m.s * u) * a') + 
          P.i (m.s * u * u') * (P.i (n.s * v) * b')
          : by rw[m.e,n.e] 
    ... = (P.i (ss * (u * v))) * (a' * (P.i v') + (P.i u') * b')
-         : by {repeat {rw[P.i_hom.map_mul]}, ring,},
+         : by {repeat {rw[P.i.map_mul]}, ring,},
   exact { s := ss, e := ee },
 end
 
@@ -286,11 +283,11 @@ begin
  let ee := calc
      (P.i (ss * (u' * v'))) * (a * b)
        = (P.i (m.s * u') * a) * (P.i (n.s * v') * b)
-         : by {repeat {rw[P.i_hom.map_mul]}, ring,}
+         : by {repeat {rw[P.i.map_mul]}, ring,}
    ... =  (P.i (m.s * u) * a') * (P.i (n.s * v) * b')
          : by rw[m.e,n.e] 
    ... = (P.i (ss * (u * v))) * (a' * b')
-         : by {repeat {rw[P.i_hom.map_mul]}, ring,},
+         : by {repeat {rw[P.i.map_mul]}, ring,},
   exact { s := ss, e := ee },
 end
 
@@ -313,7 +310,7 @@ begin
             (a * (b * (P.i w) + (P.i v) * c)) =
           (P.i (1 * (u * (v *w)))) * 
             ((a * b) * P.i (u * w) + P.i (u * v) * (a * c)) :=  
-  by {repeat {rw[P.i_hom.map_mul]}, ring,},
+  by {repeat {rw[P.i.map_mul]}, ring,},
   exact {s := 1, e := e},
 end
 
@@ -324,7 +321,7 @@ begin
             ((a * (P.i v) + (P.i u) * b) * c) =
           (P.i (1 * (u * v *w))) * 
             ((a * c) * P.i (v * w) + P.i (u * w) * (b * c)) :=  
-  by {repeat {rw[P.i_hom.map_mul]}, ring,},
+  by {repeat {rw[P.i.map_mul]}, ring,},
   exact {s := 1, e := e},
 end
 
@@ -387,13 +384,16 @@ instance : comm_semiring (loc P) := {
   },
 }
 
-def η (a : P.A) : loc P := a /₁ 1
-
-instance (P : prelog_semiring) : is_semiring_hom (@η P) := {
- map_zero := rfl,
- map_one := rfl,
- map_add := λ a b,congr_arg mk0 (preloc.eta_map_add a b),
- map_mul := λ a b,congr_arg mk0 (preloc.eta_map_mul a b),
+def η {P : prelog_semiring} : P.A →+* (loc P) := {
+ to_fun :=  λ a, a /₁ 1,
+ map_zero' := rfl,
+ map_one' := rfl,
+ map_add' := λ a b,congr_arg mk0 (preloc.eta_map_add a b),
+ map_mul' := λ a b, begin 
+  have := preloc.eta_map_mul a b,
+  have := congr_arg mk0 this,
+  exact this
+ end
 }
 
 def ζ (s : P.S) : units (loc P) := begin
@@ -402,7 +402,7 @@ def ζ (s : P.S) : units (loc P) := begin
   let val_inv : val * inv = 1 := begin 
    show mk0 (((P.i s) * 1) /₀ (1 * s)) = mk0 (1 /₀ 1),
    let h : (((P.i s) * 1) /₀ (1 * s)) ≈ (1 /₀ 1) := 
-    ⟨{ s := 1 , e := by {simp[P.i_hom.map_one],}}⟩ ,
+    ⟨{ s := 1 , e := by {simp[P.i.map_one],}}⟩ ,
    exact quotient.sound h,
   end,
   let inv_val := (mul_comm inv val).trans val_inv,

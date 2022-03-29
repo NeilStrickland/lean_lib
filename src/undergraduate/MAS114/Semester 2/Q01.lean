@@ -41,13 +41,16 @@ def X := (fin 4) × (fin 4)
 
 namespace X
 
-instance : decidable_eq X := by { dsimp [X], apply_instance }
-instance : fintype X      := by { dsimp [X], apply_instance }
-instance : has_repr X     := ⟨λ ij, ij.1.val.repr ++ ij.2.val.repr⟩ 
-instance : bounded_lattice X := by { dsimp [X], apply_instance }
+instance : decidable_eq X    := by { dsimp [X], apply_instance }
+instance : fintype X         := by { dsimp [X], apply_instance }
+instance : has_repr X        := ⟨λ ij, ij.1.val.repr ++ ij.2.val.repr⟩ 
+instance : distrib_lattice X := by { dsimp [X], apply_instance }
+instance : bounded_order X   := by { dsimp [X], apply_instance }
 
+/-
 instance : linear_order X := 
-  by { dsimp [X], exact lex_linear_order }
+  by { dsimp [X], exact lex_order }
+-/
 
 def s : self_map X := λ ij, ⟨ij.1, ij.2.reflect⟩ 
 def r : self_map X := λ ij, ⟨ij.2.reflect, ij.1⟩
@@ -64,8 +67,8 @@ end
 
 instance : mul_action (dihedral 4) X := self_map.mul_action_of_hom p.to_hom
 
-lemma smul_s (ij : X) : (@dihedral.s 4 0) • ij = ⟨ij.1, ij.2.reflect⟩ := rfl
-lemma smul_r (ij : X) : (@dihedral.r 4 1) • ij = ⟨ij.2.reflect, ij.1⟩ := rfl
+lemma smul_s (ij : X) : (dihedral.s (0 : zmod 4)) • ij = ⟨ij.1, ij.2.reflect⟩ := rfl
+lemma smul_r (ij : X) : (dihedral.r (1 : zmod 4)) • ij = ⟨ij.2.reflect, ij.1⟩ := rfl
 
 def F : (finset (orbits (dihedral 4) X)) := finset.univ
 def L (o : orbits (dihedral 4) X) : finset X :=  

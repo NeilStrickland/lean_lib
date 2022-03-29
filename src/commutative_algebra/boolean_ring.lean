@@ -1,3 +1,4 @@
+import algebra.ring
 import order.boolean_algebra
 
 universe u
@@ -45,8 +46,8 @@ instance : has_inf α := ⟨λ a b, a * b⟩
 
 instance : boolean_algebra α := 
 { le := has_le.le,
-  bot := has_bot.bot α,
-  top := has_top.top α,
+  bot := has_bot.bot,
+  top := has_top.top,
   sup := has_sup.sup,
   inf := has_inf.inf,
   le_refl := λ a, mul_self a,
@@ -107,14 +108,20 @@ instance : boolean_algebra α :=
   rw [mul_add, mul_add, mul_comm a (b * c), ← mul_assoc (b * c) (b * c)],
   rw [mul_self (b * c), add_comm (b * c * a), add_assoc, add_self, add_zero], 
  end,
- neg := λ a, 1 + a,
- sub := λ a b, a + a * b,
- inf_neg_eq_bot := λ a, show a * (1 + a) = 0,
-   by rw [mul_add,mul_one,mul_self,add_self],
- sup_neg_eq_top := λ a, show a + (1 + a) + a * (1 + a) = 1,
-   by rw[mul_add,mul_one,mul_self,add_self,add_zero,
-         add_comm 1 a,← add_assoc,add_self,zero_add],
- sub_eq := λ a b, show a + a * b = a * (1 + b), by rw[mul_add,mul_one]
+ compl := λ a, 1 + a,
+ sdiff := λ a b, a + a * b,
+ sdiff_eq := λ a b, show a + a * b = a * (1 + b), by rw[mul_add,mul_one],
+ sup_inf_sdiff := λ a b, show a * b + (a + a * b) + (a * b) * (a + a * b) = a,
+  by rw[mul_add,mul_comm (a * b) a,← mul_assoc,mul_self a,mul_self (a * b),
+     add_self (a * b),add_zero,add_comm a,← add_assoc,add_self (a * b),zero_add],
+  inf_inf_sdiff := λ a b, show a * b * (a + a * b) = 0,
+   by rw[mul_add,mul_self (a * b),mul_comm (a * b),← mul_assoc,mul_self a,
+          add_self],
+  inf_compl_le_bot := λ a, show a * (1 + a) * 0 = a * (1 + a), 
+   by rw[mul_zero,mul_add,mul_one,mul_self,add_self],
+  top_le_sup_compl := λ a, show 1 * (a + (1 + a) + a * (1 + a)) = 1,
+  by rw[one_mul,mul_add,mul_one,mul_self,add_self,add_zero,
+           add_comm 1 a,← add_assoc,add_self,zero_add]
 }
 
 end boolean_ring

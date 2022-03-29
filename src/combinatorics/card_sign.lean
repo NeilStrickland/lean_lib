@@ -130,11 +130,12 @@ end
 
 end insert
 
+#check finset.nonempty
 lemma card_sign_sum_eq (J : finset I) : card_sign_sum J = if J = ∅ then 1 else 0 := 
 begin
  split_ifs with h,
  {rw[h],refl},
- {rcases (exists_mem_of_ne_empty h) with ⟨a,a_in_J⟩,
+ { rcases (nonempty_of_ne_empty h) with ⟨a,a_in_J⟩,
   rw[← insert_erase a_in_J,card_sign_sum_insert (not_mem_erase a J)],
  }
 end

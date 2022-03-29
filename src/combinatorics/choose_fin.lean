@@ -37,12 +37,12 @@ def squash : ∀ (l : list ℕ ), list ℕ
 | (i :: l) := i :: squash (l.map (simplicial.infinite.σ i.pred))
 using_well_founded {
   rel_tac := λ _ _, `[exact ⟨_, measure_wf list.length⟩],
-  dec_tac := well_founded_tactics.default_dec_tac' }
+  dec_tac := well_founded_tactics.default_dec_tac }
 
-@[simp] lemma squash.nil : squash [] = [] := rfl
+@[simp] lemma squash.nil : squash [] = [] := by simp[squash]
 
 @[simp] lemma squash.cons (i : ℕ) (l : list ℕ) : 
-  squash (i :: l)  = i :: (squash (l.map (σ i.pred))) := rfl
+  squash (i :: l)  = i :: (squash (l.map (σ i.pred))) := by simp[squash]
 
 lemma spread.nodup (l : list ℕ) : (spread l).nodup := 
 begin
@@ -61,22 +61,22 @@ begin
 end
 
 @[simp] lemma squash.length : ∀ (l : list ℕ), (squash l).length = l.length
-| [] := rfl
+| [] := by simp[squash]
 | (i :: l) := 
 begin
   rw [squash.cons, list.length_cons, squash.length, list.length_map, list.length_cons]
 end
 using_well_founded {
   rel_tac := λ _ _, `[exact ⟨_, measure_wf list.length⟩],
-  dec_tac := well_founded_tactics.default_dec_tac' }
+  dec_tac := well_founded_tactics.default_dec_tac }
 
 lemma squash_spread : ∀ (l : list ℕ), squash (spread l) = l
-| [] := rfl
+| [] := by simp[squash,spread]
 | (i :: l) :=
   by { rw [spread, squash.cons, list.map_map, σδ_pred, list.map_id, squash_spread] }
 
 lemma spread_squash : ∀ {l : list ℕ} (hl : l.nodup), spread (squash l) = l
-| [] _ := rfl
+| [] _ := by simp[squash,spread]
 | (i :: l) hl := begin
   rw [list.nodup_cons] at hl,
   let m := l.map (σ i.pred),
@@ -96,7 +96,7 @@ lemma spread_squash : ∀ {l : list ℕ} (hl : l.nodup), spread (squash l) = l
 end
 using_well_founded {
   rel_tac := λ _ _, `[exact ⟨_, measure_wf (λ x, list.length x.1)⟩],
-  dec_tac := well_founded_tactics.default_dec_tac' }
+  dec_tac := well_founded_tactics.default_dec_tac }
 
 def spread_equiv : list ℕ ≃ { l : list ℕ // l.nodup } := {
   to_fun := λ l, ⟨spread l, spread.nodup l⟩,
@@ -371,7 +371,7 @@ by { rw [of_spread_list, of_squash_list.length, natlist.squash.length] }
 
 def of_list {n : ℕ} (l : list (fin n)) (hn : l.nodup) : fin_falling n :=
  of_spread_list (l.map coe) 
-  (list.nodup_map (λ _ _ e, fin.injective_val e) hn) (natlist.below_line.of_fin l)
+  (list.nodup_map (λ _ _ e, subtype.val_injective e) hn) (natlist.below_line.of_fin l)
 
 lemma of_list.length {n : ℕ} (l : list (fin n)) (hn : l.nodup) :
   (of_list l hn).length = l.length := 
@@ -415,7 +415,7 @@ end
 lemma to_of_list {n : ℕ} (l : list (fin n)) (hn : l.nodup): 
   to_list (of_list l hn) = l := 
 begin
-  apply list.injective_map_iff.mpr (@fin.coe_inj n),
+  apply list.map_injective_iff.mpr (@fin.coe_inj n),
   rw [to_list.val, of_list, to_of_spread_list]
 end
 

@@ -75,7 +75,7 @@ def padic_valuation (p : ℕ) (n : ℕ) : ℕ :=
 def unique_factors (n : ℕ) := 
  (n.factors : multiset ℕ).erase_dup
 
-lemma mem_unique_factors {n : ℕ} (h : n > 0) (p : ℕ) :
+lemma mem_unique_factors {n : ℕ} (h : n ≠ 0) (p : ℕ) :
  p ∈ unique_factors n ↔ p.prime ∧ p ∣ n := 
 begin
  dsimp[unique_factors],rw[multiset.mem_coe,list.mem_erase_dup],
@@ -97,7 +97,6 @@ begin
   have : unique_factors 0 = 0 := 
    by { dsimp[unique_factors], rw[factors_zero], refl },
    rw[this],apply multiset.pairwise_zero},
- replace h := nat.pos_of_ne_zero h,
  apply multiset.nodup_prime_coprime,
  {apply multiset.nodup_erase_dup},
  {rw[multiset.all_prop_iff],intros p hp,
@@ -110,7 +109,7 @@ end
 def prime_power_factors (n : ℕ) := 
  (unique_factors n).map (λ p, p ^ (padic_valuation p n))
 
-def prod_factors' (n : ℕ) (h : n > 0) :
+def prod_factors' (n : ℕ) (h : n ≠ 0) :
  (prime_power_factors n).prod = n := 
 begin
  let f : multiset ℕ := n.factors,
@@ -151,7 +150,6 @@ lemma square_free_radical_dvd (n : ℕ) :
  by_cases hn : n = 0,
  {rw[hn],use 0,rw[mul_zero]},
  {
-  replace hn := nat.pos_of_ne_zero hn,
   let fl := n.factors,
   let fm : multiset ℕ := fl,
   let fs := fm.erase_dup,
@@ -165,7 +163,7 @@ lemma square_free_radical_dvd (n : ℕ) :
  }
 end
 
-lemma square_free_radical_primes {n : ℕ} (hn : n > 0) 
+lemma square_free_radical_primes {n : ℕ} (hn : n ≠ 0) 
  {p : ℕ} (p_prime : nat.prime p) : 
   p ∣ (square_free_radical n) ↔ p ∣ n := 
 begin
@@ -183,7 +181,7 @@ begin
  }
 end
 
-lemma square_free_radical_dvd_iff {n : ℕ} (hn : n > 0) (m : ℕ) : 
+lemma square_free_radical_dvd_iff {n : ℕ} (hn : n ≠ 0) (m : ℕ) : 
  (square_free_radical n) ∣ m ↔ ∀ p, nat.prime p → p ∣ n → p ∣ m := begin
 split,
 {intros h p p_prime p_dvd_n,
@@ -197,7 +195,7 @@ split,
 }
 end
 
-lemma dvd_square_free_radical {n : ℕ} (hn : n > 0) :
+lemma dvd_square_free_radical {n : ℕ} (hn : n ≠ 0) :
  ∃ (k : ℕ), n ∣ n.square_free_radical ^ k := 
 begin
  let f : multiset ℕ := n.factors,

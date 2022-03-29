@@ -5,7 +5,8 @@ Authors: Neil Strickland
 
 -/
 
-import data.fintype.intervals
+import data.fintype.basic
+import data.nat.interval
 
 namespace combinatorics
 
@@ -16,20 +17,19 @@ def Ioo (n m : ℕ) : finset ℕ := Ico n.succ m
 def Ioc (n m : ℕ) : finset ℕ := Ico n.succ m.succ
 
 lemma mem_Ico { n m k : ℕ } : k ∈ (Ico n m) ↔ (n ≤ k ∧ k < m) := 
- finset.Ico.mem
+ finset.mem_Ico
 
 lemma mem_Icc { n m k : ℕ } : k ∈ (Icc n m) ↔ (n ≤ k ∧ k ≤ m) := 
-by { rw[Icc, ← @nat.lt_succ_iff k m], exact finset.Ico.mem }
+by { rw[Icc, ← @nat.lt_succ_iff k m], exact finset.mem_Ico }
 
 lemma mem_Ioo { n m k : ℕ } : k ∈ (Ioo n m) ↔ (n < k ∧ k < m) := 
-by { rw[Ioo, ← @nat.succ_le_iff n k], exact finset.Ico.mem }
+by { rw[Ioo, ← @nat.succ_le_iff n k], exact finset.mem_Ico }
 
 lemma mem_Ioc { n m k : ℕ } : k ∈ (Ioc n m) ↔ (n < k ∧ k ≤ m) := 
 by { rw[Ioc, ← @nat.lt_succ_iff k m, ← @nat.succ_le_iff n k],
-      exact finset.Ico.mem } 
+      exact finset.mem_Ico } 
 
-lemma Ico_card (n m : ℕ) : (Ico n m).card = m - n := 
- finset.Ico.card n m
+lemma Ico_card (n m : ℕ) : (Ico n m).card = m - n := nat.card_Ico n m
 
 lemma Icc_card (n m : ℕ) : (Icc n m).card = m.succ - n := 
 by { rw[Icc, Ico_card] }

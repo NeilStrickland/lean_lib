@@ -1,14 +1,21 @@
-import algebra.ring
+import algebra.field.basic
 
-instance : discrete_field bool := 
-begin 
- refine_struct {
+instance : field bool := {
   zero := ff, one := tt,
   neg := id, inv := id,
   add := bxor, mul := band,
-  zero_ne_one := λ e, by {cases e},
-  has_decidable_eq := by { apply_instance }
- };
- try { repeat { intro a, cases a }; exact dec_trivial, },
-end
-
+  zero_add      := by { repeat { rintro ⟨_⟩ };  refl },
+  add_zero      := by { repeat { rintro ⟨_⟩ };  refl },
+  one_mul       := by { repeat { rintro ⟨_⟩ };  refl },
+  mul_one       := by { repeat { rintro ⟨_⟩ };  refl },
+  add_left_neg  := by { repeat { rintro ⟨_⟩ };  refl },
+  add_comm      := by { repeat { rintro ⟨_⟩ };  refl },
+  mul_comm      := by { repeat { rintro ⟨_⟩ };  refl },
+  add_assoc     := by { repeat { rintro ⟨_⟩ };  refl },
+  mul_assoc     := by { repeat { rintro ⟨_⟩ };  refl },
+  left_distrib  := by { repeat { rintro ⟨_⟩ };  refl },
+  right_distrib := by { repeat { rintro ⟨_⟩ };  refl },
+  mul_inv_cancel := λ a ha, by {  cases a, { exact false.elim (ha rfl) }, { refl }},
+  inv_zero := rfl,
+  exists_pair_ne := by { use tt, use ff }
+ }

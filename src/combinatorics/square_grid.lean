@@ -32,7 +32,10 @@ instance : fintype (square_grid N) :=
 instance : has_repr (square_grid N) := 
   ⟨λ ij, ij.1.val.repr ++ ij.2.val.repr⟩ 
 
-instance : lattice.bounded_lattice (square_grid N) :=
+instance : distrib_lattice (square_grid N) :=
+  by { dsimp [square_grid], apply_instance }
+
+instance : bounded_order (square_grid N) :=
   by { dsimp [square_grid], apply_instance }
 
 variable {N} 
@@ -50,58 +53,60 @@ begin
  refl
 end
 
+instance four_pos : fact (4 > 0) := by apply_instance
+
 instance : mul_action (dihedral 4) (square_grid N) := 
   self_map.mul_action_of_hom (p N).to_hom
 
 lemma smul_r₀ (ij : square_grid N) :
- (@dihedral.r 4 0) • ij = ij := rfl
+ (dihedral.r (0 : zmod 4)) • ij = ij := rfl
 
 lemma smul_r₁ (ij : square_grid N) :
- (@dihedral.r 4 1) • ij = ⟨ij.2.reflect, ij.1⟩ := rfl
+ (dihedral.r (1 : zmod 4)) • ij = ⟨ij.2.reflect, ij.1⟩ := rfl
 
 lemma smul_r₂ (ij : (square_grid N)) :
-  (@dihedral.r 4 2) • ij = ⟨ij.1.reflect, ij.2.reflect⟩ := 
+  (dihedral.r (2 : zmod 4)) • ij = ⟨ij.1.reflect, ij.2.reflect⟩ := 
 begin
-  change ((p N).to_hom) (@dihedral.r 4 2) ij = _,
+  change ((p N).to_hom) (dihedral.r (2 : zmod 4)) ij = _,
   rw [dihedral.prehom.to_hom.map_r (p N) 2], 
   change r (r ij) = _,
   simp only [r, fin.reflect_reflect], 
 end
 
 lemma smul_r₃ (ij : (square_grid N)) :
-  (@dihedral.r 4 3) • ij = ⟨ij.2, ij.1.reflect⟩ := 
+  (dihedral.r (3 : zmod 4)) • ij = ⟨ij.2, ij.1.reflect⟩ := 
 begin
-  change ((p N).to_hom) (@dihedral.r 4 3) ij = _,
+  change ((p N).to_hom) (dihedral.r (3 : zmod 4)) ij = _,
   rw [dihedral.prehom.to_hom.map_r (p N) 3], 
   change r (r (r ij)) = _,
   simp only [r, fin.reflect_reflect], 
 end
 
 lemma smul_s₀ (ij : (square_grid N)) :
-  (@dihedral.s 4 0) • ij = ⟨ij.1, ij.2.reflect⟩ := rfl
+  (dihedral.s (0 : zmod 4)) • ij = ⟨ij.1, ij.2.reflect⟩ := rfl
 
 lemma smul_s₁ (ij : (square_grid N)) :
-  (@dihedral.s 4 1) • ij = ⟨ij.2, ij.1⟩ := 
+  (dihedral.s (1 : zmod 4)) • ij = ⟨ij.2, ij.1⟩ := 
 begin
-  change ((p N).to_hom) (@dihedral.s 4 1) ij = _,
+  change ((p N).to_hom) (dihedral.s (1 : zmod 4)) ij = _,
   rw [dihedral.prehom.to_hom.map_s (p N) 1, 
       self_map.mul_app],
   change r (s ij) = _, simp only [s, r, fin.reflect_reflect], 
 end
 
 lemma smul_s₂ (ij : (square_grid N)) :
-  (@dihedral.s 4 2) • ij = ⟨ij.1.reflect, ij.2⟩ := 
+  (dihedral.s (2 : zmod 4)) • ij = ⟨ij.1.reflect, ij.2⟩ := 
 begin
-  change ((p N).to_hom) (@dihedral.s 4 2) ij = _,
+  change ((p N).to_hom) (dihedral.s (2 : zmod 4)) ij = _,
   rw [dihedral.prehom.to_hom.map_s (p N) 2], 
   change r (r (s ij)) = _,
   simp only [s, r, fin.reflect_reflect], 
 end
 
 lemma smul_s₃ (ij : (square_grid N)) :
-  (@dihedral.s 4 3) • ij = ⟨ij.2.reflect, ij.1.reflect⟩ := 
+  (dihedral.s (3 : zmod 4)) • ij = ⟨ij.2.reflect, ij.1.reflect⟩ := 
 begin
-  change ((p N).to_hom) (@dihedral.s 4 3) ij = _,
+  change ((p N).to_hom) (dihedral.s (3 : zmod 4)) ij = _,
   rw [dihedral.prehom.to_hom.map_s (p N) 3], 
   change r (r (r (s ij))) = _,
   simp only [s, r, fin.reflect_reflect], 
@@ -135,8 +140,8 @@ lemma flip_w (d : dim) : d.flip.w = d.h := rfl
 lemma flip_flip (d : dim) : d.flip.flip = d := by { cases d, refl }
 
 def smul₀ : (dihedral 4) → dim → dim
-| (@dihedral.r 4 i) d := cond i.val.bodd d.flip d
-| (@dihedral.s 4 i) d := cond i.val.bodd d d.flip
+| (dihedral.r i) d := cond i.val.bodd d.flip d
+| (dihedral.s i) d := cond i.val.bodd d d.flip
 
 lemma bodd_mod4 (i : ℕ) : (i % 4).bodd = i.bodd := 
 begin 
@@ -147,7 +152,7 @@ end
 
 lemma bodd_add (i j : zmod 4) : (i + j).val.bodd = 
   bxor i.val.bodd j.val.bodd := 
-by { rw [← nat.bodd_add, zmod.add_val], exact bodd_mod4 (i.val + j.val) }
+by { rw [← nat.bodd_add,zmod.val_add], exact bodd_mod4 (i.val + j.val) }
 
 lemma bodd_sub (i j : zmod 4) : (i - j).val.bodd = 
   bxor i.val.bodd j.val.bodd := 
@@ -230,122 +235,125 @@ instance : mul_action (dihedral 4) (box N) :=
   self_map.mul_action_of_hom (p N).to_hom
 
 lemma smul_r₀ (x : box N) : 
-  (@dihedral.r 4 0) • x = x := rfl 
+  (dihedral.r (0 : zmod 4)) • x = x := rfl 
 
 lemma smul_r₁ (x : box N) : 
-  (@dihedral.r 4 1) • x = 
+  (dihedral.r (1 : zmod 4)) • x = 
     box.mk x.l.reflect x.i x.j.reflect x.k 
           (fin.reflect_le x.hjl) x.hik :=
 by { cases x, refl }
 
 lemma smul_r₂ (x : box N) : 
-  (@dihedral.r 4 2) • x = 
+  (dihedral.r (2 : zmod 4)) • x = 
     box.mk x.k.reflect x.l.reflect x.i.reflect x.j.reflect 
           (fin.reflect_le x.hik) (fin.reflect_le x.hjl) :=
 by { cases x, refl }
 
 lemma smul_r₃ (x : box N) : 
-  (@dihedral.r 4 3) • x = 
+  (dihedral.r (3 : zmod 4)) • x = 
     box.mk x.j x.k.reflect x.l x.i.reflect
           x.hjl (fin.reflect_le x.hik) :=
 by { change (r * (r * r)) _ = _, cases x, 
      simp only [self_map.mul_app, r, fin.reflect_reflect], cc }
 
 lemma smul_s₀ (x : box N) : 
-  (@dihedral.s 4 0) • x = 
+  (dihedral.s (0 : zmod 4)) • x = 
     box.mk x.i x.l.reflect x.k x.j.reflect
            x.hik (fin.reflect_le x.hjl) := 
 by { cases x, refl }
 
 lemma smul_s₁ (x : box N) : 
-  (@dihedral.s 4 1) • x = 
+  (dihedral.s (1 : zmod 4)) • x = 
     box.mk x.j x.i x.l x.k x.hjl x.hik := 
 by { change (r * s) _ = _, cases x, 
      simp only [self_map.mul_app, r, s, fin.reflect_reflect], cc }
 
 lemma smul_s₂ (x : box N) : 
-  (@dihedral.s 4 2) • x = 
+  (dihedral.s (2 : zmod 4)) • x = 
     box.mk x.k.reflect x.j x.i.reflect x.l 
            (fin.reflect_le x.hik) x.hjl := 
 by { change (r * r * s) _ = _, cases x, 
      simp only [self_map.mul_app, r, s, fin.reflect_reflect], cc }
 
 lemma smul_s₃ (x : box N) : 
-  (@dihedral.s 4 3) • x = 
+  (dihedral.s (3 : zmod 4)) • x = 
     box.mk x.l.reflect x.k.reflect x.j.reflect x.i.reflect
           (fin.reflect_le x.hjl) (fin.reflect_le x.hik) := 
 by { change (r * r * r * s) _ = _, cases x, 
      simp only [self_map.mul_app, r, s, fin.reflect_reflect], cc }
 
 def to_subset : ∀ (x : box N), subsets N
-| ⟨i,j,k,l,hik,hjl⟩ := sorry
+| ⟨i,j,k,l,hik,hjl⟩ := 
+   finset.product (finset.Icc i k) (finset.Icc j l)
 
 end box
 
-def bounding_box : Y → X × X := 
-  λ (xs : finset X), ⟨xs.inf id,xs.sup id⟩
+variable {N}
 
-def size  (y : Y) : ℕ × ℕ := 
-  let b := y.bounding_box in prod.mk (b.2.1 - b.1.1) (b.2.2 - b.1.2)
+namespace subsets
 
-def is_horizontal (y : Y) : bool := y.size.2 = 0
-def is_vertical   (y : Y) : bool := y.size.1  = 0
+def bounding_box : (subsets N) → (square_grid N) × (square_grid N) := 
+  λ (xs : finset (square_grid N)), ⟨xs.inf id,xs.sup id⟩
 
-instance : mul_action (dihedral 4) Y := 
-  _root_.mul_action.finset_action
-end Y
+def size  (y : subsets N) : ℕ × ℕ := 
+ let b := y.bounding_box in prod.mk (b.2.1 - b.1.1) (b.2.2 - b.1.2)
+
+def is_horizontal (y : subsets N) : bool := y.size.2 = 0
+def is_vertical   (y : subsets N) : bool := y.size.1  = 0
+
+end subsets
 
 @[derive decidable_eq]
-inductive Z_single 
-| H : (fin 3) → (fin 4) → Z_single
-| V : (fin 4) → (fin 3) → Z_single
+inductive Z_single (N : ℕ)
+| H : (fin N) → (fin N.succ) → Z_single
+| V : (fin N.succ) → (fin N) → Z_single
 
 namespace Z_single
 
-def to_string : Z_single → string
+def to_string : (Z_single N) → string
 | (H i j) := "H" ++ i.val.repr ++ j.val.repr
 | (V i j) := "V" ++ i.val.repr ++ j.val.repr
 
-instance : has_repr Z_single := ⟨to_string⟩ 
+instance : has_repr (Z_single N) := ⟨to_string⟩ 
 
-def bounding_box : Z_single → X × X 
+def bounding_box : (Z_single N) → (square_grid N) × (square_grid N)
 | (H i j) := ⟨⟨i.inc,j⟩,⟨i.succ,j⟩⟩
 | (V i j) := ⟨⟨i,j.inc⟩,⟨i,j.succ⟩⟩
 
-def size : Z_single → ℕ × ℕ  
+def size : (Z_single N) → ℕ × ℕ  
 | (H _ _) := ⟨1,0⟩ 
 | (V _ _) := ⟨0,1⟩
 
-instance : enumeration Z_single := {
+instance : enumeration (Z_single N) := {
   elems := 
-   ((enumeration.elems (fin 3)).bind 
-      (λ i, (enumeration.elems (fin 4)).map (Z_single.H i))) ++
-   ((enumeration.elems (fin 4)).bind 
-      (λ i, (enumeration.elems (fin 3)).map (Z_single.V i))),
-  nodup := dec_trivial,
+   ((enumeration.elems : list (fin N)).bind 
+      (λ i, (enumeration.elems : list (fin N.succ)).map (Z_single.H i))) ++
+   ((enumeration.elems : list (fin N.succ)).bind 
+      (λ i, (enumeration.elems : list (fin N)).map (Z_single.V i))),
+  nodup := sorry,
   complete := λ z, 
   begin
     cases z with i j i j; rw [list.mem_append],
     { left, 
-      exact @list.mem_bind_of_mem (fin 3) Z_single (H i j)
-        (enumeration.elems (fin 3)) 
-        (λ i, (enumeration.elems (fin 4)).map (Z_single.H i))
+      exact @list.mem_bind_of_mem (fin N) (Z_single N) (H i j)
+        (enumeration.elems : list (fin N)) 
+        (λ i, (enumeration.elems : list (fin N.succ)).map (Z_single.H i))
         i (enumeration.complete i)
         (list.mem_map_of_mem (H i) (enumeration.complete j)) },  
     { right, 
-      exact @list.mem_bind_of_mem (fin 4) Z_single (V i j)
-        (enumeration.elems (fin 4)) 
-        (λ i, (enumeration.elems (fin 3)).map (Z_single.V i))
+      exact @list.mem_bind_of_mem (fin N.succ) (Z_single N) (V i j)
+        (enumeration.elems : list (fin N.succ)) 
+        (λ i, (enumeration.elems : list (fin N)).map (Z_single.V i))
         i (enumeration.complete i)
         (list.mem_map_of_mem (V i) (enumeration.complete j)) },  
   end
 }
  
-def to_Y₀ : ∀ (z : Z_single), list X 
+def to_Y₀ : ∀ (z : Z_single N), list (square_grid N) 
 | (H i j) := [prod.mk i.inc j, prod.mk i.succ j]
 | (V i j) := [prod.mk i j.inc, prod.mk i j.succ]
 
-lemma to_Y₀_nodup (z : Z_single) : z.to_Y₀.nodup :=
+lemma to_Y₀_nodup (z : Z_single N) : z.to_Y₀.nodup :=
 begin
  have : ∀ {n : ℕ} (k : fin n), k.inc ≠ k.succ := 
    λ n k, ne_of_lt k.inc_lt_succ,
@@ -353,31 +361,35 @@ begin
  simp [fin.eq_iff_veq,(nat.succ_ne_self i.val).symm, this]
 end
 
-def to_Y (z : Z_single) : Y := @finset.mk X z.to_Y₀ z.to_Y₀_nodup
+def to_Y (z : Z_single N) : (subsets N) := 
+ @finset.mk (square_grid N) z.to_Y₀ z.to_Y₀_nodup
 
-lemma to_Y_card (z : Z_single) : z.to_Y.card = 2 := 
+lemma to_Y_card (z : Z_single N) : z.to_Y.card = 2 := 
 by { cases z with i j i j; refl }
 
-lemma to_Y_bounding_box (z : Z_single) : 
+lemma to_Y_bounding_box (z : Z_single N) : 
   z.to_Y.bounding_box = z.bounding_box := 
 begin
   cases z with i j i j, 
   focus { 
-    let u : X := ⟨i.inc,j⟩, let v : X := ⟨i.succ,j⟩,
+    let u : square_grid N := ⟨i.inc,j⟩, 
+    let v : square_grid N := ⟨i.succ,j⟩,
     have huv : u ≤ v := ⟨le_of_lt i.inc_lt_succ,le_refl j⟩, },
   swap, focus 
-  { let u : X := ⟨i,j.inc⟩, let v : X := ⟨i,j.succ⟩,
+  { let u : square_grid N := ⟨i,j.inc⟩, 
+    let v : square_grid N := ⟨i,j.succ⟩,
     have huv : u ≤ v := ⟨le_refl i,le_of_lt j.inc_lt_succ⟩ },
   all_goals {  
     change prod.mk (u ⊓ (v ⊓ ⊤)) (u ⊔ (v ⊔ ⊥)) = ⟨u,v⟩,
-    rw [lattice.inf_top_eq, lattice.sup_bot_eq],
-    rw [lattice.inf_of_le_left huv, lattice.sup_of_le_right huv] }
+    rw [inf_top_eq, sup_bot_eq],
+    rw [inf_of_le_left huv, sup_of_le_right huv] 
+  }
 end
 
-lemma to_Y_size (z : Z_single) : 
+lemma to_Y_size (z : Z_single N) : 
   z.to_Y.size = z.size := 
 begin
-  dsimp [Y.size], rw [to_Y_bounding_box],
+  dsimp [subsets.size], rw [to_Y_bounding_box],
   rcases z with ⟨⟨i,hi⟩,⟨j,hj⟩⟩ | ⟨⟨i,hi⟩,⟨j,hj⟩⟩,
   { change prod.mk ((i + 1) - i) (j - j) = ⟨1,0⟩,
     rw [nat.sub_self, nat.add_sub_cancel_left] },
@@ -385,10 +397,10 @@ begin
     rw [nat.sub_self, nat.add_sub_cancel_left] }
 end
 
-lemma to_Y_inj : function.injective to_Y := 
+lemma to_Y_inj : function.injective (@to_Y N) := 
 begin
   intros z₀ z₁ he,
-  have hb := congr_arg Y.bounding_box he,
+  have hb := congr_arg subsets.bounding_box he,
   rw [to_Y_bounding_box, to_Y_bounding_box] at hb, clear he,
   cases z₀ with i₀ j₀ i₀ j₀; cases z₁ with i₁ j₁ i₁ j₁,
   all_goals {
@@ -396,48 +408,48 @@ begin
     injection hb  with hb₀ hb₁, 
     injection hb₀ with hb₂ hb₃, 
     injection hb₁ with hb₄ hb₅ },
-  { replace hb₄ := fin.succ_inj _ _ hb₄, cc },
+  { replace hb₄ := fin.succ_inj.mp hb₄, cc },
   { exfalso, exact ne_of_lt (fin.inc_lt_succ i₀) (hb₂.trans hb₄.symm) },
   { exfalso, exact ne_of_lt (fin.inc_lt_succ j₀) (hb₃.trans hb₅.symm) },
-  { replace hb₅ := fin.succ_inj _ _ hb₅, cc }
+  { replace hb₅ := fin.succ_inj.mp hb₅, cc }
 end
 
-def s : Z_single → Z_single
+def s : (Z_single N) → (Z_single N)
 | (H i j) := H i j.reflect 
 | (V i j) := V i j.reflect 
 
-def r : Z_single → Z_single
+def r : (Z_single N) → (Z_single N)
 | (H i j) := V j.reflect i
 | (V i j) := H j.reflect i
 
-lemma to_Y_s (z : Z_single) :
-  (s z).to_Y = (@dihedral.s 4 0) • z.to_Y :=
+lemma to_Y_s (z : Z_single N) :
+  (s z).to_Y = (dihedral.s (0 : zmod 4)) • z.to_Y :=
 begin
-  cases z with i j i j; dsimp[s, to_Y, to_Y₀] ;
-  change finset.mk ([_,_] : multiset X) _ = _;
-  ext x;
+  cases z with i j i j; dsimp[s, to_Y, to_Y₀];
+  change finset.mk _ _ = _;
+  ext x; cases x with i' j';
   simp only [
       mul_action.mem_smul_finset', dihedral.s_inv,
       finset.mem_mk, multiset.mem_coe, 
       list.mem_cons_iff, list.mem_singleton,
       mul_action.smul_eq_iff_eq_smul_inv];
-  simp only [
-      fin.reflect_inc, fin.reflect_succ, X.smul_s, or_comm],
+  simp only [smul_s₀,
+      fin.reflect_inc, fin.reflect_succ, or_comm],
 end
 
-lemma to_Y_r (z : Z_single) :
-  (r z).to_Y = (@dihedral.r 4 1) • z.to_Y :=
+lemma to_Y_r (z : Z_single N) :
+  (r z).to_Y = (dihedral.r (1 : zmod 4)) • z.to_Y :=
 begin
-  cases z with i j i j; dsimp[s, to_Y, to_Y₀] ;
-  change finset.mk ([_,_] : multiset X) _ = _;
-  ext x;
+  cases z with i j i j; dsimp[r, to_Y, to_Y₀];
+  change finset.mk _ _ = _;
+  ext x; cases x with i' j';
   simp only [
       mul_action.mem_smul_finset', dihedral.r_inv, neg_neg,
       finset.mem_mk, multiset.mem_coe, 
       list.mem_cons_iff, list.mem_singleton,
       mul_action.smul_eq_iff_eq_smul_inv];
-  simp only [
-      fin.reflect_inc, fin.reflect_succ, X.smul_r, X.smul_r, or.comm],
+  simp only [smul_r₁,
+      fin.reflect_inc, fin.reflect_succ,  or.comm],
 end
 
 end Z_single
