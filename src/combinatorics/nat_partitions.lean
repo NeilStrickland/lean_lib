@@ -41,8 +41,8 @@ def to_finset (l : inc_list α) : finset α := ⟨(l : list α),l.nodup⟩
 
 def of_finset (s : finset α) : inc_list α := ⟨ s.sort has_le.le, 
 begin
-  have hx := list.pairwise.and.mpr
-   ⟨s.sort_sorted has_le.le,s.sort_nodup has_le.le⟩,
+  have hx := list.pairwise.and
+   (s.sort_sorted has_le.le) (s.sort_nodup has_le.le),
   have hi : ∀ (a b : α) (h : a ≤ b ∧ a ≠ b), a < b := 
     λ a b h, lt_of_le_of_ne h.1 h.2,
   exact list.pairwise.imp hi hx,
@@ -255,7 +255,7 @@ instance enum : ∀ (k n : ℕ), enumeration (pnat_sols k n)
     begin
       apply list.nodup_bind.mpr; split,
       { intros i hi, 
-        exact list.nodup_map (cons'_inj i) (enum k (n - 1 - i)).nodup },
+        exact list.nodup.map (cons'_inj i) (enum k (n - 1 - i)).nodup },
       { have hd : ∀ (i₀ i₁ : fin n), i₀ ≠ i₁ → 
           list.disjoint 
             ((enum k (n - 1 - i₀)).elems.map (cons' i₀))

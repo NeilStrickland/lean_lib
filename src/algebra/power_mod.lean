@@ -43,7 +43,7 @@ begin
     zpow_mul, zpow_coe_nat, hg, one_zpow]
 end
 
-lemma inv_exponent : (g⁻¹) ^ (n : ℕ) = 1 := by rw [inv_pow, hg, one_inv]
+lemma inv_exponent : (g⁻¹) ^ (n : ℕ) = 1 := by rw [inv_pow, hg, inv_one]
 
 lemma gpow_nat_congr {i j : ℕ} (e : i ≡ j [MOD n]) : g ^ i = g ^ j :=
 begin
@@ -167,12 +167,12 @@ begin
 end
 
 @[simp] lemma gpow_mod_neg (i : zmod n) : g ^ (- i) = (g ^ i)⁻¹ :=
-eq_inv_of_mul_eq_one $ by rw [← pow_mod_add hg, neg_add_self, pow_mod_zero]
+eq_inv_iff_mul_eq_one.mpr $ by rw [← pow_mod_add hg, neg_add_self, pow_mod_zero]
 
 lemma gpow_mod_inv (i : zmod n) : g⁻¹ ^ i = g ^ (- i) :=
 begin
  rw [gpow_mod_neg hg],
- apply eq_inv_of_mul_eq_one,
+ apply eq_inv_iff_mul_eq_one.mpr,
  rw [pow_mod_eq, pow_mod_eq, inv_pow, mul_left_inv]
 end
 

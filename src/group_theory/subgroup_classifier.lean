@@ -15,7 +15,6 @@ under `bxor`, so it is morally `ℤ/2`, but `bool` is more
 natural in the Lean context. 
 -/
 
-import algebra.group.hom 
 import group_theory.subgroup.basic
 import tactic.interactive tactic.squeeze tactic.suggest
 

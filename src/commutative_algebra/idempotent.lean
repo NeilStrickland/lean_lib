@@ -145,7 +145,7 @@ def lift : ∀ (e : A) (h : as_nilpotent (e * (1 - e))), A :=
  λ e ⟨n, hx⟩, let y := (1 - e ^ (n + 2) - (1 - e) ^ (n + 2)) in 
   e ^ (n + 2) * (finset.range n).sum (λ i, y ^ i)
 
-theorem lift_spec (e : A) (h : as_nilpotent (e * (1 - e))) :
+def lift_spec (e : A) (h : as_nilpotent (e * (1 - e))) :
  pprod (is_idempotent (lift e h)) (as_nilpotent ((lift e h) - e)) :=
 begin 
  rcases h with ⟨n, hx⟩,

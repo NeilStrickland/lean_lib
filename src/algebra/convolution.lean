@@ -27,9 +27,11 @@ operation `map M P₁ → map M P₂ → map M P₁₂`.  We can recover the
 ring structure on `map M R` by taking `P₁ = P₂ = P₁₂ = R`.
 -/
 
-import data.fintype.basic data.finsupp algebra.big_operators 
-import data.pi tactic.pi_instances
-import data.list_extra algebra.biadditive algebra.prod_equiv
+import data.fintype.basic data.finsupp algebra.big_operators data.pi.algebra 
+import data.list_extra 
+import algebra.biadditive
+import algebra.prod_equiv
+import tactic.pi_instances
 import tactic.squeeze
 
 namespace convolution

@@ -8,7 +8,7 @@ to equivalences of `α` and `β`.  This should be placed in some
 more general context.
 -/
 
-import data.equiv.basic
+import logic.equiv.basic
 
 open equiv
 

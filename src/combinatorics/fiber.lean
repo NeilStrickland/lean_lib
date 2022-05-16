@@ -32,18 +32,12 @@ lemma mem_fiber' (b : β) (a : α) : a ∈ fiber' p b ↔ p a = b :=
 lemma card_fiber (b : β) : fintype.card (fiber p b) = (fiber' p b).card := 
  fintype.subtype_card (fiber' p b) (mem_fiber' p b)
 
-lemma equiv_fibre_sigma : α ≃ Σ (b : β), (fiber p b) := 
-begin
- let to_fun : α → Σ (b : β), (fiber p b) := λ a, ⟨p a,⟨a,rfl⟩⟩,
- let inv_fun : ∀ x : Σ (b : β), (fiber p b), α := λ x, x.2.val,
- let left_inv : function.left_inverse inv_fun to_fun :=
-  λ a, by { dsimp[to_fun,inv_fun],refl },
- let right_inv : function.right_inverse inv_fun to_fun := λ ⟨b,⟨a,e⟩⟩, begin 
-  rcases e,
-  dsimp[inv_fun,to_fun],simp only[heq_iff_eq],split; refl,
- end,
- exact ⟨to_fun,inv_fun,left_inv,right_inv⟩, 
-end
+def equiv_fibre_sigma : α ≃ Σ (b : β), (fiber p b) := {
+  to_fun := λ a, ⟨p a,⟨a,rfl⟩⟩,
+  inv_fun := λ x, x.2.val,
+  left_inv := λ a, by { refl },
+  right_inv := by { rintro ⟨b,⟨a,⟨e⟩⟩⟩, simp only[heq_iff_eq], split; refl }
+}
 
 lemma card_eq_fiber_sum :
  fintype.card α = finset.univ.sum (λ b, fintype.card (fiber p b)) := 

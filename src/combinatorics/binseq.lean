@@ -79,9 +79,9 @@ begin
   induction n with n ih; rw[enum_by_length],
   { exact list.nodup_singleton _ },
   { rw[list.nodup_append], split,
-    { exact list.nodup_map list.cons_injective ih },
+    { exact list.nodup.map list.cons_injective ih },
     split,
-    { exact list.nodup_map list.cons_injective ih },
+    { exact list.nodup.map list.cons_injective ih },
     { intros u hff htt,
       rcases list.mem_map.mp hff with ⟨v,⟨mv,ev⟩⟩,
       rcases list.mem_map.mp htt with ⟨w,⟨mw,ew⟩⟩,
@@ -155,11 +155,11 @@ begin
   { exact list.nodup_singleton _ },
   { exact list.nodup_nil},
   { have : function.injective (list.cons ff) := λ _ _ h, (list.cons_inj ff).mp h,
-    exact list.nodup_map list.cons_injective (ih 0) },
+    exact list.nodup.map list.cons_injective (ih 0) },
   { rw[list.nodup_append], split,
-    { exact list.nodup_map list.cons_injective (ih (k + 1)) },
+    { exact list.nodup.map list.cons_injective (ih (k + 1)) },
     split,
-    { exact list.nodup_map list.cons_injective (ih k) },
+    { exact list.nodup.map list.cons_injective (ih k) },
     { intros u hff htt,
       rcases list.mem_map.mp hff with ⟨v,⟨mv,ev⟩⟩,
       rcases list.mem_map.mp htt with ⟨w,⟨mw,ew⟩⟩,
@@ -284,7 +284,7 @@ begin
   induction u with b u ih,
   { exact list.sorted_nil },
   { have h : ((to_nat_list u).map nat.succ).sorted has_lt.lt := 
-      list.pairwise_map_of_pairwise nat.succ @nat.succ_lt_succ ih,
+      list.pairwise.map nat.succ @nat.succ_lt_succ ih,
     cases b; rw[to_nat_list],
     { exact h },
     { rw [list.sorted_cons], split,
@@ -388,11 +388,10 @@ variables (u h)
 
 lemma sorted : (u.to_fin_list h).sorted has_lt.lt := 
 begin
-  have hs : ((u.to_fin_list h).map subtype.val).pairwise has_lt.lt := 
-  by { rw [val], exact to_nat_list.sorted u },
-  have hp : ∀ i j : fin n, i.val < j.val → i < j := 
-    λ i j hij, hij,
-  exact list.pairwise_of_pairwise_map subtype.val hp hs
+  change list.pairwise _ _,
+  apply list.pairwise.pmap (to_nat_list.sorted u),
+  intros i hi j hj hij,
+  exact hij
 end
 
 lemma nodup : (u.to_fin_list h).nodup := 

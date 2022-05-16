@@ -59,11 +59,14 @@ theorem gt_coe  (p q : ℚ+) : p > q ↔ (p : ℚ) > (q : ℚ)    := iff.refl _
 
 theorem sub_coe (a b : ℚ+) : ((a - b : ℚ+) : ℚ) = ite (a > b) ((a : ℚ) - (b : ℚ)) 1 :=
 begin
-  change ((of_rat (a - b : ℚ)) : ℚ) = ite ((a : ℚ) > (b : ℚ)) (a - b : ℚ) 1,
+  change ((of_rat (a - b : ℚ)) : ℚ) = ite _ (a - b : ℚ) 1,
+  have h₀ : a > b ↔ ((a : ℚ) > (b : ℚ)) := by { refl },
+/-  change ((of_rat (a - b : ℚ)) : ℚ) = ite ((a : ℚ) > (b : ℚ)) (a - b : ℚ) 1, -/
   rw[of_rat_coe],
-  by_cases h : (a : ℚ) > (b : ℚ),
-  { rw[if_pos h, if_pos (sub_pos_of_lt h)] },
-  { rw[if_neg h, if_neg (mt lt_of_sub_pos h)] }
+  by_cases h₁ : (a : ℚ) > (b : ℚ);
+  have h₂ := h₁; rw[← h₀] at h₂,
+  { rw[if_pos h₂, if_pos (sub_pos_of_lt h₁)] },
+  { rw[if_neg h₂, if_neg (mt lt_of_sub_pos h₁)] }
 end
 
 theorem add_sub_of_lt {a b : ℚ+} : a < b → a + (b - a) = b :=
@@ -273,7 +276,7 @@ by { rw[q.sizeof_val, q⁻¹.sizeof_val, q.inv_num, q.inv_denom, add_comm] }
 theorem inv_gt_one_iff {q : ℚ+} : q⁻¹ > 1 ↔ q < 1 := 
 begin
   let h := inv_lt_inv (1 : ℚ+).pos q.pos,
-  rw [← inv_coe, ← inv_coe, one_coe, one_inv, one_coe] at h,
+  rw [← inv_coe, ← inv_coe, one_coe, inv_one, one_coe] at h,
   exact h
 end
 

@@ -627,7 +627,7 @@ begin
  have top_block : ∀ i, top.nth (block.nth i) ≥ i := 
  begin
   intro i, cases i with i_val i_is_lt, cases i_val with i0_val,
-  {simp[vector.zth],exact fin.zero_le _,},
+  { change top.nth (block.nth 0) ≥ 0, rw[vector.nth_cons_zero], exact fin.zero_le _,},
   {have i0_is_lt : i0_val < n := nat.lt_of_succ_lt_succ i_is_lt,
    let h0 := fin.succ_le_succ (p.top_block ⟨i0_val,i0_is_lt⟩),
    dsimp[block,top],
@@ -1087,9 +1087,9 @@ instance enum : ∀ (n r : ℕ), enumeration (fin_ind_partition n r)
    let nodup : list.nodup elems :=
    begin
     have add_inj : function.injective (@add n r) := by simp[function.injective],
-    have L_add_nodup : L_add.nodup := list.nodup_map add_inj e0.nodup,
+    have L_add_nodup : L_add.nodup := list.nodup.map add_inj e0.nodup,
     have LL_nodup : ∀ u, (f u).nodup := 
-     λ u, list.nodup_map (by simp[function.injective]) e1.nodup,
+     λ u, list.nodup.map (by simp[function.injective]) e1.nodup,
     have LL_disjoint_aux : ∀ u v : fin (r + 1), u ≠ v → list.disjoint (f u) (f v) :=
     begin
      intros u v u_ne_v p p_in_f_u p_in_f_v,
@@ -1202,7 +1202,7 @@ begin
    cases r_eq,
    exact eq_of_heq p_heq,
   end,
-  exact list.nodup_map tot_inj (e0 r).nodup,
+  exact list.nodup.map tot_inj (e0 r).nodup,
  end,
  let nodup1 : ∀ l, l ∈ elems1 → (list.nodup l) := 
  begin
@@ -1222,7 +1222,7 @@ begin
  end,
  let disjoint1 := @list.pairwise.imp ℕ ne
   (λ r1 r2, list.disjoint (elems0 r1) (elems0 r2))
-   disjoint0 _ (list.nodup_range n.succ), 
+   _ disjoint0 (list.nodup_range n.succ), 
  let disjoint2 := (list.pairwise_map elems0).mpr disjoint1,
  let nodup := list.nodup_join.mpr ⟨nodup1,disjoint2⟩,
  let complete : ∀ rp : tot n, rp ∈ elems := 

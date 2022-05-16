@@ -27,7 +27,7 @@ contexts.
 -/
 
 import data.nat.basic
-import data.list data.multiset data.finset data.fintype.basic data.equiv.encodable.basic
+import data.list data.multiset data.finset data.fintype.basic logic.encodable.basic
 
 universe u
 

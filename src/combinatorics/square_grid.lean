@@ -11,7 +11,7 @@ import group_theory.burnside_count
 import group_theory.dihedral
 import data.fin_extra
 import data.enumeration
-import order.lexicographic order.lattice order.lattice_extra
+import order.lattice order.lattice_extra
 
 open group_theory
 

@@ -113,7 +113,7 @@ lemma is_equivariant_comp {g : Y → Z} {f : X → Y}
 instance map_action : mul_action G (X → Y) := {
  smul := λ g u x, g • (u (g⁻¹ • x)),
  one_smul := λ u, funext $ λ x, 
-   by { change _ • (u _) = u x, rw [one_inv, one_smul, one_smul] },
+   by { change _ • (u _) = u x, rw [inv_one, one_smul, one_smul] },
  mul_smul := λ a b u, funext $ λ x, 
    by { change _ • (u _) = _ • (_ • _),
         rw [mul_inv_rev, mul_smul, mul_smul] } 

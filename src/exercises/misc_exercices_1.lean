@@ -410,7 +410,7 @@ def E := {n : ℕ // n.bodd = ff}
 
 def O := {n : ℕ // n.bodd = tt}
 
-lemma bool_elim {C : Sort*} {b : bool} : b ≠ ff → b ≠ tt → C := 
+def bool_elim {C : Sort*} {b : bool} : b ≠ ff → b ≠ tt → C := 
  by {intros,cases b;contradiction}
 
 def f (n : ℕ) : E ⊕ O := 

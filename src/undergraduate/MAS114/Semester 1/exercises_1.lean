@@ -1082,7 +1082,7 @@ begin
  let e3 := calc 
   (2 * (x - 1)) * f (x - 1) = (2 * (x - 1)) * (((x - 1) + 1) / (2 * (x - 1))) : rfl
   ... = (2 * (x - 1)) * (x / (2 * (x - 1))) : by rw[e2]
-  ... = x * (2 * (x - 1) / (2 * (x - 1))) : mul_div_comm (2 * (x - 1)) x (2 * (x - 1))
+  ... = x * (2 * (x - 1) / (2 * (x - 1))) : mul_div_left_comm (2 * (x - 1)) x (2 * (x - 1))
   ... = x : by rw[div_self nz_2y,mul_one],
  let e4 := calc
   d * ((1 - 1 / (x ^ 2)) * f (x - 1)) = (d * (1 - 1 / (x ^ 2))) * f (x - 1) :
@@ -1096,7 +1096,7 @@ begin
   d * f x = d * ((x + 1) / (2 * x)) : rfl 
   ... = ((x * x - x) * (2 * x)) * ((x + 1) / (2 * x)) : by rw[e5]
   ... = (x * x - x) * ((2 * x) * ((x + 1) / (2 * x))) : by rw[mul_assoc]
-  ... = (x * x - x) * (x + 1) : by rw[mul_div_comm,div_self nz_2x,mul_one]
+  ... = (x * x - x) * (x + 1) : by rw[mul_div_left_comm,div_self nz_2x,mul_one]
   ... = x ^ 3 - x : by ring,
   exact (mul_right_inj' nz_d).mp (e4.trans e6.symm)
 end
@@ -1147,7 +1147,7 @@ lemma nat.bodd_odd (n : ℕ) : (2 * n + 1).bodd = tt :=
 lemma nat.div2_even : ∀ (n : ℕ), (2 * n).div2 = n 
 | 0 := rfl
 | (n + 1) := begin 
- have : 2 * (n + 1) = (2 * n + 1).succ := by ring,
+ have : 2 * (n + 1) = (2 * n + 1).succ := by ring_nf,
  rw[this,nat.div2_succ,nat.bodd_odd,bool.cond_tt],
  rw[nat.div2_succ,nat.bodd_even,bool.cond_ff],
  rw[nat.div2_even n],

@@ -1,4 +1,4 @@
-import algebra.ring data.equiv.basic
+import algebra.ring
 import commutative_algebra.bool_field
 import tactic.pi_instances tactic.squeeze
 

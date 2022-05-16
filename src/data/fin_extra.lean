@@ -137,10 +137,6 @@ lemma le_of_succ_le_succ {n : ℕ} {i j : fin n} (h : i.succ ≤ j.succ) : i ≤
 lemma lt_of_succ_lt_succ {n : ℕ} {i j : fin n} (h : i.succ < j.succ) : i < j := 
  by {cases i,cases j,dsimp[has_lt.lt,fin.lt],apply nat.lt_of_succ_lt_succ h,}
 
-/- Nothing is less than zero -/
-lemma not_lt_zero {n : ℕ} (i : fin n.succ) : ¬ i < 0 := 
- by {cases i,dsimp[has_lt.lt,fin.lt],exact nat.not_lt_zero i_val,}
-
 /- This function produces a list of all the elements of (fin n) -/
 def elems_list : ∀ (n : ℕ), list (fin n)
 | 0 := @list.nil _
@@ -161,7 +157,7 @@ def elems_list_nodup : ∀ (n : ℕ), list.nodup (elems_list n)
   have h : function.injective (fin.succ : (fin n) → (fin (n + 1))) := 
    λ _ _ e, fin.succ_inj.mp e,
   have old_nodup : list.nodup old_list :=
-   list.nodup_map h (elems_list_nodup n),
+   list.nodup.map h (elems_list_nodup n),
   have not_mem_old : ∀ k ∈ old_list, (0 : fin n.succ) ≠ k := 
   begin
    intros k k_in_old zero_eq_k,

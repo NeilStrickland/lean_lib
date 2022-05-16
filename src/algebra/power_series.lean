@@ -6,7 +6,7 @@ Authors: Neil Strickland
 Given a semiring `R`, this file defines the power series semiring `R[[x]]`
 -/
 
-import data.fintype.basic data.finsupp algebra.big_operators data.pi
+import data.fintype.basic data.finsupp algebra.big_operators data.pi.algebra
 import data.list_extra algebra.biadditive algebra.prod_equiv algebra.convolution
 import algebra.order.sub
 import tactic.squeeze tactic.pi_instances

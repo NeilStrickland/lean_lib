@@ -13,7 +13,7 @@ of cases.
 -- TODO: 
 -- instances for (co) products etc
 
-import data.finset data.fintype.basic data.list.basic data.equiv.encodable.basic
+import data.finset data.fintype.basic data.list.basic logic.encodable.basic
 
 namespace combinatorics
 
@@ -47,7 +47,7 @@ end
 
 def of_equiv (f : α ≃ β) : enumeration β := 
 { elems := (univ_list α).map f.to_fun,
-  nodup := list.nodup_map f.left_inv.injective (univ_nodup α),
+  nodup := list.nodup.map f.left_inv.injective (univ_nodup α),
   complete := 
   begin
     intro b,
@@ -115,7 +115,7 @@ begin
  let α1 := {x // p x},
  let elems1 : list α1 := @list.pmap α α1 p subtype.mk l (λ x, (l_mem x).mp),
  let nodup : elems1.nodup :=
-  @list.nodup_pmap α α1 p subtype.mk l (λ x, (l_mem x).mp)
+  @list.nodup.pmap α α1 p subtype.mk l (λ x, (l_mem x).mp)
    (λ a _ b _,congr_arg subtype.val) l_nodup,
  let complete : ∀ a1 : α1, a1 ∈ elems1 := 
  begin
@@ -131,7 +131,7 @@ end
 instance (p : α → Prop) [decidable_pred p] : enumeration {a // p a} :=
 begin
  let l := (univ_list α).filter p,
- let l_nodup : l.nodup := list.nodup_filter p (univ_nodup α), 
+ let l_nodup : l.nodup := list.nodup.filter p (univ_nodup α), 
  let l_mem : ∀ x : α, x ∈ l ↔ p x := 
  begin
   intro x,
@@ -156,7 +156,7 @@ instance enum : ∀ (n : ℕ), combinatorics.enumeration (fin n)
       rw [list.nodup_cons], split,
       { intro h, rcases list.mem_map.mp h with ⟨i,⟨hm,he⟩⟩,
         exact fin.succ_ne_zero i he },
-      { exact list.nodup_map (λ i j e, fin.succ_inj.mp e) (enum n).nodup }
+      { exact list.nodup.map (λ i j e, fin.succ_inj.mp e) (enum n).nodup }
     end,
     complete := 
     λ i, begin

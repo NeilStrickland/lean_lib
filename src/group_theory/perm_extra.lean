@@ -1,5 +1,5 @@
 import group_theory.perm.cycles
-import data.vector data.equiv.basic 
+import data.vector 
 import data.fin_extra
 import group_theory.cyclic
 

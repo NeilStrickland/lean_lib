@@ -269,7 +269,7 @@ def twist_rat (p : ℚ) : ℚ := p / (1 + p)
 lemma rat_simp₀ {p q r : ℚ} (hp : p > 0) (hq : q > 0) (hr : r > 0) : p / q / r = p / (q * r) := 
 begin 
   change (p * q⁻¹) * r⁻¹ = p * (q * r)⁻¹,
-  rw[mul_inv_rev₀, mul_comm r⁻¹, mul_assoc]
+  rw[mul_inv_rev, mul_comm r⁻¹, mul_assoc]
 end
 
 lemma twist_to_rat (m : mat) :
@@ -306,9 +306,7 @@ begin
  let cdnz := m.cdq_nz,
  rcases m with ⟨ a,b,c,d,det_prop ⟩,
  simp[to_rat,mat.inv,mat.abq,mat.cdq,mat.ab,mat.cd],
- let e0 := inv_eq_one_div (((a:ℚ) + (b:ℚ)) / ((c:ℚ) + (d:ℚ))),
- let e1 := div_div_eq_mul_div 1 ((a:ℚ) + (b:ℚ)) ((c:ℚ) + (d:ℚ)),
- rw[e0,e1,one_mul,add_comm ↑c ↑d,add_comm ↑a ↑b],
+ rw[add_comm ↑c ↑d,add_comm ↑a ↑b],
 end
 
 end mat

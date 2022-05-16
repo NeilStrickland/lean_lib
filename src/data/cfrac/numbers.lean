@@ -1,25 +1,5 @@
 import data.pnat.basic data.setoid.basic
 
-namespace pnat
-
-instance : covariant_class pnat pnat (+) (≤) := {
-  elim := begin
-   rintro ⟨x,hx⟩ ⟨y,hy⟩ ⟨z,hz⟩ (hyz : y ≤ z),
-   change x + y ≤ x + z,
-   exact add_le_add_left hyz x
-  end
-}
-
-instance : covariant_class pnat pnat (+) (<) := {
-  elim := begin
-   rintro ⟨x,hx⟩ ⟨y,hy⟩ ⟨z,hz⟩ (hyz : y < z),
-   change x + y < x + z,
-   exact add_lt_add_left hyz x
-  end
-}
-
-end pnat
-
 inductive spread (α : Type*)
 | zero : spread
 | ps : α → spread

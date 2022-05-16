@@ -72,13 +72,12 @@ end
 def padic_valuation (p : ℕ) (n : ℕ) : ℕ := 
   multiset.count p n.factors
 
-def unique_factors (n : ℕ) := 
- (n.factors : multiset ℕ).erase_dup
+def unique_factors (n : ℕ) := (n.factors : multiset ℕ).dedup
 
 lemma mem_unique_factors {n : ℕ} (h : n ≠ 0) (p : ℕ) :
  p ∈ unique_factors n ↔ p.prime ∧ p ∣ n := 
 begin
- dsimp[unique_factors],rw[multiset.mem_coe,list.mem_erase_dup],
+ dsimp[unique_factors],rw[multiset.mem_coe,list.mem_dedup],
  split,
  {intro h0,
   let h1 := ((nat.mem_factors h).mp h0).1,
@@ -98,9 +97,9 @@ begin
    by { dsimp[unique_factors], rw[factors_zero], refl },
    rw[this],apply multiset.pairwise_zero},
  apply multiset.nodup_prime_coprime,
- {apply multiset.nodup_erase_dup},
+ {apply multiset.nodup_dedup},
  {rw[multiset.all_prop_iff],intros p hp,
-  replace hp := multiset.mem_erase_dup.mp hp,
+  replace hp := multiset.mem_dedup.mp hp,
   rw[multiset.mem_coe] at hp,
   exact ((nat.mem_factors h).mp hp).1,
  }
@@ -113,14 +112,15 @@ def prod_factors' (n : ℕ) (h : n ≠ 0) :
  (prime_power_factors n).prod = n := 
 begin
  let f : multiset ℕ := n.factors,
- let f₁ := f.erase_dup,
+ let f₁ := f.dedup,
  let u := λ p, multiset.prod (multiset.repeat p (multiset.count p f)),
  let v := λ p, p ^ (multiset.count p f),
  change (f₁.map v).prod = n,
  have : v = u := by {ext p,dsimp[u,v],rw[multiset.prod_repeat]},
  rw[this],
  let e : f.prod = n := by {rw[multiset.coe_prod],exact nat.prod_factors h},
- rw[← multiset.eq_repeat_count f,multiset.prod_bind] at e,
+ rw[← multiset.eq_repeat_count f] at e,
+ rw[multiset.prod_bind] at e,
  exact e,
 end
 
@@ -143,7 +143,7 @@ begin
 end
 
 def square_free_radical (n : ℕ) : ℕ := 
- (n.factors : multiset ℕ).erase_dup.prod
+ (n.factors : multiset ℕ).dedup.prod
 
 lemma square_free_radical_dvd (n : ℕ) : 
  (square_free_radical n) ∣ n := begin
@@ -152,11 +152,11 @@ lemma square_free_radical_dvd (n : ℕ) :
  {
   let fl := n.factors,
   let fm : multiset ℕ := fl,
-  let fs := fm.erase_dup,
+  let fs := fm.dedup,
   let ft := fm - fs,
   let hm : fm.prod = n :=
    (multiset.coe_prod fl).trans (nat.prod_factors hn),
-  have hl : fs ≤ fm := multiset.erase_dup_le n.factors,
+  have hl : fs ≤ fm := multiset.dedup_le n.factors,
   have : fm = ft + fs := (tsub_add_cancel_of_le hl).symm,
   rw[this,multiset.prod_add,mul_comm] at hm,
   use ft.prod,exact hm.symm,
@@ -172,10 +172,10 @@ begin
  {intro p_dvd_n, 
   let fl := n.factors,
   let fm : multiset ℕ := fl,
-  let fs := fm.erase_dup,
+  let fs := fm.dedup,
   change p ∣ fs.prod,
   have : p ∈ fm := (nat.mem_factors_iff_dvd hn p_prime).mpr p_dvd_n,
-  have : p ∈ fs := multiset.mem_erase_dup.mpr this,
+  have : p ∈ fs := multiset.mem_dedup.mpr this,
   rw[← multiset.cons_erase this,multiset.prod_cons], 
   apply dvd_mul_right,
  }
@@ -199,8 +199,8 @@ lemma dvd_square_free_radical {n : ℕ} (hn : n ≠ 0) :
  ∃ (k : ℕ), n ∣ n.square_free_radical ^ k := 
 begin
  let f : multiset ℕ := n.factors,
- let f₁ := f.erase_dup,
- rcases multiset.le_smul_erase_dup f with ⟨k,hk⟩,
+ let f₁ := f.dedup,
+ rcases multiset.le_smul_dedup f with ⟨k,hk⟩,
  use k,change n ∣ f₁.prod ^ k,
  let f₂ := add_monoid.nsmul k f₁, change f ≤ f₂ at hk,
  have : f₂.prod = f₁.prod ^ k := by {

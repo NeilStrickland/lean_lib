@@ -44,22 +44,22 @@ begin
 end
 
 lemma eq_repeat_count (s : multiset α) : 
- s.erase_dup.bind (λ a, repeat a (count a s)) = s := 
+ s.dedup.bind (λ a, repeat a (count a s)) = s := 
 begin
  rw[eq_iff_count],intro a,
  rw[count_bind],
- let s₁ := s.erase_dup, 
+ let s₁ := s.dedup, 
  let m₁ := s₁.card,
  let c := (λ b, count a (repeat b (count b s))),
  change (s₁.map c).sum = count a s,
  by_cases h : a ∈ s, 
- {have h₁ : a ∈ s₁ := mem_erase_dup.mpr h,
+ {have h₁ : a ∈ s₁ := mem_dedup.mpr h,
   let s₂ : multiset α := s₁.erase a,
   let s₃ : multiset α := (cons a s₂),
   have : s₁ = (cons a s₂) := (cons_erase h₁).symm,
   rw[this,map_cons,sum_cons],
   have : a ∉ s₂ := λ h,
-   ((mem_erase_iff_of_nodup s.nodup_erase_dup).mp h).left rfl,
+   ((nodup.mem_erase_iff s.nodup_dedup).mp h).left rfl,
   have : s₂.map c = repeat 0 (s₂.map c).card := 
    by {apply eq_repeat.mpr ⟨rfl,_⟩,intros m hm,
        rcases (mem_map.mp hm) with ⟨b,⟨h₁,h₂⟩⟩,
@@ -76,7 +76,7 @@ begin
        rcases (mem_map.mp hm) with ⟨b,⟨h₁,h₂⟩⟩,
        rw[← h₂,count_eq_zero],intro ha,
        rw[eq_of_mem_repeat ha] at h,
-       exact h (mem_erase_dup.mp h₁),
+       exact h (mem_dedup.mp h₁),
    },
   rw[this,sum_repeat,smul_eq_mul,mul_zero],
  }

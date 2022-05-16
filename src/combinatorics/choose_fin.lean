@@ -50,7 +50,7 @@ begin
   { exact list.nodup_nil },
   { rw [spread, list.nodup_cons], split,
     { intro h, rcases list.mem_map.mp h with ⟨j,⟨hm,he⟩⟩, exact δ_ne i j he },
-    { exact list.nodup_map (δ_inj i) ih } }
+    { exact list.nodup.map (δ_inj i) ih } }
 end
 
 @[simp] lemma spread.length (l : list ℕ) : (spread l).length = l.length :=
@@ -330,7 +330,7 @@ begin
   rw [to_list.cons, list.nodup_cons], split,
   { rw [list.mem_map],
     rintro ⟨k,⟨hm,he⟩⟩, exact simplicial.δ_ne _ _ he, },
-  { exact list.nodup_map (simplicial.δ_inj i) (to_list.nodup l) }
+  { exact list.nodup.map (simplicial.δ_inj i) (to_list.nodup l) }
 end
 
 lemma to_list.val : ∀ {n : ℕ} (l : fin_falling n), 
@@ -371,7 +371,7 @@ by { rw [of_spread_list, of_squash_list.length, natlist.squash.length] }
 
 def of_list {n : ℕ} (l : list (fin n)) (hn : l.nodup) : fin_falling n :=
  of_spread_list (l.map coe) 
-  (list.nodup_map (λ _ _ e, subtype.val_injective e) hn) (natlist.below_line.of_fin l)
+  (list.nodup.map (λ _ _ e, subtype.val_injective e) hn) (natlist.below_line.of_fin l)
 
 lemma of_list.length {n : ℕ} (l : list (fin n)) (hn : l.nodup) :
   (of_list l hn).length = l.length := 

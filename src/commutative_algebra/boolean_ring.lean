@@ -23,7 +23,7 @@ begin
 end
 
 lemma neg_self (a : α) : - a = a := 
- (eq_neg_of_add_eq_zero (add_self a)).symm
+ (eq_neg_iff_add_eq_zero.mpr (add_self a)).symm
 
 instance : comm_ring α := 
 { mul_comm := λ a b,

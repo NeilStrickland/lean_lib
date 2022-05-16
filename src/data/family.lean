@@ -22,7 +22,7 @@ Authors: Neil Strickland
  It is far from clear that the approach taken here is optimal.
 -/
 
-import data.equiv.basic
+import logic.equiv.basic
 import data.heq_extra 
 
 /-

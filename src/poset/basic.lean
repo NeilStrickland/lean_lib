@@ -10,7 +10,7 @@ category theory library.
 -/
 
 import order.basic order.sort_rank
-import data.equiv.basic
+import logic.equiv.basic
 import data.fintype.basic data.fin_extra
 import logic.relation
 import algebra.punit_instances
@@ -437,7 +437,7 @@ begin
   let n := fintype.card P,
   let l := (fin.elems_list n).map f.symm,
   have l_nodup : l.nodup :=
-    list.nodup_map f.symm.injective (fin.elems_list_nodup _),
+    list.nodup.map f.symm.injective (fin.elems_list_nodup _),
   have l_univ : ∀ p, p ∈ l := λ p,
   begin 
     apply list.mem_map.mpr,

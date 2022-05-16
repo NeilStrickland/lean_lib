@@ -11,7 +11,7 @@ import group_theory.burnside_count
 import group_theory.dihedral
 import data.fin_extra
 import data.enumeration
-import order.lexicographic order.lattice order.lattice_extra
+import order.lattice order.lattice_extra
 
 open group_theory
 
@@ -117,8 +117,6 @@ def bounding_box : Z_single → X × X
 def size : Z_single → ℕ × ℕ  
 | (H _ _) := ⟨1,0⟩ 
 | (V _ _) := ⟨0,1⟩
-
-#check enumeration.elems
 
 instance : enumeration Z_single := {
   elems := 

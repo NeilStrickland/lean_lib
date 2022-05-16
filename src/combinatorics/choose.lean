@@ -52,7 +52,7 @@ variables {g : β → γ} (g_inj : function.injective g)
 
 def map {k : ℕ} : ∀ (s : ordered_subset α k), ordered_subset β k
 | ⟨s,⟨s_len,s_nodup⟩⟩ :=
-   ⟨s.map f,⟨(list.length_map f s).trans s_len,list.nodup_map f_inj s_nodup⟩⟩
+   ⟨s.map f,⟨(list.length_map f s).trans s_len,list.nodup.map f_inj s_nodup⟩⟩
 
 @[simp]
 lemma map_id {k : ℕ} : ∀ s : ordered_subset α k, 

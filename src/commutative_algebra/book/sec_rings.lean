@@ -135,10 +135,10 @@ def CX := continuous_map X ℝ
 noncomputable instance CX_comm_ring : comm_ring CX :=
  by { unfold CX, exact continuous_map.comm_ring }
 
-noncomputable def CX.x : CX := ⟨prod.fst ∘ subtype.val,
+def CX.x : CX := ⟨prod.fst ∘ subtype.val,
  continuous.comp continuous_fst continuous_subtype_val⟩
 
-noncomputable def CX.y : CX := ⟨prod.snd ∘ subtype.val,
+def CX.y : CX := ⟨prod.snd ∘ subtype.val,
  continuous.comp continuous_snd continuous_subtype_val⟩
 
 lemma CX.x_def (xy : X) : CX.x xy = xy.val.1 := rfl
@@ -163,7 +163,7 @@ noncomputable def PX.y : PX := @mv_polynomial.X ℝ A_gens _ A_gens.y
 
 noncomputable def PX.relator : PX := (PX.x ^ 2 + PX.y ^ 2 - 1) * PX.y
 
-noncomputable def φ₀ : ℝ →+* CX := {
+def φ₀ : ℝ →+* CX := {
  to_fun := λ c, ⟨(λ u, c),continuous_const⟩,
  map_zero' := by { ext, refl },
  map_add' := λ c d, by { ext, refl },
@@ -171,7 +171,7 @@ noncomputable def φ₀ : ℝ →+* CX := {
  map_mul' := λ c d, by { ext, refl }
 }
 
-noncomputable def φ₁ : A_gens → CX
+def φ₁ : A_gens → CX
 | A_gens.x := CX.x
 | A_gens.y := CX.y
 

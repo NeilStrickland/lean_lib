@@ -1,4 +1,4 @@
-import algebra.ring data.equiv.basic data.complex.basic data.zmod.basic 
+import algebra.ring data.complex.basic data.zmod.basic 
 import data.nat.prime data.int.gcd data.nat.choose algebra.gcd_monoid.basic data.finsupp
 import data.list.min_max data.polynomial
 import data.nat.square_free
@@ -625,7 +625,7 @@ end
 def lift : ∀ (e : A) (h : nilpotent_witness (e * (1 - e))), A := 
  λ e ⟨n,hx⟩, e ^ (n + 2) * geometric_series (1 - e ^ (n + 2) - (1 - e) ^ (n + 2)) n
 
-lemma lift_spec (e : A) (h : nilpotent_witness (e * (1 - e))) :
+def lift_spec (e : A) (h : nilpotent_witness (e * (1 - e))) :
  pprod (is_idempotent (lift e h)) (nilpotent_witness ((lift e h) - e)) :=
 begin 
  rcases h with ⟨n,hx⟩,
@@ -733,8 +733,10 @@ def lift' : ∀ (e : A) (h : nilpotent_witness (e * (1 - e))), A :=
    let b := (finset.range n).sum (λ k, ((x ^ k) * nat.choose (2 * k + 1) k)) in 
     e + (2 * e - 1) * b * x
 
+/-
 lemma lift_eq (e : A) (h : nilpotent_witness (e * (1 - e))) : 
  lift' e h = lift e h := sorry
+-/
 
 end idempotent
 
@@ -973,10 +975,12 @@ begin
  exact h₂ p.nat_degree p (le_refl _),
 end
 
+/-
 lemma is_invertible_iff : 
  is_invertible p ↔
   (is_invertible (coeff p 0)) ∧ (∀ n : ℕ, (is_nilpotent (coeff p n.succ))) :=
 sorry
+-/
 
 lemma is_idempotent_aux {p : polynomial A} (h₀ : p.coeff 0 = 0) (h₁ : is_idempotent p) : p = 0 := 
 begin
