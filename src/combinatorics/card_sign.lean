@@ -35,12 +35,12 @@ section insert
 variables {i : I} {J : finset I} (hiJ : i ∉ J)
 include hiJ
 
+example (n : ℤ) : n * (-1) = - n := by library_search
+
 lemma insert.card_sign :
  card_sign (insert i J) = - card_sign J := 
  by {dsimp[card_sign],
-     rw[card_insert_of_not_mem hiJ,pow_add,pow_one],
-     rw[mul_neg_eq_neg_mul_symm,mul_one],
- }
+     rw[card_insert_of_not_mem hiJ,pow_add,pow_one,mul_neg_one] }
 
 lemma subset_iff_subset_insert (K : finset I) :
  K ⊆ J ↔ K ⊆ (insert i J) ∧ i ∉ K := 

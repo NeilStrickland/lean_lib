@@ -166,7 +166,6 @@ begin
   rcases pnat.dvd_iff.mp (pnat.gcd_dvd_right n d) with ⟨d',hd₀⟩,
   change (n : ℕ) = g * n' at hn₀,
   change (d : ℕ) = g * d' at hd₀,
-  split; apply pnat.eq; rw[pnat.mul_coe],
   have hn₁ : (n' : ℕ) = (n : ℕ) / (g : ℕ) :=
     by { rw [hn₀, nat.mul_div_cancel_left _ g.pos] },
   have hd₁ : (d' : ℕ) = (d : ℕ) / (g : ℕ) :=
@@ -181,10 +180,11 @@ begin
   begin
     dsimp[num],
     rw [mk_coe',rat.mk_pnat_num,hn₂,← pnat.gcd_coe,← int.coe_nat_div],
-    norm_cast, exact hn₁.symm
+    norm_cast, exact hn₁.symm,
   end,
-  rw [hd₂, hn₂],
-  exact ⟨hn₀.symm,hd₀.symm⟩,
+  split; apply pnat.eq; rw[pnat.mul_coe],
+  { rw[hn₃], exact hn₀ },
+  { rw[hd₂], exact hd₀ }
 end
 
 theorem mk_spec' (n d : ℕ+) :

@@ -1121,7 +1121,9 @@ begin
       exact this
     },
     use u,
-  }
+    sorry
+  },
+  sorry
 end
 
 end infinite_root

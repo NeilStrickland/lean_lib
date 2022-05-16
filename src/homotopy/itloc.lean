@@ -13,7 +13,7 @@ posets).  We have not formalised any of the theory of derivators.
 import data.list.basic
 import data.fin.basic
 import data.fintype.basic
-import order.bounded_lattice
+import order.lattice
 import algebra.big_operators
 import data.fin_extra 
 import poset.basic poset.upper
@@ -78,7 +78,7 @@ instance : has_repr (ℙ n)            := by { dsimp [  ℙ] , apply_instance }
 instance dl : distrib_lattice (ℙ n) := 
 by { dsimp [ℙ], apply_instance }
 
-instance : bounded_distrib_lattice (ℙ n) := {
+instance bo : bounded_order (ℙ n) := {
   bot := finset.empty,
   top := finset.univ,
   le_top := λ (A : finset (𝕀 n)),
@@ -337,8 +337,11 @@ def 𝕂 := poset.upper (ℙ n)
 
 namespace 𝕂 
 
-instance : bounded_distrib_lattice (𝕂 n) := 
-@upper.bdl (ℙ n) _ _ _ _
+instance : distrib_lattice (𝕂 n) := 
+@upper.dl (ℙ n) _ _ _ _
+
+instance : bounded_order (𝕂 n) := 
+@upper.bo (ℙ n) _ _ _ _
 
 instance : partial_order (𝕂 n) := by apply_instance 
 
@@ -1048,7 +1051,7 @@ begin
          prod.mk A B,
   rw [ℙ.filter_lt_last hu, ℙ.filter_ge_last hv],
   congr,
-  exact @bot_sup_eq _ _ B,
+  exact bot_sup_eq
 end
 
 /-- The relation `β₀ = 1` -/
@@ -1062,7 +1065,7 @@ begin
          prod.mk A B,
   rw[ℙ.filter_lt_zero, ℙ.filter_ge_zero],
   congr,
-  exact @sup_bot_eq _ _ A,
+  exact sup_bot_eq
 end
 
 /-- The relation `βᵢ ⟨A,B⟩ = ⟨A⊔ B, ⊥⟩` for `i ≥ 2n` -/
@@ -1189,8 +1192,11 @@ def 𝕃 (n : ℕ) := poset.upper (𝕄 n)
 
 namespace 𝕃 
 
-instance : bounded_distrib_lattice (𝕃 n) := 
-  @upper.bdl (𝕄 n) _ _ _ _
+instance : distrib_lattice (𝕃 n) := 
+  @upper.dl (𝕄 n) _ _ _ _
+
+instance : bounded_order  (𝕃 n) := 
+  @upper.bo (𝕄 n) _ _ _ _
 
 instance : partial_order (𝕄 n) := by apply_instance 
 

@@ -118,26 +118,28 @@ def size : Z_single → ℕ × ℕ
 | (H _ _) := ⟨1,0⟩ 
 | (V _ _) := ⟨0,1⟩
 
+#check enumeration.elems
+
 instance : enumeration Z_single := {
   elems := 
-   ((enumeration.elems (fin 3)).bind 
-      (λ i, (enumeration.elems (fin 4)).map (Z_single.H i))) ++
-   ((enumeration.elems (fin 4)).bind 
-      (λ i, (enumeration.elems (fin 3)).map (Z_single.V i))),
+   ((enumeration.elems : list (fin 3)).bind 
+      (λ i, (enumeration.elems : list (fin 4)).map (Z_single.H i))) ++
+   ((enumeration.elems : list (fin 4)).bind 
+      (λ i, (enumeration.elems : list (fin 3)).map (Z_single.V i))),
   nodup := dec_trivial,
   complete := λ z, 
   begin
     cases z with i j i j; rw [list.mem_append],
     { left, 
       exact @list.mem_bind_of_mem (fin 3) Z_single (H i j)
-        (enumeration.elems (fin 3)) 
-        (λ i, (enumeration.elems (fin 4)).map (Z_single.H i))
+        (enumeration.elems : list (fin 3)) 
+        (λ i, (enumeration.elems : list (fin 4)).map (Z_single.H i))
         i (enumeration.complete i)
         (list.mem_map_of_mem (H i) (enumeration.complete j)) },  
     { right, 
       exact @list.mem_bind_of_mem (fin 4) Z_single (V i j)
-        (enumeration.elems (fin 4)) 
-        (λ i, (enumeration.elems (fin 3)).map (Z_single.V i))
+        (enumeration.elems : list (fin 4)) 
+        (λ i, (enumeration.elems : list (fin 3)).map (Z_single.V i))
         i (enumeration.complete i)
         (list.mem_map_of_mem (V i) (enumeration.complete j)) },  
   end
@@ -172,8 +174,8 @@ begin
     have huv : u ≤ v := ⟨le_refl i,le_of_lt j.inc_lt_succ⟩ },
   all_goals {  
     change prod.mk (u ⊓ (v ⊓ ⊤)) (u ⊔ (v ⊔ ⊥)) = ⟨u,v⟩,
-    rw [lattice.inf_top_eq, lattice.sup_bot_eq],
-    rw [lattice.inf_of_le_left huv, lattice.sup_of_le_right huv] }
+    rw [inf_top_eq, sup_bot_eq],
+    rw [inf_of_le_left huv, sup_of_le_right huv] }
 end
 
 lemma to_Y_size (z : Z_single) : 
@@ -198,10 +200,10 @@ begin
     injection hb  with hb₀ hb₁, 
     injection hb₀ with hb₂ hb₃, 
     injection hb₁ with hb₄ hb₅ },
-  { replace hb₄ := fin.succ_inj _ _ hb₄, cc },
+  { replace hb₄ := fin.succ_inj.mp hb₄, cc },
   { exfalso, exact ne_of_lt (fin.inc_lt_succ i₀) (hb₂.trans hb₄.symm) },
   { exfalso, exact ne_of_lt (fin.inc_lt_succ j₀) (hb₃.trans hb₅.symm) },
-  { replace hb₅ := fin.succ_inj _ _ hb₅, cc }
+  { replace hb₅ := fin.succ_inj.mp hb₅, cc }
 end
 
 def s : Z_single → Z_single
@@ -213,10 +215,10 @@ def r : Z_single → Z_single
 | (V i j) := H j.reflect i
 
 lemma to_Y_s (z : Z_single) :
-  (s z).to_Y = (@dihedral.s 4 0) • z.to_Y :=
+  (s z).to_Y = (dihedral.s (0 : zmod 4)) • z.to_Y :=
 begin
   cases z with i j i j; dsimp[s, to_Y, to_Y₀] ;
-  change finset.mk ([_,_] : multiset X) _ = _;
+  change finset.mk (_ : multiset X) _ = _;
   ext x;
   simp only [
       mul_action.mem_smul_finset', dihedral.s_inv,
@@ -228,10 +230,10 @@ begin
 end
 
 lemma to_Y_r (z : Z_single) :
-  (r z).to_Y = (@dihedral.r 4 1) • z.to_Y :=
+  (r z).to_Y = (dihedral.r (1 : zmod 4)) • z.to_Y :=
 begin
   cases z with i j i j; dsimp[s, to_Y, to_Y₀] ;
-  change finset.mk ([_,_] : multiset X) _ = _;
+  change finset.mk (([_,_] : list X) : multiset X) _ = _;
   ext x;
   simp only [
       mul_action.mem_smul_finset', dihedral.r_inv, neg_neg,

@@ -94,14 +94,14 @@ begin
  fin_cases r0,
  {left,
   use m,
-  let e : r = 0 := congr_arg subtype.val h_1,
-  rw[e,add_zero] at h,
+  have hr : r = 0 := fin.veq_of_eq this,
+  rw[hr, add_zero] at h,
   exact h,
  },{
   right,
   use m,
-  let e : r = 1 := congr_arg subtype.val h_1,
-  rw[e] at h,
+  have hr : r = 1 := fin.veq_of_eq this,
+  rw[hr] at h,
   exact h,
  },
 end
