@@ -2,5 +2,9 @@
 *.scr
 *.pdf
 *.mw
+*.log
+*.out
 /_target
 /leanpkg.path
+errs.txt
+err_files.txt
